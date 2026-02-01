@@ -65,7 +65,6 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               size="xl"
               showEditIcon={isOwnProfile}
               onClick={onAvatarEditClick}
-              className="border-4 border-white dark:border-gray-900"
             />
             <div className="pt-4 md:pt-0 md:pb-4">
               <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
