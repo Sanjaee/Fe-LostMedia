@@ -31,6 +31,12 @@ import type {
   SendFriendRequestRequest,
 } from "@/types/friendship";
 import type { User, UserSearchResponse } from "@/types/user";
+import type {
+  Post,
+  CreatePostRequest,
+  UpdatePostRequest,
+  PostResponse,
+} from "@/types/post";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.194.248:5000";
 
@@ -459,6 +465,70 @@ class ApiClient {
     return this.request<void>(`/api/v1/friendships/${friendshipID}`, {
       method: "DELETE",
     });
+  }
+
+  // Post endpoints
+  async createPost(data: CreatePostRequest): Promise<PostResponse> {
+    return this.request<PostResponse>("/api/v1/posts", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getPost(postID: string): Promise<PostResponse> {
+    return this.request<PostResponse>(`/api/v1/posts/${postID}`, {
+      method: "GET",
+    });
+  }
+
+  async getPostsByUserID(
+    userID: string,
+    limit: number = 20,
+    offset: number = 0
+  ): Promise<PostResponse> {
+    return this.request<PostResponse>(
+      `/api/v1/posts/user/${userID}?limit=${limit}&offset=${offset}`,
+      {
+        method: "GET",
+      }
+    );
+  }
+
+  async getFeed(
+    limit: number = 20,
+    offset: number = 0
+  ): Promise<PostResponse> {
+    return this.request<PostResponse>(
+      `/api/v1/posts/feed?limit=${limit}&offset=${offset}`,
+      {
+        method: "GET",
+      }
+    );
+  }
+
+  async updatePost(
+    postID: string,
+    data: UpdatePostRequest
+  ): Promise<PostResponse> {
+    return this.request<PostResponse>(`/api/v1/posts/${postID}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deletePost(postID: string): Promise<void> {
+    return this.request<void>(`/api/v1/posts/${postID}`, {
+      method: "DELETE",
+    });
+  }
+
+  async countPostsByUserID(userID: string): Promise<{ count: number }> {
+    return this.request<{ count: number }>(
+      `/api/v1/posts/user/${userID}/count`,
+      {
+        method: "GET",
+      }
+    );
   }
 }
 

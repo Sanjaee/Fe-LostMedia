@@ -16,7 +16,6 @@ import { Badge } from "@/components/ui/badge";
 import { Bell, UserPlus, Check, X, Loader2, User as UserIcon } from "lucide-react";
 import { useRouter } from "next/router";
 import type { Notification } from "@/types/notification";
-import type { Friendship } from "@/types/friendship";
 import { formatDistanceToNow } from "date-fns";
 import { id } from "date-fns/locale";
 import { useWebSocket } from "@/hooks/useWebSocket";
@@ -45,15 +44,34 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
       ? `${process.env.NEXT_PUBLIC_WS_URL || "wss://lostmedia.zacloth.com"}/ws`
       : "";
 
-  const { isConnected } = useWebSocket(wsUrl, {
-    onMessage: (data: Notification) => {
-      // Add new notification to the list
-      setNotifications((prev) => [data, ...prev]);
+  useWebSocket(wsUrl, {
+    onMessage: (data: any) => {
+      // Handle WebSocket message format
+      // Backend sends: { type: "notification", payload: {...} }
+      // Or direct notification object
+      let notification: Notification;
+      if (data.type === "notification" && data.payload) {
+        notification = data.payload as Notification;
+      } else if (data.id) {
+        // Direct notification object
+        notification = data as Notification;
+      } else {
+        return; // Invalid message format
+      }
+
+      // Only add if it's a new notification (not already in the list)
+      setNotifications((prev) => {
+        const exists = prev.some(n => n.id === notification.id);
+        if (exists) {
+          return prev; // Don't add duplicate
+        }
+        return [notification, ...prev];
+      });
       setUnreadCount((prev) => prev + 1);
       // Show toast notification
       toast({
         title: "Notifikasi Baru",
-        description: data.content,
+        description: notification.message || notification.content || notification.title,
       });
     },
     onError: (error) => {
@@ -66,47 +84,68 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
       loadNotifications();
       loadUnreadCount();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const loadNotifications = async () => {
     try {
       setLoading(true);
       const response = await api.getNotifications(50, 0);
-      const notifs = response.notifications ||
+      const allNotifs = response.notifications ||
         response.data?.notifications ||
         [];
-      setNotifications(notifs);
 
-      // Load friendship statuses for friend_request notifications
-      const friendRequestNotifs = notifs.filter(n => n.type === "friend_request");
+      // Filter out friend_request notifications that are already accepted
+      const filteredNotifs: Notification[] = [];
+      const friendRequestNotifs: Notification[] = [];
+
+      for (const notif of allNotifs) {
+        if (notif.type === "friend_request") {
+          friendRequestNotifs.push(notif);
+        } else {
+          filteredNotifs.push(notif);
+        }
+      }
+
+      // Check friendship status for friend_request notifications
       if (friendRequestNotifs.length > 0) {
         const statusPromises = friendRequestNotifs.map(async (notif: Notification) => {
           try {
             // Get sender ID from notification
             const senderId = notif.sender_id || (notif.sender?.id);
-            if (!senderId) return null;
+            if (!senderId) return { notif, status: "none" };
 
             const statusResponse = await api.getFriendshipStatus(senderId);
             const status = statusResponse.data?.status || "none";
-            return {
-              notificationId: notif.id,
-              senderId: senderId,
-              status: status
-            };
+            return { notif, status };
           } catch {
-            return null;
+            return { notif, status: "none" };
           }
         });
 
-        const statuses = await Promise.all(statusPromises);
+        const results = await Promise.all(statusPromises);
         const statusMap: Record<string, string> = {};
-        statuses.forEach((item) => {
-          if (item) {
-            statusMap[item.notificationId] = item.status;
+        
+        for (const result of results) {
+          const { notif, status } = result;
+          statusMap[notif.id] = status;
+          
+          // Only include friend_request notification if status is still pending
+          // If accepted, exclude it from the list
+          if (status !== "accepted") {
+            filteredNotifs.push(notif);
           }
-        });
+        }
+        
         setFriendshipStatuses(statusMap);
       }
+
+      // Sort by created_at descending (newest first)
+      filteredNotifs.sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+
+      setNotifications(filteredNotifs);
     } catch (error: any) {
       console.error("Failed to load notifications:", error);
       toast({
@@ -174,27 +213,40 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
         }));
       }
       
-      // Only reload notifications after successful action
-      // This will update the list and reload friendship statuses
+      // Reload notifications after successful action
+      // This will filter out accepted friend_request notifications
       await loadNotifications();
       await loadUnreadCount();
       
-      // Verify status from backend after reload to ensure accuracy
+      // Small delay to ensure DB transaction is committed
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Verify status directly from DB (no message broker needed)
       if (senderId) {
         try {
+          // Add small delay to ensure cache is cleared
+          await new Promise(resolve => setTimeout(resolve, 200));
+          
           const statusResponse = await api.getFriendshipStatus(senderId);
           const actualStatus = statusResponse.data?.status || "none";
           setFriendshipStatuses((prev) => ({
             ...prev,
             [notification.id]: actualStatus
           }));
-        } catch {
+          console.log(`[NotificationDialog] Verified status for ${senderId}: "${actualStatus}"`);
+        } catch (error) {
+          console.error(`[NotificationDialog] Failed to verify status for ${senderId}:`, error);
           // Keep the optimistic update if backend check fails
         }
       }
       
       // Trigger custom event to refresh other pages (e.g., search page)
-      window.dispatchEvent(new CustomEvent('friendshipStatusChanged'));
+      // Status will be refreshed directly from DB, no message broker needed
+      // Use longer delay to ensure DB transaction is fully committed
+      setTimeout(() => {
+        console.log("[NotificationDialog] Dispatching friendshipStatusChanged event");
+        window.dispatchEvent(new CustomEvent('friendshipStatusChanged'));
+      }, 500);
     } catch (error: any) {
       toast({
         title: "Error",

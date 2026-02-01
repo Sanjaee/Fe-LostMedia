@@ -3,11 +3,14 @@ import { ProfileHeader } from "../molecules/ProfileHeader";
 import { ProfileTabs, ProfileTabType } from "../molecules/ProfileTabs";
 import { ProfileDetails } from "../molecules/ProfileDetails";
 import { ProfileForm } from "./ProfileForm";
+import { PostDialog } from "./PostDialog";
+import { PostList } from "./PostList";
 import { Profile } from "@/types/profile";
-import { Image, Video, Radio } from "lucide-react";
+import { Image, Video, Radio, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { useSession } from "next-auth/react";
 
 interface ProfileLayoutProps {
   profile: Profile;
@@ -26,10 +29,12 @@ export const ProfileLayout: React.FC<ProfileLayoutProps> = ({
   onProfileUpdate,
   className,
 }) => {
+  const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState<ProfileTabType>("all");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isEditingCover, setIsEditingCover] = useState(false);
   const [isEditingAvatar, setIsEditingAvatar] = useState(false);
+  const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
 
   // Use session data for own profile, otherwise use profile data
   const userName = isOwnProfile && sessionName 
@@ -87,24 +92,36 @@ export const ProfileLayout: React.FC<ProfileLayoutProps> = ({
                       {getInitials(userName)}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex-1">
-                    <input
-                      type="text"
-                      placeholder="Apa yang Anda pikirkan sekarang?"
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
+                  <Button
+                    variant="outline"
+                    className="flex-1 justify-start text-left text-gray-500 dark:text-gray-400"
+                    onClick={() => setIsPostDialogOpen(true)}
+                  >
+                    <span className="text-sm">Apa yang Anda pikirkan sekarang?</span>
+                  </Button>
                 </div>
                 <div className="flex gap-4 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <Button variant="ghost" className="flex-1">
+                  <Button
+                    variant="ghost"
+                    className="flex-1"
+                    onClick={() => setIsPostDialogOpen(true)}
+                  >
                     <Image className="h-5 w-5 mr-2" />
                     Foto/video
                   </Button>
-                  <Button variant="ghost" className="flex-1">
+                  <Button
+                    variant="ghost"
+                    className="flex-1"
+                    onClick={() => setIsPostDialogOpen(true)}
+                  >
                     <Video className="h-5 w-5 mr-2" />
                     Reel
                   </Button>
-                  <Button variant="ghost" className="flex-1">
+                  <Button
+                    variant="ghost"
+                    className="flex-1"
+                    onClick={() => setIsPostDialogOpen(true)}
+                  >
                     <Radio className="h-5 w-5 mr-2" />
                     Video siaran langsung
                   </Button>
@@ -132,25 +149,22 @@ export const ProfileLayout: React.FC<ProfileLayoutProps> = ({
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                   Postingan
                 </h2>
-                <div className="flex gap-2">
-                  <Button variant="ghost" size="sm">Filter</Button>
-                  {isOwnProfile && (
-                    <Button variant="ghost" size="sm">Kelola postingan</Button>
-                  )}
-                </div>
+                {isOwnProfile && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsPostDialogOpen(true)}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Buat Postingan
+                  </Button>
+                )}
               </div>
-              <div className="flex gap-2 mb-4">
-                <Button
-                  variant={activeTab === "all" ? "default" : "ghost"}
-                  size="sm"
-                >
-                  Tampilan Daftar
-                </Button>
-                <Button variant="ghost" size="sm">Tampilan Kisi</Button>
-              </div>
-              <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                <p>Tidak tersedia postingan</p>
-              </div>
+              <PostList
+                userId={profile.user_id || profile.user?.id || ""}
+                isOwnProfile={isOwnProfile}
+                currentUserId={(session?.user?.id || profile.user?.id) as string}
+              />
             </div>
           </div>
         );
@@ -244,6 +258,19 @@ export const ProfileLayout: React.FC<ProfileLayoutProps> = ({
         onClose={() => setIsFormOpen(false)}
         onSuccess={handleFormSuccess}
       />
+
+      {/* Post Dialog */}
+      {isOwnProfile && (session?.user?.id || profile.user?.id) && (
+        <PostDialog
+          open={isPostDialogOpen}
+          onClose={() => setIsPostDialogOpen(false)}
+          onSuccess={() => {
+            setIsPostDialogOpen(false);
+            // Posts will be reloaded by PostList component
+          }}
+          userId={(session?.user?.id || profile.user?.id) as string}
+        />
+      )}
     </div>
   );
 };

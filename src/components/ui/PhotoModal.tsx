@@ -1,0 +1,168 @@
+import React from 'react';
+import { Dialog, DialogContent, DialogOverlay, DialogTitle } from "@/components/ui/dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { X, MoreHorizontal, ThumbsUp, MessageCircle, Share2, Send } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { id as idLocale } from "date-fns/locale";
+
+interface PhotoModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  post: any; // Type this properly based on your schema
+  imageIndex: number;
+}
+
+export default function PhotoModal({ isOpen, onClose, post, imageIndex }: PhotoModalProps) {
+  if (!post) return null;
+  const imageUrl = post.images && post.images[imageIndex] ? post.images[imageIndex] : '';
+
+  if (!imageUrl) return null;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent 
+        className="max-w-[100vw] w-screen h-screen p-0 border-none bg-transparent shadow-none z-[61] gap-0 sm:rounded-none outline-none focus:outline-none [&>button]:hidden block fixed inset-0 top-0 left-0 translate-x-0 translate-y-0"
+        showCloseButton={false}
+      >
+        <DialogTitle className="sr-only">Photo Viewer</DialogTitle>
+        <div className="flex flex-col md:flex-row w-full h-full overflow-hidden">
+          {/* Left Side: Image */}
+          <div className="flex-1 bg-black flex items-center justify-center relative h-[50vh] md:h-full group">
+           {/* Close Button (Mobile/Desktop overlay) */}
+           <Button 
+            variant="ghost" 
+            size="icon" 
+            className="absolute top-4 left-4 z-50 text-white hover:bg-white/10 rounded-full"
+            onClick={onClose}
+          >
+            <X className="w-6 h-6" />
+          </Button>
+
+          <div className="relative w-full h-full flex items-center justify-center">
+             {/* Main Image */}
+             <img 
+              src={imageUrl} 
+              alt={`Post by ${post.author?.name}`} 
+              className="max-w-full max-h-full object-contain"
+            />
+          </div>
+        </div>
+
+        {/* Right Side: Sidebar (Post Details) */}
+        <div className="w-full md:w-[360px] lg:w-[400px] bg-white dark:bg-zinc-950 flex flex-col h-[50vh] md:h-full border-l border-zinc-800">
+          {/* Header */}
+          <div className="p-4 flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800">
+            <div className="flex items-center gap-3">
+              <Avatar className="w-10 h-10 border">
+                <AvatarImage src={post.author?.image || ''} />
+                <AvatarFallback>{post.author?.name?.[0] || 'U'}</AvatarFallback>
+              </Avatar>
+              <div>
+                <div className="font-semibold text-sm hover:underline cursor-pointer">
+                  {post.author?.name || 'Unknown User'}
+                </div>
+                <div className="text-xs text-zinc-500 flex items-center gap-1">
+                  {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: idLocale })}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+               <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                <MoreHorizontal className="w-5 h-5" />
+              </Button>
+               {/* Close button for Sidebar context (optional, redundant with overlay close but good UX) */}
+               <Button variant="ghost" size="icon" className="md:hidden h-8 w-8 rounded-full" onClick={onClose}>
+                 <X className="w-5 h-5" />
+               </Button>
+            </div>
+          </div>
+
+          {/* Content (Caption + Comments) */}
+          <div className="flex-1 overflow-y-auto p-4 scrollbar-hide">
+             {/* Caption */}
+             {post.excerpt && (
+               <div className="mb-4 text-sm text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap">
+                 {post.excerpt}
+               </div>
+             )}
+             
+             <Separator className="my-4" />
+             
+             {/* Stats */}
+             <div className="flex items-center justify-between text-zinc-500 text-xs mb-4">
+                <div className="flex items-center gap-1">
+                  <div className="bg-blue-500 rounded-full p-1">
+                    <ThumbsUp className="w-2 h-2 text-white fill-white" />
+                  </div>
+                  <span>{post.likes || 0}</span>
+                </div>
+                <div className="flex gap-2">
+                  <span>{post.comments || 0} komentar</span>
+                  <span>{post.shares || 0} dibagikan</span>
+                </div>
+             </div>
+
+             {/* Action Buttons */}
+             <div className="flex border-y border-zinc-200 dark:border-zinc-800 py-1 mb-4">
+                <Button variant="ghost" className="flex-1 h-8 text-xs gap-2 text-zinc-600 dark:text-zinc-400">
+                  <ThumbsUp className="w-4 h-4" /> Suka
+                </Button>
+                <Button variant="ghost" className="flex-1 h-8 text-xs gap-2 text-zinc-600 dark:text-zinc-400">
+                  <MessageCircle className="w-4 h-4" /> Komentar
+                </Button>
+                <Button variant="ghost" className="flex-1 h-8 text-xs gap-2 text-zinc-600 dark:text-zinc-400">
+                  <Share2 className="w-4 h-4" /> Bagikan
+                </Button>
+             </div>
+
+             {/* Comments Placeholder */}
+             <div className="space-y-4">
+               <p className="text-sm font-semibold text-zinc-500">Komentar Terbaru</p>
+               {/* Dummy Comments */}
+               {[1, 2, 3].map((i) => (
+                 <div key={i} className="flex gap-2">
+                   <Avatar className="w-8 h-8">
+                     <AvatarFallback>U{i}</AvatarFallback>
+                   </Avatar>
+                   <div className="flex-1">
+                     <div className="bg-zinc-100 dark:bg-zinc-800 rounded-2xl px-3 py-2 inline-block">
+                       <span className="font-semibold text-xs block">User {i}</span>
+                       <span className="text-sm">Keren banget fotonya! 🔥</span>
+                     </div>
+                     <div className="flex gap-3 mt-1 ml-2 text-xs text-zinc-500 font-semibold">
+                       <span className="cursor-pointer hover:underline">Suka</span>
+                       <span className="cursor-pointer hover:underline">Balas</span>
+                       <span>1j</span>
+                     </div>
+                   </div>
+                 </div>
+               ))}
+             </div>
+          </div>
+
+          {/* Footer: Input Comment */}
+          <div className="p-3 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
+             <div className="flex gap-2 items-center">
+                <Avatar className="w-8 h-8">
+                  <AvatarFallback>Me</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center px-3 py-2">
+                   <input 
+                    type="text" 
+                    placeholder="Tulis komentar..." 
+                    className="bg-transparent border-none outline-none text-sm w-full"
+                   />
+                   <Button variant="ghost" size="icon" className="h-6 w-6 text-blue-500 hover:bg-blue-50 hover:text-blue-600 rounded-full">
+                     <Send className="w-4 h-4" />
+                   </Button>
+                </div>
+             </div>
+          </div>
+        </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
