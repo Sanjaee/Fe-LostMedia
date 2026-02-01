@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { useApi } from "@/components/contex/ApiProvider";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -11,6 +13,7 @@ import type { User } from "@/types/user";
 
 const SearchPeoplePage: React.FC = () => {
   const router = useRouter();
+  const { data: session } = useSession();
   const { api } = useApi();
   const { toast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
@@ -47,8 +50,10 @@ const SearchPeoplePage: React.FC = () => {
       const statusPromises = users.map(async (user: User) => {
         try {
           // Get status directly from DB via API (bypasses cache)
-          const statusResponse = await api.getFriendshipStatus(user.id);
-          const status = statusResponse.data?.status || "none";
+          // API client unwraps response.data, so we get { status: "accepted" | "pending" | "none" }
+          const statusResponse = await api.getFriendshipStatus(user.id) as any;
+          // Response structure: { status: "accepted" | "pending" | "none" } (after unwrap)
+          const status = statusResponse?.status || statusResponse?.data?.status || "none";
           const finalStatus = status === "rejected" ? "none" : status;
           
           return { 
@@ -117,15 +122,24 @@ const SearchPeoplePage: React.FC = () => {
       // Response structure after unwrap: {users: [...], limit: 50, offset: 0, total: 1}
       // or wrapped: {data: {users: [...], limit: 50, offset: 0, total: 1}}
       const usersList = (response as any).users || response.data?.users || [];
-      setUsers(usersList);
+      
+      // Filter out current user from search results
+      const currentUserId = session?.user?.id;
+      const filteredUsers = currentUserId 
+        ? usersList.filter((user: User) => user.id !== currentUserId)
+        : usersList;
+      
+      setUsers(filteredUsers);
 
       // Load friendship statuses directly from DB (no message broker needed)
       const loadStatuses = async (): Promise<void> => {
-        const statusPromises = usersList.map(async (user: User) => {
+        const statusPromises = filteredUsers.map(async (user: User) => {
           try {
             // Get status directly from DB via API
-            const statusResponse = await api.getFriendshipStatus(user.id);
-            const status = statusResponse.data?.status || "none";
+            // API client unwraps response.data, so we get { status: "accepted" | "pending" | "none" }
+            const statusResponse = await api.getFriendshipStatus(user.id) as any;
+            // Response structure: { status: "accepted" | "pending" | "none" } (after unwrap)
+            const status = statusResponse?.status || statusResponse?.data?.status || "none";
             const finalStatus = status === "rejected" ? "none" : status;
             
             return { 
@@ -175,28 +189,26 @@ const SearchPeoplePage: React.FC = () => {
       // Handle "already friends" error - refresh status to show correct button
       if (errorMessage.includes("already friends")) {
         // If backend says "already friends", status must be "accepted"
-        // Set status immediately to "accepted" for instant UI update
-        setFriendshipStatuses((prev) => {
-          return { ...prev, [userId]: "accepted" };
-        });
-        
-        toast({
-          title: "Info",
-          description: "Anda sudah berteman dengan user ini",
-        });
-        
-        // Also verify with backend directly from DB (async, non-blocking)
+        // Immediately verify from DB and update status for instant UI update
         try {
-          await new Promise(resolve => setTimeout(resolve, 200));
-          const statusResponse = await api.getFriendshipStatus(userId);
-          const actualStatus = statusResponse.data?.status || "accepted";
+          const statusResponse = await api.getFriendshipStatus(userId) as any;
+          // API client unwraps response.data, so we get { status: "accepted" | "pending" | "none" }
+          const actualStatus = statusResponse?.status || statusResponse?.data?.status || "accepted";
           
-          // Update again with backend response to ensure accuracy
-          if (actualStatus === "accepted") {
-            setFriendshipStatuses((prev) => ({ ...prev, [userId]: "accepted" }));
-          }
+          // Update status immediately from DB response
+          setFriendshipStatuses((prev) => ({ ...prev, [userId]: actualStatus }));
+          
+          toast({
+            title: "Info",
+            description: "Anda sudah berteman dengan user ini",
+          });
         } catch {
-          // Keep the "accepted" status we set earlier
+          // If DB check fails, set to "accepted" based on error message
+          setFriendshipStatuses((prev) => ({ ...prev, [userId]: "accepted" }));
+          toast({
+            title: "Info",
+            description: "Anda sudah berteman dengan user ini",
+          });
         }
       } else if (errorMessage.includes("already pending") || errorMessage.includes("friend request already pending")) {
         // Update status to pending if request is already pending
@@ -207,9 +219,10 @@ const SearchPeoplePage: React.FC = () => {
         });
         // Also verify with backend directly from DB to ensure status is correct
         try {
-          await new Promise(resolve => setTimeout(resolve, 200));
-          const statusResponse = await api.getFriendshipStatus(userId);
-          const actualStatus = statusResponse.data?.status || "pending";
+          // No delay needed - update immediately from DB
+          const statusResponse = await api.getFriendshipStatus(userId) as any;
+          // API client unwraps response.data, so we get { status: "accepted" | "pending" | "none" }
+          const actualStatus = statusResponse?.status || statusResponse?.data?.status || "pending";
           // Update with actual status from DB
           setFriendshipStatuses((prev) => ({ ...prev, [userId]: actualStatus }));
         } catch {
@@ -308,26 +321,34 @@ const SearchPeoplePage: React.FC = () => {
                   key={user.id}
                   className="flex items-center gap-4 p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                 >
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage
-                      src={user.profile_photo}
-                      alt={user.full_name}
-                    />
-                    <AvatarFallback>
-                      {user.full_name.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-gray-900 dark:text-white">
-                      {user.full_name}
-                    </h3>
-                    {user.username && (
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        @{user.username}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex-shrink-0">
+                  <Link 
+                    href={`/profile/${user.id}`} 
+                    className="flex items-center gap-4 flex-1 min-w-0 cursor-pointer"
+                  >
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage
+                        src={user.profile_photo}
+                        alt={user.full_name}
+                      />
+                      <AvatarFallback>
+                        {user.full_name.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-gray-900 dark:text-white hover:underline">
+                        {user.full_name}
+                      </h3>
+                      {user.username && (
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          @{user.username}
+                        </p>
+                      )}
+                    </div>
+                  </Link>
+                  <div 
+                    className="shrink-0"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     {getActionButton(user)}
                   </div>
                 </div>
