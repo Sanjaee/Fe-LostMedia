@@ -12,25 +12,13 @@ import { id as idLocale } from "date-fns/locale";
 import type { Post } from "@/types/post";
 
 interface PhotoModalProps {
-  post: Post;
+  post: Post | null;
   imageIndex: number;
 }
 
 export default function PhotoModal({ post, imageIndex }: PhotoModalProps) {
   const router = useRouter();
-  const imageUrl = post.image_urls?.[imageIndex] || '';
-  const totalImages = post.image_urls?.length || 0;
-  const hasPrev = imageIndex > 0;
-  const hasNext = imageIndex < totalImages - 1;
-
-  const navigateImage = (direction: 'prev' | 'next') => {
-    if (direction === 'prev' && hasPrev) {
-      router.push(`/photo/${post.id}?index=${imageIndex - 1}`);
-    } else if (direction === 'next' && hasNext) {
-      router.push(`/photo/${post.id}?index=${imageIndex + 1}`);
-    }
-  };
-
+  
   // Prevent body scroll when modal is open
   useEffect(() => {
     // Save current scroll position before opening modal
@@ -49,6 +37,24 @@ export default function PhotoModal({ post, imageIndex }: PhotoModalProps) {
       }
     };
   }, []);
+
+  // Handle case when post is undefined (during build/prerender)
+  if (!post) {
+    return null;
+  }
+  
+  const imageUrl = post.image_urls?.[imageIndex] || '';
+  const totalImages = post.image_urls?.length || 0;
+  const hasPrev = imageIndex > 0;
+  const hasNext = imageIndex < totalImages - 1;
+
+  const navigateImage = (direction: 'prev' | 'next') => {
+    if (direction === 'prev' && hasPrev) {
+      router.push(`/photo/${post.id}?index=${imageIndex - 1}`);
+    } else if (direction === 'next' && hasNext) {
+      router.push(`/photo/${post.id}?index=${imageIndex + 1}`);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={(e) => {

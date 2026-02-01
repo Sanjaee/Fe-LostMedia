@@ -7,6 +7,10 @@ import { useApi } from "@/components/contex/ApiProvider";
 import type { Post } from "@/types/post";
 import { Loader2 } from "lucide-react";
 
+// Prevent static generation for this dynamic route
+export const dynamic = 'force-dynamic';
+export const dynamicParams = true;
+
 export default function PhotoPage() {
   const params = useParams();
   const searchParams = useSearchParams();

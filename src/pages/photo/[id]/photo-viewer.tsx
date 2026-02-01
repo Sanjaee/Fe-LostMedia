@@ -11,12 +11,18 @@ import { id as idLocale } from "date-fns/locale";
 import type { Post } from "@/types/post";
 
 interface PhotoViewerProps {
-  post: Post;
+  post: Post | null;
   imageIndex: number;
 }
 
 export default function PhotoViewer({ post, imageIndex }: PhotoViewerProps) {
   const router = useRouter();
+  
+  // Handle case when post is undefined (during build/prerender)
+  if (!post) {
+    return null;
+  }
+  
   const imageUrl = post.image_urls?.[imageIndex] || '';
   const totalImages = post.image_urls?.length || 0;
   const hasPrev = imageIndex > 0;
