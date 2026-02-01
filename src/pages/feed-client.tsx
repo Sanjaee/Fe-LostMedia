@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import { id } from "date-fns/locale";
 import { 
@@ -18,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import PhotoModal from "@/components/ui/PhotoModal";
 
 import type { Post } from "@/types/post";
 
@@ -32,12 +34,58 @@ export const dynamic = 'force-dynamic';
 
 export default function FeedClient({ posts }: FeedClientProps) {
   const { data: session } = useSession();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const scrollRestoredRef = useRef(false);
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+
+  // Check URL params for photo modal
+  const fbid = searchParams?.get('fbid');
+  const set = searchParams?.get('set');
   
-  // Handle case when posts is undefined (during build/prerender)
-  if (!posts || !Array.isArray(posts)) {
-    return null;
-  }
+  // Parse URL params to determine selected post and image index
+  useEffect(() => {
+    if (fbid && set) {
+      // Parse set parameter to get post ID and image index
+      // Format: set=pcb.POST_ID.IMAGE_INDEX
+      const setParts = set.split('.');
+      if (setParts.length >= 2) {
+        const postId = setParts[1];
+        const imageIndex = setParts[2] ? parseInt(setParts[2]) : 0;
+        
+        // Find the post
+        const post = posts.find(p => p.id === postId);
+        if (post && post.image_urls && post.image_urls.length > 0) {
+          // Only update if different to avoid unnecessary renders
+          if (selectedPost?.id !== post.id || selectedImageIndex !== imageIndex) {
+            setSelectedPost(post);
+            setSelectedImageIndex(imageIndex);
+          }
+        }
+      }
+    } else {
+      // Only update if currently has selected post
+      if (selectedPost) {
+        setSelectedPost(null);
+        setSelectedImageIndex(0);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fbid, set, posts]);
+
+  // Handle browser back button
+  useEffect(() => {
+    const handlePopState = () => {
+      if (!fbid && !set) {
+        setSelectedPost(null);
+        setSelectedImageIndex(0);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [fbid, set]);
 
   // Restore scroll position when component mounts
   useEffect(() => {
@@ -53,10 +101,44 @@ export default function FeedClient({ posts }: FeedClientProps) {
     }
   }, []);
 
-  // Save scroll position before navigating
-  const handleImageClick = () => {
+  // Handle image click - update URL without reload
+  const handleImageClick = (post: Post, imageIndex: number) => {
+    // Save scroll position
     const scrollPosition = window.scrollY || document.documentElement.scrollTop;
     sessionStorage.setItem(SCROLL_POSITION_KEY, scrollPosition.toString());
+    
+    // Update URL with query params (like Facebook: /photo/?fbid=...&set=pcb.POST_ID.IMAGE_INDEX)
+    const newUrl = `/?fbid=${post.id}&set=pcb.${post.id}.${imageIndex}`;
+    router.push(newUrl, { scroll: false });
+  };
+
+  // Handle modal close - restore URL
+  const handleCloseModal = () => {
+    // Remove query params and restore original URL
+    router.push('/', { scroll: false });
+    setSelectedPost(null);
+    setSelectedImageIndex(0);
+  };
+
+  // Handle image navigation in modal
+  const handleNavigateImage = (direction: 'prev' | 'next') => {
+    if (!selectedPost || !selectedPost.image_urls) return;
+    
+    const totalImages = selectedPost.image_urls.length;
+    let newIndex = selectedImageIndex;
+    
+    if (direction === 'prev' && selectedImageIndex > 0) {
+      newIndex = selectedImageIndex - 1;
+    } else if (direction === 'next' && selectedImageIndex < totalImages - 1) {
+      newIndex = selectedImageIndex + 1;
+    }
+    
+    if (newIndex !== selectedImageIndex) {
+      setSelectedImageIndex(newIndex);
+      // Update URL
+      const newUrl = `/?fbid=${selectedPost.id}&set=pcb.${selectedPost.id}.${newIndex}`;
+      router.push(newUrl, { scroll: false });
+    }
   };
 
   // Save scroll position on scroll
@@ -69,6 +151,11 @@ export default function FeedClient({ posts }: FeedClientProps) {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Handle case when posts is undefined (during build/prerender)
+  if (!posts || !Array.isArray(posts)) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 pt-4">
@@ -190,21 +277,21 @@ export default function FeedClient({ posts }: FeedClientProps) {
                           post.image_urls.length >= 3 ? 'grid-cols-2' : ''
                         }`}>
                           {post.image_urls.slice(0, 4).map((img, idx) => (
-                            <Link 
-                              key={idx} 
-                              href={`/photo/${post.id}?index=${idx}`}
-                              scroll={false}
-                              onClick={handleImageClick}
-                              className={`relative bg-zinc-100 cursor-pointer block ${
-                                post.image_urls!.length === 3 && idx === 0 ? 'row-span-2 h-full' : 'aspect-square'
-                              } ${
-                                post.image_urls!.length === 1 ? 'aspect-auto max-h-[500px]' : ''
+                            <button
+                              key={idx}
+                              onClick={() => handleImageClick(post, idx)}
+                              className={`relative bg-zinc-100 cursor-pointer block w-full ${
+                                post.image_urls!.length === 1 ? 'h-auto' : 
+                                post.image_urls!.length === 3 && idx === 0 ? 'row-span-2 h-full' : 
+                                'aspect-square'
                               }`}
                             >
                               <img 
                                 src={img} 
                                 alt={`Post image ${idx + 1}`} 
-                                className="w-full h-full object-cover"
+                                className={`w-full ${
+                                  post.image_urls!.length === 1 ? 'h-auto object-contain' : 'h-full object-cover'
+                                }`}
                                 loading="lazy"
                               />
                               {post.image_urls!.length > 4 && idx === 3 && (
@@ -212,7 +299,7 @@ export default function FeedClient({ posts }: FeedClientProps) {
                                   +{post.image_urls!.length - 4}
                                 </div>
                               )}
-                            </Link>
+                            </button>
                           ))}
                         </div>
                       </div>
@@ -295,6 +382,17 @@ export default function FeedClient({ posts }: FeedClientProps) {
 
         </div>
       </div>
+
+      {/* Photo Modal */}
+      {selectedPost && (
+        <PhotoModal
+          isOpen={!!selectedPost}
+          onClose={handleCloseModal}
+          post={selectedPost}
+          imageIndex={selectedImageIndex}
+          onNavigateImage={handleNavigateImage}
+        />
+      )}
     </div>
   );
 }
