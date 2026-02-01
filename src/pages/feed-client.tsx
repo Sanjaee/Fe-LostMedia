@@ -27,9 +27,17 @@ interface FeedClientProps {
 
 const SCROLL_POSITION_KEY = "feed_scroll_position";
 
+// Prevent static generation for this page
+export const dynamic = 'force-dynamic';
+
 export default function FeedClient({ posts }: FeedClientProps) {
   const { data: session } = useSession();
   const scrollRestoredRef = useRef(false);
+  
+  // Handle case when posts is undefined (during build/prerender)
+  if (!posts || !Array.isArray(posts)) {
+    return null;
+  }
 
   // Restore scroll position when component mounts
   useEffect(() => {
@@ -133,8 +141,9 @@ export default function FeedClient({ posts }: FeedClientProps) {
 
             {/* Posts Feed */}
             <div className="space-y-4">
-              {posts.map((post) => (
-                <Card key={post.id} className="border-none shadow-sm overflow-hidden">
+              {posts && posts.length > 0 ? (
+                posts.map((post) => (
+                  <Card key={post.id} className="border-none shadow-sm overflow-hidden">
                   <CardHeader className="p-4 pb-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -242,7 +251,12 @@ export default function FeedClient({ posts }: FeedClientProps) {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+                ))
+              ) : (
+                <div className="text-center py-12 text-zinc-500">
+                  <p>No posts available</p>
+                </div>
+              )}
             </div>
           </div>
 
