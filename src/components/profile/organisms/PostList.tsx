@@ -249,7 +249,7 @@ export const PostList: React.FC<PostListProps> = ({
                           alt={`Post image ${idx + 1}`}
                           className="w-full rounded-lg h-48 object-cover"
                         />
-                        {idx === 3 && post.image_urls.length > 4 && (
+                        {idx === 3 && post.image_urls && post.image_urls.length > 4 && (
                           <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center">
                             <span className="text-white font-semibold text-lg">
                               +{post.image_urls.length - 4}
