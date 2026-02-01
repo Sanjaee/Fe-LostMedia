@@ -6,7 +6,7 @@ import { useApi } from "@/components/contex/ApiProvider";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, UserPlus, Check } from "lucide-react";
+import { Loader2, UserPlus, Check, User as UserIcon } from "lucide-react";
 import type { User } from "@/types/user";
 
 const SearchPeoplePage: React.FC = () => {
@@ -28,6 +28,51 @@ const SearchPeoplePage: React.FC = () => {
     }
   }, [query]);
 
+  // Refresh friendship statuses when friendship status changes (e.g., after accepting from notification)
+  useEffect(() => {
+    const refreshStatuses = async () => {
+      if (users.length === 0) return;
+      
+      const statusPromises = users.map(async (user: User) => {
+        try {
+          const statusResponse = await api.getFriendshipStatus(user.id);
+          const status = statusResponse.data?.status || "none";
+          return { 
+            userId: user.id, 
+            status: status === "rejected" ? "none" : status 
+          };
+        } catch {
+          return { userId: user.id, status: "none" };
+        }
+      });
+
+      const statuses = await Promise.all(statusPromises);
+      const statusMap: Record<string, string> = {};
+      statuses.forEach((item: { userId: string; status: string }) => {
+        statusMap[item.userId] = item.status;
+      });
+      setFriendshipStatuses(statusMap);
+    };
+
+    const handleFriendshipStatusChanged = () => {
+      refreshStatuses();
+    };
+
+    // Listen for custom event when friendship status changes
+    window.addEventListener('friendshipStatusChanged', handleFriendshipStatusChanged);
+    
+    // Also refresh when window gains focus (e.g., user switches back to tab)
+    const handleFocus = () => {
+      refreshStatuses();
+    };
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      window.removeEventListener('friendshipStatusChanged', handleFriendshipStatusChanged);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [users, api]);
+
   const searchUsers = async () => {
     if (!query.trim()) {
       setUsers([]);
@@ -37,7 +82,9 @@ const SearchPeoplePage: React.FC = () => {
     try {
       setLoading(true);
       const response = await api.searchUsers(query, 50, 0);
-      const usersList = response.data?.users || [];
+      // Response structure after unwrap: {users: [...], limit: 50, offset: 0, total: 1}
+      // or wrapped: {data: {users: [...], limit: 50, offset: 0, total: 1}}
+      const usersList = (response as any).users || response.data?.users || [];
       setUsers(usersList);
 
       // Load friendship statuses for all users
@@ -82,6 +129,7 @@ const SearchPeoplePage: React.FC = () => {
         title: "Success",
         description: "Friend request sent",
       });
+      // Only update status if request was successful
       setFriendshipStatuses((prev) => ({ ...prev, [userId]: "pending" }));
     } catch (error: any) {
       toast({
@@ -89,6 +137,11 @@ const SearchPeoplePage: React.FC = () => {
         description: error.message || "Failed to send friend request",
         variant: "destructive",
       });
+      // Don't update status on error - keep current state
+      // If error is "already pending", we might want to update status anyway
+      if (error.message?.includes("already pending")) {
+        setFriendshipStatuses((prev) => ({ ...prev, [userId]: "pending" }));
+      }
     } finally {
       setProcessingIds((prev) => {
         const next = new Set(prev);
@@ -130,9 +183,13 @@ const SearchPeoplePage: React.FC = () => {
 
     if (status === "accepted") {
       return (
-        <Button variant="outline" size="sm" disabled>
-          <Check className="h-4 w-4 mr-2" />
-          Berteman
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => router.push(`/profile/${user.id}`)}
+        >
+          <UserIcon className="h-4 w-4 mr-2" />
+          Lihat Profile
         </Button>
       );
     }

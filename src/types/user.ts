@@ -15,11 +15,16 @@ export interface User {
 }
 
 export interface UserSearchResponse {
-  message: string;
-  data: {
+  message?: string;
+  data?: {
     users: User[];
     limit: number;
     offset: number;
     total: number;
   };
+  // After unwrap from api.ts, response structure is flattened
+  users?: User[];
+  limit?: number;
+  offset?: number;
+  total?: number;
 }

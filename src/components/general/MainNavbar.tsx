@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/router";
+import Image from "next/image";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -191,10 +192,21 @@ export default function MainNavbar() {
           ) : session?.user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="relative flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800">
-                  <span className="text-white font-bold text-lg">
-                    {getInitials(session.user.name)}
-                  </span>
+                <button className="relative flex items-center justify-center w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800">
+                  {session.user.image ? (
+                    <Image
+                      src={session.user.image}
+                      alt={session.user.name || "User"}
+                      width={40}
+                      height={40}
+                      className="w-full h-full object-cover"
+                      unoptimized
+                    />
+                  ) : (
+                    <span className="text-white font-bold text-lg">
+                      {getInitials(session.user.name)}
+                    </span>
+                  )}
                   <span className="absolute -bottom-0.5 -right-0.5 flex items-center justify-center w-4 h-4 bg-gray-700 dark:bg-gray-800 rounded-full border-2 border-gray-800 dark:border-gray-900">
                     <ChevronDown className="h-2.5 w-2.5 text-gray-300" />
                   </span>

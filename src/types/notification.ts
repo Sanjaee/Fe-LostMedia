@@ -3,8 +3,11 @@ export interface Notification {
   user_id: string;
   sender_id?: string;
   type: string; // "friend_request", "friend_accepted", "friend_rejected", "friend_removed"
-  content: string;
+  content?: string; // For backward compatibility
+  message?: string; // New field name
+  title?: string;
   target_id?: string;
+  data?: string | object; // JSON string or parsed object
   is_read: boolean;
   created_at: string;
   updated_at: string;

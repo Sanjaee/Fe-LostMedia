@@ -13,7 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 // import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Bell, UserPlus, Check, X, Loader2 } from "lucide-react";
+import { Bell, UserPlus, Check, X, Loader2, User as UserIcon } from "lucide-react";
+import { useRouter } from "next/router";
 import type { Notification } from "@/types/notification";
 import type { Friendship } from "@/types/friendship";
 import { formatDistanceToNow } from "date-fns";
@@ -30,11 +31,13 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
   onOpenChange,
 }) => {
   const { api } = useApi();
+  const router = useRouter();
   const { toast } = useToast();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
+  const [friendshipStatuses, setFriendshipStatuses] = useState<Record<string, string>>({});
 
   // WebSocket connection for realtime notifications
   const wsUrl =
@@ -69,11 +72,41 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
     try {
       setLoading(true);
       const response = await api.getNotifications(50, 0);
-      setNotifications(
-        response.notifications ||
-          response.data?.notifications ||
-          []
-      );
+      const notifs = response.notifications ||
+        response.data?.notifications ||
+        [];
+      setNotifications(notifs);
+
+      // Load friendship statuses for friend_request notifications
+      const friendRequestNotifs = notifs.filter(n => n.type === "friend_request");
+      if (friendRequestNotifs.length > 0) {
+        const statusPromises = friendRequestNotifs.map(async (notif: Notification) => {
+          try {
+            // Get sender ID from notification
+            const senderId = notif.sender_id || (notif.sender?.id);
+            if (!senderId) return null;
+
+            const statusResponse = await api.getFriendshipStatus(senderId);
+            const status = statusResponse.data?.status || "none";
+            return {
+              notificationId: notif.id,
+              senderId: senderId,
+              status: status
+            };
+          } catch {
+            return null;
+          }
+        });
+
+        const statuses = await Promise.all(statusPromises);
+        const statusMap: Record<string, string> = {};
+        statuses.forEach((item) => {
+          if (item) {
+            statusMap[item.notificationId] = item.status;
+          }
+        });
+        setFriendshipStatuses(statusMap);
+      }
     } catch (error: any) {
       console.error("Failed to load notifications:", error);
       toast({
@@ -99,7 +132,22 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
     notification: Notification,
     friendshipId?: string
   ) => {
-    if (!friendshipId && !notification.target_id) {
+    // Try to get friendship ID from target_id, or parse from data
+    let id = friendshipId || notification.target_id;
+    
+    // If not found, try to parse from data field (for backward compatibility)
+    if (!id && (notification as any).data) {
+      try {
+        const data = typeof (notification as any).data === 'string' 
+          ? JSON.parse((notification as any).data) 
+          : (notification as any).data;
+        id = data?.friendship_id || data?.target_id;
+      } catch {
+        // Ignore parse errors
+      }
+    }
+
+    if (!id) {
       toast({
         title: "Error",
         description: "Friendship ID not found",
@@ -107,8 +155,6 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
       });
       return;
     }
-
-    const id = friendshipId || notification.target_id!;
     setProcessingIds((prev) => new Set(prev).add(id));
 
     try {
@@ -117,14 +163,47 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
         title: "Success",
         description: "Friend request accepted",
       });
+      
+      // Update friendship status immediately for UI responsiveness
+      const senderId = notification.sender_id || notification.sender?.id;
+      if (senderId) {
+        // Update status immediately (optimistic update)
+        setFriendshipStatuses((prev) => ({
+          ...prev,
+          [notification.id]: "accepted"
+        }));
+      }
+      
+      // Only reload notifications after successful action
+      // This will update the list and reload friendship statuses
       await loadNotifications();
       await loadUnreadCount();
+      
+      // Verify status from backend after reload to ensure accuracy
+      if (senderId) {
+        try {
+          const statusResponse = await api.getFriendshipStatus(senderId);
+          const actualStatus = statusResponse.data?.status || "none";
+          setFriendshipStatuses((prev) => ({
+            ...prev,
+            [notification.id]: actualStatus
+          }));
+        } catch {
+          // Keep the optimistic update if backend check fails
+        }
+      }
+      
+      // Trigger custom event to refresh other pages (e.g., search page)
+      window.dispatchEvent(new CustomEvent('friendshipStatusChanged'));
     } catch (error: any) {
       toast({
         title: "Error",
         description: error.message || "Failed to accept friend request",
         variant: "destructive",
       });
+      // Don't remove notification on error - keep it visible
+      // Reload to ensure we have the latest state
+      await loadNotifications();
     } finally {
       setProcessingIds((prev) => {
         const next = new Set(prev);
@@ -138,7 +217,22 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
     notification: Notification,
     friendshipId?: string
   ) => {
-    if (!friendshipId && !notification.target_id) {
+    // Try to get friendship ID from target_id, or parse from data
+    let id = friendshipId || notification.target_id;
+    
+    // If not found, try to parse from data field (for backward compatibility)
+    if (!id && (notification as any).data) {
+      try {
+        const data = typeof (notification as any).data === 'string' 
+          ? JSON.parse((notification as any).data) 
+          : (notification as any).data;
+        id = data?.friendship_id || data?.target_id;
+      } catch {
+        // Ignore parse errors
+      }
+    }
+
+    if (!id) {
       toast({
         title: "Error",
         description: "Friendship ID not found",
@@ -146,8 +240,6 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
       });
       return;
     }
-
-    const id = friendshipId || notification.target_id!;
     setProcessingIds((prev) => new Set(prev).add(id));
 
     try {
@@ -156,15 +248,31 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
         title: "Berhasil",
         description: "Permintaan pertemanan ditolak",
       });
-      // Remove notification from list
-      setNotifications((prev) => prev.filter((n) => n.id !== notification.id));
+      // Update friendship status for rejected request
+      const senderId = notification.sender_id || notification.sender?.id;
+      if (senderId) {
+        // Remove from friendship statuses (rejected = none, can send again)
+        setFriendshipStatuses((prev) => {
+          const next = { ...prev };
+          delete next[notification.id];
+          return next;
+        });
+      }
+      // Only reload notifications after successful action
+      // This will update the list and remove the rejected notification
+      await loadNotifications();
       await loadUnreadCount();
+      // Trigger custom event to refresh other pages (e.g., search page)
+      window.dispatchEvent(new CustomEvent('friendshipStatusChanged'));
     } catch (error: any) {
       toast({
         title: "Error",
         description: error.message || "Failed to reject friend request",
         variant: "destructive",
       });
+      // Don't remove notification on error - keep it visible
+      // Reload to ensure we have the latest state
+      await loadNotifications();
     } finally {
       setProcessingIds((prev) => {
         const next = new Set(prev);
@@ -200,15 +308,64 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
   };
 
   const getNotificationAction = (notification: Notification) => {
-    if (notification.type === "friend_request" && !notification.is_read) {
-      const friendshipId = notification.target_id;
-      const isProcessing = processingIds.has(friendshipId || "");
+    // Show action buttons for friend_request notifications (regardless of read status)
+    if (notification.type === "friend_request") {
+      // Get friendship ID from target_id or parse from data
+      let friendshipId = notification.target_id;
+      
+      // Fallback: parse from data if target_id not available
+      if (!friendshipId && (notification as any).data) {
+        try {
+          const data = typeof (notification as any).data === 'string' 
+            ? JSON.parse((notification as any).data) 
+            : (notification as any).data;
+          friendshipId = data?.friendship_id || data?.target_id;
+        } catch {
+          // Ignore parse errors
+        }
+      }
+      
+      // If no friendship ID found, don't show buttons
+      if (!friendshipId) {
+        return null;
+      }
 
+      // Check friendship status for this notification
+      const senderId = notification.sender_id || (notification.sender?.id);
+      const friendshipStatus = friendshipStatuses[notification.id];
+      
+      // If friendship is already accepted, show "Lihat Profile" button
+      if (friendshipStatus === "accepted" && senderId) {
+        return (
+          <div className="flex gap-2 mt-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(`/profile/${senderId}`);
+                onOpenChange(false);
+              }}
+              className="h-8"
+            >
+              <UserIcon className="h-4 w-4 mr-1" />
+              Lihat Profile
+            </Button>
+          </div>
+        );
+      }
+      
+      const isProcessing = processingIds.has(friendshipId);
+
+      // Show accept/reject buttons if status is pending or not yet checked
       return (
         <div className="flex gap-2 mt-2">
           <Button
             size="sm"
-            onClick={() => handleAcceptFriendRequest(notification, friendshipId)}
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent marking as read when clicking button
+              handleAcceptFriendRequest(notification, friendshipId);
+            }}
             disabled={isProcessing}
             className="h-8"
           >
@@ -224,7 +381,10 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
           <Button
             size="sm"
             variant="outline"
-            onClick={() => handleRejectFriendRequest(notification, friendshipId)}
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent marking as read when clicking button
+              handleRejectFriendRequest(notification, friendshipId);
+            }}
             disabled={isProcessing}
             className="h-8"
           >
@@ -274,8 +434,9 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
                       ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
                       : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
                   }`}
-                  onClick={() => {
-                    if (!notification.is_read) {
+                  onClick={(e) => {
+                    // Only mark as read if clicking on the notification itself, not on buttons
+                    if (!notification.is_read && (e.target as HTMLElement).closest('button') === null) {
                       handleMarkAsRead(notification.id);
                     }
                   }}
@@ -304,7 +465,7 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">
                           <p className="text-sm text-gray-900 dark:text-white">
-                            {notification.content}
+                            {notification.message || notification.content || notification.title}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                             {formatDistanceToNow(
