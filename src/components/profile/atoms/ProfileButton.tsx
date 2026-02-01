@@ -1,11 +1,11 @@
 import React from "react";
 import { Button, ButtonProps } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
-interface ProfileButtonProps extends ButtonProps {
-  variant?: "default" | "outline" | "ghost" | "link";
-  size?: "sm" | "md" | "lg";
-}
+// ProfileButtonProps extends ButtonProps but allows "md" size which maps to "default"
+// We use Omit to remove size from ButtonProps and redefine it with "md" option
+type ProfileButtonProps = Omit<ButtonProps, "size"> & {
+  size?: "sm" | "md" | "lg" | "default";
+};
 
 export const ProfileButton: React.FC<ProfileButtonProps> = ({
   children,
@@ -14,16 +14,18 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
   size = "md",
   ...props
 }) => {
-  const sizeClasses = {
-    sm: "h-8 px-3 text-sm",
-    md: "h-10 px-4",
-    lg: "h-12 px-6 text-lg",
+  // Map "md" to "default" for Button component since Button doesn't support "md"
+  const getButtonSize = (): ButtonProps["size"] => {
+    if (size === "md") return "default";
+    if (size === "sm" || size === "lg" || size === "default") return size;
+    return "default";
   };
 
   return (
     <Button
       variant={variant}
-      className={cn(sizeClasses[size], className)}
+      size={getButtonSize()}
+      className={className}
       {...props}
     >
       {children}
