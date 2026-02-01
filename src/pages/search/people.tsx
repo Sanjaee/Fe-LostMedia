@@ -41,11 +41,8 @@ const SearchPeoplePage: React.FC = () => {
       }
 
       if (users.length === 0) {
-        console.log("[refreshStatuses] No users to refresh");
         return;
       }
-
-      console.log(`[refreshStatuses] Refreshing statuses for ${users.length} users (retry: ${retryCount})`);
 
       const statusPromises = users.map(async (user: User) => {
         try {
@@ -54,14 +51,11 @@ const SearchPeoplePage: React.FC = () => {
           const status = statusResponse.data?.status || "none";
           const finalStatus = status === "rejected" ? "none" : status;
           
-          console.log(`[refreshStatuses] User ${user.id} (${user.full_name}): status="${status}" -> "${finalStatus}"`);
-          
           return { 
             userId: user.id, 
             status: finalStatus
           };
-        } catch (error) {
-          console.error(`[refreshStatuses] Failed to get status for user ${user.id}:`, error);
+        } catch {
           return { userId: user.id, status: "none" };
         }
       });
@@ -72,14 +66,10 @@ const SearchPeoplePage: React.FC = () => {
         statusMap[item.userId] = item.status;
       });
       
-      console.log(`[refreshStatuses] Final status map:`, statusMap);
-      console.log(`[refreshStatuses] Setting friendshipStatuses state...`);
       setFriendshipStatuses(statusMap);
-      console.log(`[refreshStatuses] State updated, component should re-render`);
     };
 
     const handleFriendshipStatusChanged = async () => {
-      console.log("[handleFriendshipStatusChanged] Event received, refreshing statuses from DB");
       // Refresh status directly from DB (no need to wait for message broker)
       // Small delay to ensure DB transaction is committed
       await new Promise(resolve => setTimeout(resolve, 300));
@@ -95,7 +85,6 @@ const SearchPeoplePage: React.FC = () => {
     
     // Also refresh when window gains focus (e.g., user switches back to tab)
     const handleFocus = () => {
-      console.log("[handleFocus] Window gained focus, refreshing statuses");
       refreshStatuses();
     };
     window.addEventListener('focus', handleFocus);
@@ -103,7 +92,6 @@ const SearchPeoplePage: React.FC = () => {
     // Also refresh on visibility change (tab becomes visible)
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        console.log("[handleVisibilityChange] Tab became visible, refreshing statuses");
         refreshStatuses();
       }
     };
@@ -133,8 +121,6 @@ const SearchPeoplePage: React.FC = () => {
 
       // Load friendship statuses directly from DB (no message broker needed)
       const loadStatuses = async (): Promise<void> => {
-        console.log(`[searchUsers] Loading statuses for ${usersList.length} users from DB`);
-        
         const statusPromises = usersList.map(async (user: User) => {
           try {
             // Get status directly from DB via API
@@ -142,14 +128,11 @@ const SearchPeoplePage: React.FC = () => {
             const status = statusResponse.data?.status || "none";
             const finalStatus = status === "rejected" ? "none" : status;
             
-            console.log(`[searchUsers] User ${user.id} (${user.full_name}): status="${status}" -> "${finalStatus}"`);
-            
             return { 
               userId: user.id, 
               status: finalStatus
             };
-          } catch (error) {
-            console.error(`[searchUsers] Failed to get status for user ${user.id}:`, error);
+          } catch {
             return { userId: user.id, status: "none" };
           }
         });
@@ -160,13 +143,11 @@ const SearchPeoplePage: React.FC = () => {
           statusMap[item.userId] = item.status;
         });
         
-        console.log(`[searchUsers] Final status map:`, statusMap);
         setFriendshipStatuses(statusMap);
       };
 
       await loadStatuses();
     } catch (error: any) {
-      console.error("Failed to search users:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to search users",
@@ -196,9 +177,7 @@ const SearchPeoplePage: React.FC = () => {
         // If backend says "already friends", status must be "accepted"
         // Set status immediately to "accepted" for instant UI update
         setFriendshipStatuses((prev) => {
-          const updated = { ...prev, [userId]: "accepted" };
-          console.log("Setting status to 'accepted' for user:", userId, "Full map:", updated);
-          return updated;
+          return { ...prev, [userId]: "accepted" };
         });
         
         toast({
@@ -212,14 +191,11 @@ const SearchPeoplePage: React.FC = () => {
           const statusResponse = await api.getFriendshipStatus(userId);
           const actualStatus = statusResponse.data?.status || "accepted";
           
-          console.log(`[handleSendFriendRequest] Verified status from DB for ${userId}: "${actualStatus}"`);
-          
           // Update again with backend response to ensure accuracy
           if (actualStatus === "accepted") {
             setFriendshipStatuses((prev) => ({ ...prev, [userId]: "accepted" }));
           }
-        } catch (statusError) {
-          console.error(`[handleSendFriendRequest] Failed to verify status from DB for ${userId}:`, statusError);
+        } catch {
           // Keep the "accepted" status we set earlier
         }
       } else if (errorMessage.includes("already pending")) {
@@ -250,15 +226,8 @@ const SearchPeoplePage: React.FC = () => {
     const status = friendshipStatuses[user.id] || "none";
     const isProcessing = processingIds.has(user.id);
 
-    // Debug: Log status for troubleshooting (only in development)
-    if (process.env.NODE_ENV === "development") {
-      console.log(`[getActionButton] User ${user.id} (${user.full_name}): status="${status}", isProcessing=${isProcessing}`);
-      console.log(`[getActionButton] Full friendshipStatuses:`, friendshipStatuses);
-    }
-
     // Force re-render check: if status is "accepted", show "Lihat Profile"
     if (status === "accepted") {
-      console.log(`[getActionButton] Rendering "Lihat Profile" button for user ${user.id}`);
       return (
         <Button
           variant="outline"

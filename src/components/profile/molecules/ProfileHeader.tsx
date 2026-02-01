@@ -2,7 +2,7 @@ import React from "react";
 import { ProfileAvatar } from "../atoms/ProfileAvatar";
 import { ProfileCover } from "../atoms/ProfileCover";
 import { ProfileButton } from "../atoms/ProfileButton";
-import { Edit, Settings } from "lucide-react";
+import { Edit, Settings, UserPlus, Check } from "lucide-react";
 import { Profile } from "@/types/profile";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +15,9 @@ interface ProfileHeaderProps {
   onSettingsClick?: () => void;
   onCoverEditClick?: () => void;
   onAvatarEditClick?: () => void;
+  friendshipStatus?: string;
+  onAddFriend?: () => void;
+  friendsCount?: { followers: number; following: number };
   className?: string;
 }
 
@@ -27,12 +30,15 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   onSettingsClick,
   onCoverEditClick,
   onAvatarEditClick,
+  friendshipStatus,
+  onAddFriend,
+  friendsCount,
   className,
 }) => {
   // Use session data for own profile, otherwise use profile data
   const userName = isOwnProfile && sessionName 
     ? sessionName 
-    : profile.user?.full_name || "User";
+    : profile.user?.full_name || profile.user?.email || "User";
   const userAvatar = isOwnProfile && sessionImage 
     ? sessionImage 
     : profile.user?.profile_photo;
@@ -71,34 +77,66 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 </p>
               )}
               <div className="flex items-center gap-4 mt-2 text-sm text-gray-600 dark:text-gray-400">
-                <span>0 pengikut</span>
+                <span>{friendsCount?.followers || 0} pengikut</span>
                 <span>•</span>
-                <span>0 mengikuti</span>
+                <span>{friendsCount?.following || 0} mengikuti</span>
               </div>
             </div>
           </div>
 
           {/* Action Buttons */}
-          {isOwnProfile && (
-            <div className="flex gap-2 mt-4 md:mt-0 md:mb-4">
-              <ProfileButton
-                variant="outline"
-                onClick={onEditClick}
-                className="flex items-center gap-2"
-              >
-                <Edit className="h-4 w-4" />
-                Edit
-              </ProfileButton>
-              <ProfileButton
-                variant="outline"
-                onClick={onSettingsClick}
-                className="flex items-center gap-2"
-              >
-                <Settings className="h-4 w-4" />
-                Settings
-              </ProfileButton>
-            </div>
-          )}
+          <div className="flex gap-2 mt-4 md:mt-0 md:mb-4">
+            {isOwnProfile ? (
+              <>
+                <ProfileButton
+                  variant="outline"
+                  onClick={onEditClick}
+                  className="flex items-center gap-2"
+                >
+                  <Edit className="h-4 w-4" />
+                  Edit
+                </ProfileButton>
+                <ProfileButton
+                  variant="outline"
+                  onClick={onSettingsClick}
+                  className="flex items-center gap-2"
+                >
+                  <Settings className="h-4 w-4" />
+                  Settings
+                </ProfileButton>
+              </>
+            ) : (
+              <>
+                {friendshipStatus === "accepted" ? (
+                  <ProfileButton
+                    variant="outline"
+                    disabled
+                    className="flex items-center gap-2 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-300 dark:border-green-700"
+                  >
+                    <Check className="h-4 w-4" />
+                    Berteman
+                  </ProfileButton>
+                ) : friendshipStatus === "pending" ? (
+                  <ProfileButton
+                    variant="outline"
+                    disabled
+                    className="flex items-center gap-2"
+                  >
+                    Menunggu Persetujuan
+                  </ProfileButton>
+                ) : (
+                  <ProfileButton
+                    variant="default"
+                    onClick={onAddFriend}
+                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    Tambahkan Teman
+                  </ProfileButton>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

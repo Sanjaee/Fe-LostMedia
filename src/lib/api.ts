@@ -443,6 +443,15 @@ class ApiClient {
     );
   }
 
+  async getFriendsCount(userID: string): Promise<{ followers: number; following: number }> {
+    return this.request<{ followers: number; following: number }>(
+      `/api/v1/friendships/count/${userID}`,
+      {
+        method: "GET",
+      }
+    );
+  }
+
   async acceptFriendRequest(friendshipID: string): Promise<FriendshipResponse> {
     return this.request<FriendshipResponse>(
       `/api/v1/friendships/${friendshipID}/accept`,

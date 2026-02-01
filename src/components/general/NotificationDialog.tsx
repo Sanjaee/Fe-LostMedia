@@ -68,6 +68,13 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
         return [notification, ...prev];
       });
       setUnreadCount((prev) => prev + 1);
+      
+      // If notification is related to friendship, trigger refresh from DB
+      if (notification.type === "friend_request" || notification.type === "friend_accepted" || notification.type === "friend_rejected") {
+        // Trigger event to refresh friendship status from DB (not from WebSocket data)
+        window.dispatchEvent(new Event('friendship-changed'));
+      }
+      
       // Show toast notification
       toast({
         title: "Notifikasi Baru",
@@ -198,6 +205,9 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
 
     try {
       await api.acceptFriendRequest(id);
+      
+      // Trigger event to refresh profile pages from DB
+      window.dispatchEvent(new Event('friendship-changed'));
       toast({
         title: "Success",
         description: "Friend request accepted",
@@ -233,9 +243,7 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
             ...prev,
             [notification.id]: actualStatus
           }));
-          console.log(`[NotificationDialog] Verified status for ${senderId}: "${actualStatus}"`);
-        } catch (error) {
-          console.error(`[NotificationDialog] Failed to verify status for ${senderId}:`, error);
+        } catch {
           // Keep the optimistic update if backend check fails
         }
       }
@@ -244,7 +252,6 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
       // Status will be refreshed directly from DB, no message broker needed
       // Use longer delay to ensure DB transaction is fully committed
       setTimeout(() => {
-        console.log("[NotificationDialog] Dispatching friendshipStatusChanged event");
         window.dispatchEvent(new CustomEvent('friendshipStatusChanged'));
       }, 500);
     } catch (error: any) {

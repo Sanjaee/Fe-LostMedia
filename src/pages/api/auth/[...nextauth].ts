@@ -214,7 +214,7 @@ export const authOptions: NextAuthOptions = {
             }
           }
         } catch (error) {
-          console.error("Failed to fetch updated user data:", error);
+          // Failed to fetch updated user data
           // Continue with existing token if fetch fails
         }
       }
@@ -260,7 +260,7 @@ export const authOptions: NextAuthOptions = {
       
       // Log for debugging if token is missing
       if (!token.accessToken && token.sub) {
-        console.warn("Session callback: accessToken missing from token, user:", token.sub);
+        // Session callback: accessToken missing from token
       }
       
       return session;

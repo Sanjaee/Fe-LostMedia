@@ -18,6 +18,10 @@ interface ProfileLayoutProps {
   sessionName?: string | null;
   sessionImage?: string | null;
   onProfileUpdate?: () => void;
+  friendshipStatus?: string;
+  onAddFriend?: () => void;
+  friendsCount?: { followers: number; following: number };
+  onFriendshipChange?: () => void;
   className?: string;
 }
 
@@ -27,6 +31,10 @@ export const ProfileLayout: React.FC<ProfileLayoutProps> = ({
   sessionName,
   sessionImage,
   onProfileUpdate,
+  friendshipStatus,
+  onAddFriend,
+  friendsCount,
+  onFriendshipChange,
   className,
 }) => {
   const { data: session } = useSession();
@@ -227,6 +235,9 @@ export const ProfileLayout: React.FC<ProfileLayoutProps> = ({
         onEditClick={handleEditClick}
         onCoverEditClick={handleCoverEditClick}
         onAvatarEditClick={handleAvatarEditClick}
+        friendshipStatus={friendshipStatus}
+        onAddFriend={onAddFriend}
+        friendsCount={friendsCount}
       />
 
       {/* Tabs */}

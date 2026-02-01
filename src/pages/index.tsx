@@ -36,7 +36,6 @@ export default function Home() {
     const currentUserId = session?.user?.id || '';
     
     if (cachedUserId && cachedUserId !== currentUserId) {
-      console.log("User changed, clearing cache");
       sessionStorage.removeItem(POSTS_CACHE_KEY);
       sessionStorage.removeItem(POSTS_CACHE_TIMESTAMP_KEY);
       sessionStorage.removeItem(POSTS_CACHE_USER_KEY);
@@ -51,7 +50,6 @@ export default function Home() {
       if (age < CACHE_DURATION) {
         try {
           const parsedPosts = JSON.parse(cachedPosts);
-          console.log("Loading posts from cache:", parsedPosts.length);
           setPosts(parsedPosts);
           setLoading(false);
           // Load fresh data in background
@@ -78,7 +76,6 @@ export default function Home() {
       // Get feed - this should return all posts visible to the user
       // (public posts + friends posts based on privacy settings)
       // Backend handles the privacy filtering
-      console.log("Fetching feed for user:", session?.user?.id || "anonymous");
       const response = await api.getFeed(50, 0);
       
       // Handle different response structures
@@ -93,20 +90,6 @@ export default function Home() {
       } else if (Array.isArray(response)) {
         postsList = response;
       }
-      
-      console.log("Feed response structure:", {
-        hasData: !!response.data,
-        hasPosts: !!response.posts,
-        hasDataPosts: !!response.data?.posts,
-        responseKeys: Object.keys(response),
-        dataKeys: response.data ? Object.keys(response.data) : [],
-        totalPosts: postsList.length,
-        posts: postsList.map(p => ({
-          id: p.id,
-          user: p.user?.full_name,
-          content: p.content?.substring(0, 50)
-        }))
-      });
       
       // Display all posts from feed (all posts are public)
       setPosts(postsList);
