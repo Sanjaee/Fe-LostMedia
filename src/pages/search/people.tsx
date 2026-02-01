@@ -6,7 +6,7 @@ import { useApi } from "@/components/contex/ApiProvider";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, UserPlus, User as UserIcon } from "lucide-react";
+import { Loader2, UserPlus, Check } from "lucide-react";
 import type { User } from "@/types/user";
 
 const SearchPeoplePage: React.FC = () => {
@@ -198,13 +198,23 @@ const SearchPeoplePage: React.FC = () => {
         } catch {
           // Keep the "accepted" status we set earlier
         }
-      } else if (errorMessage.includes("already pending")) {
+      } else if (errorMessage.includes("already pending") || errorMessage.includes("friend request already pending")) {
         // Update status to pending if request is already pending
         setFriendshipStatuses((prev) => ({ ...prev, [userId]: "pending" }));
         toast({
           title: "Info",
           description: "Permintaan pertemanan sudah terkirim",
         });
+        // Also verify with backend directly from DB to ensure status is correct
+        try {
+          await new Promise(resolve => setTimeout(resolve, 200));
+          const statusResponse = await api.getFriendshipStatus(userId);
+          const actualStatus = statusResponse.data?.status || "pending";
+          // Update with actual status from DB
+          setFriendshipStatuses((prev) => ({ ...prev, [userId]: actualStatus }));
+        } catch {
+          // Keep the "pending" status we set earlier
+        }
       } else {
         toast({
           title: "Error",
@@ -226,23 +236,23 @@ const SearchPeoplePage: React.FC = () => {
     const status = friendshipStatuses[user.id] || "none";
     const isProcessing = processingIds.has(user.id);
 
-    // Force re-render check: if status is "accepted", show "Lihat Profile"
+    // If status is "accepted", show "Berteman" button (like in profile) and make it clickable to profile
     if (status === "accepted") {
       return (
         <Button
           variant="outline"
           size="sm"
           onClick={() => router.push(`/profile/${user.id}`)}
+          className="flex items-center gap-2 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-300 dark:border-green-700"
         >
-          <UserIcon className="h-4 w-4 mr-2" />
-          Lihat Profile
+          <Check className="h-4 w-4" />
+          Berteman
         </Button>
       );
     }
 
     if (status === "pending") {
-      // Check if current user is the sender or receiver
-      // For now, we'll show a pending state
+      // Show pending state - button is disabled and cannot be clicked
       return (
         <Button variant="outline" size="sm" disabled>
           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -252,11 +262,12 @@ const SearchPeoplePage: React.FC = () => {
     }
 
     // If status is "rejected" or "none", show "Tambah Teman" button
+    // Make sure button is disabled if already processing or pending to prevent duplicate requests
     return (
       <Button
         size="sm"
         onClick={() => handleSendFriendRequest(user.id)}
-        disabled={isProcessing}
+        disabled={isProcessing || status === "pending"}
       >
         {isProcessing ? (
           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
