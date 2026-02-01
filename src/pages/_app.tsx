@@ -8,7 +8,7 @@ import MainNavbar from "@/components/general/MainNavbar";
 import { useRouter } from "next/router";
 import { Geist, Geist_Mono } from "next/font/google";
 import { cn } from "@/lib/utils";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,13 +20,17 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-function AppContent({ Component, pageProps }: AppProps) {
-  const router = useRouter();
-  const [isAuthPage, setIsAuthPage] = useState(false);
+interface AppContentProps {
+  Component: AppProps["Component"];
+  pageProps: AppProps["pageProps"];
+}
 
-  useEffect(() => {
-    setIsAuthPage(router.pathname.startsWith("/auth"));
-  }, [router.pathname]);
+function AppContent({ Component, pageProps }: AppContentProps) {
+  const router = useRouter();
+  const isAuthPage = useMemo(
+    () => router.pathname.startsWith("/auth"),
+    [router.pathname]
+  );
 
   return (
     <div className={cn(geistSans.variable, geistMono.variable)}>
