@@ -45,7 +45,7 @@ export default function MainNavbar() {
   // WebSocket for realtime notifications
   const wsUrl =
     typeof window !== "undefined"
-      ? `${process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:5000"}/ws`
+      ? `${process.env.NEXT_PUBLIC_WS_URL || "wss://lostmedia.zacloth.com"}/ws`
       : "";
 
   useWebSocket(wsUrl, {
