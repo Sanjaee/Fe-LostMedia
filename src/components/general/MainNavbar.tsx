@@ -103,9 +103,9 @@ export default function MainNavbar() {
 
   return (
     <nav className="sticky top-0 z-50 w-full bg-gray-800 dark:bg-gray-900 border-b border-gray-700">
-      <div className="max-w-[1444px] mx-auto flex items-center justify-between h-14 px-4">
+      <div className="max-w-[1444px] mx-auto flex items-center h-14 px-4 relative">
         {/* Left: Logo + Search */}
-        <div className="flex items-center gap-3 flex-1 max-w-2xl">
+        <div className="flex items-center gap-3 flex-1">
           {/* Logo */}
           <button
             onClick={() => router.push("/")}
@@ -115,7 +115,7 @@ export default function MainNavbar() {
           </button>
 
           {/* Search Bar */}
-          <form onSubmit={handleSearch} className="flex-1">
+          <form onSubmit={handleSearch} className="w-64 max-w-xs">
             <div className="relative">
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                 <Search className="h-4 w-4 text-gray-400" />
@@ -125,14 +125,14 @@ export default function MainNavbar() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Cari di Zacode"
-                className="w-full pl-10 pr-4 py-2 bg-gray-700 dark:bg-gray-800 text-white placeholder-gray-400 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-gray-600 dark:focus:bg-gray-700"
+                className="w-full pl-10 pr-4 py-2 bg-gray-700 dark:bg-gray-800 text-white placeholder-gray-400 rounded-full focus:outline-none focus:ring-2 focus:ring-gray-500 focus:bg-gray-600 dark:focus:bg-gray-700"
               />
             </div>
           </form>
         </div>
 
-        {/* Center: Navigation Icons */}
-        <div className="flex items-center gap-1">
+        {/* Center: Navigation Icons - Absolutely Centered */}
+        <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-1">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = item.active || router.pathname.startsWith(item.path);
@@ -155,7 +155,7 @@ export default function MainNavbar() {
         </div>
 
         {/* Right: Utility Icons + Profile */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 flex-1 justify-end">
           {/* Menu */}
           <button
             className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-700 dark:bg-gray-800 hover:bg-gray-600 dark:hover:bg-gray-700 transition-colors"

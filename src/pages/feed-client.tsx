@@ -20,6 +20,8 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import PhotoModal from "@/components/ui/PhotoModal";
+import { PostDialog } from "@/components/profile/organisms/PostDialog";
+import { useApi } from "@/components/contex/ApiProvider";
 
 import type { Post } from "@/types/post";
 
@@ -32,13 +34,16 @@ const SCROLL_POSITION_KEY = "feed_scroll_position";
 // Prevent static generation for this page
 export const dynamic = 'force-dynamic';
 
-export default function FeedClient({ posts }: FeedClientProps) {
+export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
   const { data: session } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { api } = useApi();
   const scrollRestoredRef = useRef(false);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [posts, setPosts] = useState<Post[]>(initialPosts || []);
+  const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
 
   // Check URL params for photo modal
   const fbid = searchParams?.get('fbid');
@@ -152,10 +157,32 @@ export default function FeedClient({ posts }: FeedClientProps) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Update posts when initialPosts changes
+  useEffect(() => {
+    if (initialPosts && Array.isArray(initialPosts)) {
+      setPosts(initialPosts);
+    }
+  }, [initialPosts]);
+
   // Handle case when posts is undefined (during build/prerender)
   if (!posts || !Array.isArray(posts)) {
     return null;
   }
+
+  // Handle post creation success
+  const handlePostSuccess = async () => {
+    try {
+      // Fetch the latest posts to get the newly created post
+      const response = await api.getFeed(50, 0);
+      const newPosts = response.posts || response.data?.posts || [];
+      if (newPosts.length > 0) {
+        // Update posts with the latest feed
+        setPosts(newPosts);
+      }
+    } catch (error) {
+      console.error("Failed to refresh posts:", error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 pt-4">
@@ -199,11 +226,12 @@ export default function FeedClient({ posts }: FeedClientProps) {
                       <AvatarImage src={session.user?.image || ''} />
                       <AvatarFallback>{session.user?.name?.[0] || 'U'}</AvatarFallback>
                     </Avatar>
-                    <Link href="/blog/new" className="flex-1">
-                      <div className="w-full h-10 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center px-4 text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer">
-                        Apa yang Anda pikirkan, {session.user?.name?.split(' ')[0]}?
-                      </div>
-                    </Link>
+                    <button
+                      onClick={() => setIsPostDialogOpen(true)}
+                      className="flex-1 w-full h-10 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center px-4 text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer text-left"
+                    >
+                      Apa yang Anda pikirkan, {session.user?.name?.split(' ')[0]}?
+                    </button>
                   </div>
                   <Separator className="mb-4" />
                   <div className="flex justify-between px-4">
@@ -211,11 +239,13 @@ export default function FeedClient({ posts }: FeedClientProps) {
                       <Video className="w-6 h-6" />
                       <span className="hidden sm:inline">Video Langsung</span>
                     </Button>
-                    <Button variant="ghost" className="flex-1 gap-2 text-green-500 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20" asChild>
-                      <Link href="/blog/new">
-                        <ImageIcon className="w-6 h-6" />
-                        <span className="hidden sm:inline">Foto/Video</span>
-                      </Link>
+                    <Button 
+                      variant="ghost" 
+                      className="flex-1 gap-2 text-green-500 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
+                      onClick={() => setIsPostDialogOpen(true)}
+                    >
+                      <ImageIcon className="w-6 h-6" />
+                      <span className="hidden sm:inline">Foto/Video</span>
                     </Button>
                     <Button variant="ghost" className="flex-1 gap-2 text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20">
                       <Smile className="w-6 h-6" />
@@ -391,6 +421,16 @@ export default function FeedClient({ posts }: FeedClientProps) {
           post={selectedPost}
           imageIndex={selectedImageIndex}
           onNavigateImage={handleNavigateImage}
+        />
+      )}
+
+      {/* Post Dialog */}
+      {session?.user && (
+        <PostDialog
+          open={isPostDialogOpen}
+          onClose={() => setIsPostDialogOpen(false)}
+          onSuccess={handlePostSuccess}
+          userId={session.user.id || ''}
         />
       )}
     </div>
