@@ -297,7 +297,10 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
                   <Card key={post.id} className="border-none shadow-sm overflow-hidden">
                   <CardHeader className="p-4 pb-2">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
+                      <Link 
+                        href={`/profile/${post.user_id}`}
+                        className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+                      >
                         <Avatar className="w-10 h-10 border">
                           <AvatarImage src={post.user?.profile_photo || ''} />
                           <AvatarFallback>{post.user?.full_name?.[0] || 'U'}</AvatarFallback>
@@ -318,7 +321,7 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
                             </svg>
                           </div>
                         </div>
-                      </div>
+                      </Link>
                       <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
                         <MoreHorizontal className="w-5 h-5" />
                       </Button>

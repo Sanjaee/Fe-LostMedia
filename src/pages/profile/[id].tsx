@@ -21,11 +21,26 @@ const ProfilePage: React.FC = () => {
     }
   }, [id]);
 
-  const loadProfile = async (profileId: string) => {
+  const loadProfile = async (id: string) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await api.getProfile(profileId);
+      
+      // Try to get profile by user ID first (since posts use user_id)
+      // If that fails, try to get by profile ID
+      let response;
+      try {
+        response = await api.getProfileByUserId(id);
+      } catch (userErr: any) {
+        // If getProfileByUserId fails, try getProfile (in case it's a profile_id)
+        try {
+          response = await api.getProfile(id);
+        } catch (profileErr: any) {
+          // Both failed, throw the original error
+          throw userErr;
+        }
+      }
+      
       setProfile(response.profile);
     } catch (err: any) {
       const errorMessage = err.message || "Failed to load profile";

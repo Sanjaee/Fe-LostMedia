@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { useApi } from "@/components/contex/ApiProvider";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -142,7 +143,10 @@ export const PostList: React.FC<PostListProps> = ({
           >
             {/* Post Header */}
             <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center gap-3">
+              <Link 
+                href={`/profile/${post.user_id}`}
+                className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+              >
                 <Avatar className="h-10 w-10">
                   <AvatarImage
                     src={post.user?.profile_photo}
@@ -154,7 +158,7 @@ export const PostList: React.FC<PostListProps> = ({
                 </Avatar>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-gray-900 dark:text-white">
+                    <h3 className="font-semibold text-gray-900 dark:text-white hover:underline">
                       {post.user?.full_name}
                     </h3>
                     {post.is_pinned && (
@@ -168,7 +172,7 @@ export const PostList: React.FC<PostListProps> = ({
                     })}
                   </p>
                 </div>
-              </div>
+              </Link>
 
               {/* Actions Menu */}
               {isOwnProfile && currentUserId === post.user_id && (
