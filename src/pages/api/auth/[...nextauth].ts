@@ -265,6 +265,35 @@ export const authOptions: NextAuthOptions = {
       
       return session;
     },
+    async redirect({ url, baseUrl }) {
+      // Clean up URL to remove duplicate query parameters
+      let cleanUrl = url.startsWith("/") ? `${baseUrl}${url}` : url;
+      
+      // Remove any duplicate query parameters (like ?id=) from profile URLs
+      if (cleanUrl.includes("/profile/") && cleanUrl.includes("?")) {
+        try {
+          const urlObj = new URL(cleanUrl);
+          // Remove id query param if it matches the pathname id
+          const pathId = urlObj.pathname.split("/profile/")[1]?.split("/")[0];
+          const queryId = urlObj.searchParams.get("id");
+          if (pathId && queryId && pathId === queryId) {
+            urlObj.searchParams.delete("id");
+            cleanUrl = urlObj.pathname + (urlObj.search ? urlObj.search : "");
+            // Convert back to relative URL if it was relative
+            if (url.startsWith("/")) {
+              cleanUrl = cleanUrl.replace(baseUrl, "");
+            }
+          }
+        } catch {
+          // If URL parsing fails, use as is
+        }
+      }
+      
+      // Ensure URL is within the same origin
+      if (cleanUrl.startsWith("/")) return cleanUrl;
+      if (new URL(cleanUrl).origin === baseUrl) return cleanUrl;
+      return baseUrl;
+    },
   },
   pages: {
     signIn: "/auth/login",

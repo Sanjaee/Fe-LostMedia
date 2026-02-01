@@ -23,7 +23,12 @@ export async function middleware(request: NextRequest) {
 
     if (!token) {
       const url = new URL("/auth/login", request.url);
-      url.searchParams.set("callbackUrl", encodeURIComponent(request.url));
+      // Clean the URL to remove any duplicate query parameters before encoding
+      const cleanUrl = new URL(request.url);
+      // Remove any duplicate id query params if they exist in pathname
+      const pathname = cleanUrl.pathname;
+      // Only use pathname for callbackUrl, not full URL with query params
+      url.searchParams.set("callbackUrl", encodeURIComponent(pathname));
       return NextResponse.redirect(url);
     }
   }

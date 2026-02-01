@@ -53,8 +53,28 @@ const LoginPage = () => {
       const session = await getSession();
       if (session) {
         // Get callback URL from query params or default to dashboard
-        const callbackUrl =
+        let callbackUrl =
           (router.query.callbackUrl as string) || "/";
+        
+        // Decode callbackUrl if it's encoded
+        try {
+          callbackUrl = decodeURIComponent(callbackUrl);
+        } catch {
+          // If decoding fails, use as is
+        }
+        
+        // Remove any duplicate query parameters (like ?id=) from profile URLs
+        if (callbackUrl.includes("/profile/") && callbackUrl.includes("?")) {
+          const url = new URL(callbackUrl, window.location.origin);
+          // Remove id query param if it matches the pathname id
+          const pathId = url.pathname.split("/profile/")[1]?.split("/")[0];
+          const queryId = url.searchParams.get("id");
+          if (pathId && queryId && pathId === queryId) {
+            url.searchParams.delete("id");
+            callbackUrl = url.pathname + (url.search ? url.search : "");
+          }
+        }
+        
         router.push(callbackUrl);
       }
     };
