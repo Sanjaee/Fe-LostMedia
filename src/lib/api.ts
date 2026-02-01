@@ -469,9 +469,46 @@ class ApiClient {
 
   // Post endpoints
   async createPost(data: CreatePostRequest): Promise<PostResponse> {
+    const cleanData: Record<string, any> = {};
+    
+    // Content - only include if not empty
+    if (data.content?.trim()) {
+      cleanData.content = data.content.trim();
+    }
+    
+    // Image URLs - only send if there are valid URLs
+    if (data.image_urls?.length) {
+      const validUrls = data.image_urls.filter(url => url?.trim());
+      if (validUrls.length > 0) {
+        cleanData.image_urls = validUrls;
+      }
+    }
+    
+    // Optional fields
+    if (data.shared_post_id) cleanData.shared_post_id = data.shared_post_id;
+    if (data.group_id) cleanData.group_id = data.group_id;
+    if (data.is_pinned !== undefined) cleanData.is_pinned = data.is_pinned;
+    
+    if (data.tags?.length) {
+      const validTags = data.tags.filter(tag => tag?.trim());
+      if (validTags.length > 0) {
+        cleanData.tags = validTags;
+      }
+    }
+    
+    if (data.location) {
+      const location: any = {};
+      if (data.location.place_name) location.place_name = data.location.place_name;
+      if (data.location.latitude != null) location.latitude = Number(data.location.latitude);
+      if (data.location.longitude != null) location.longitude = Number(data.location.longitude);
+      if (Object.keys(location).length > 0) {
+        cleanData.location = location;
+      }
+    }
+    
     return this.request<PostResponse>("/api/v1/posts", {
       method: "POST",
-      body: JSON.stringify(data),
+      body: JSON.stringify(cleanData),
     });
   }
 

@@ -24,6 +24,7 @@ import { PostDialog } from "@/components/profile/organisms/PostDialog";
 import { useApi } from "@/components/contex/ApiProvider";
 
 import type { Post } from "@/types/post";
+import type { Friendship } from "@/types/friendship";
 
 interface FeedClientProps {
   posts: Post[];
@@ -44,6 +45,8 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [posts, setPosts] = useState<Post[]>(initialPosts || []);
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
+  const [friends, setFriends] = useState<Friendship[]>([]);
+  const [loadingFriends, setLoadingFriends] = useState(false);
 
   // Check URL params for photo modal
   const fbid = searchParams?.get('fbid');
@@ -157,6 +160,27 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Load friends list
+  useEffect(() => {
+    if (session?.user?.id) {
+      loadFriends();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user?.id]);
+
+  const loadFriends = async () => {
+    try {
+      setLoadingFriends(true);
+      const response = await api.getFriends();
+      const friendsList = response.data?.friends || response.data?.friendships || [];
+      setFriends(friendsList);
+    } catch (error) {
+      console.error("Failed to load friends:", error);
+    } finally {
+      setLoadingFriends(false);
+    }
+  };
+
   // Update posts when initialPosts changes
   useEffect(() => {
     if (initialPosts && Array.isArray(initialPosts)) {
@@ -174,7 +198,17 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
     try {
       // Fetch the latest posts to get the newly created post
       const response = await api.getFeed(50, 0);
-      const newPosts = response.posts || response.data?.posts || [];
+      
+      // Handle different response structures
+      let newPosts: Post[] = [];
+      if (response.data?.posts && Array.isArray(response.data.posts)) {
+        newPosts = response.data.posts;
+      } else if (response.posts && Array.isArray(response.posts)) {
+        newPosts = response.posts;
+      } else if (Array.isArray(response)) {
+        newPosts = response;
+      }
+      
       if (newPosts.length > 0) {
         // Update posts with the latest feed
         setPosts(newPosts);
@@ -395,17 +429,47 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
               <div>
                 <h3 className="text-zinc-500 font-semibold mb-2 px-2">Kontak</h3>
                 {/* Contacts List */}
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="flex items-center gap-3 p-2 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg cursor-pointer">
-                    <div className="relative">
-                      <Avatar className="w-8 h-8">
-                        <AvatarFallback>F{i}</AvatarFallback>
-                      </Avatar>
-                      <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white dark:border-zinc-900"></div>
-                    </div>
-                    <div className="font-medium text-sm">Teman {i}</div>
-                  </div>
-                ))}
+                {loadingFriends ? (
+                  <div className="text-center py-4 text-zinc-500 text-sm">Memuat kontak...</div>
+                ) : friends.length > 0 ? (
+                  friends.slice(0, 10).map((friendship) => {
+                    // Determine which user is the friend (not the current user)
+                    const friend = session?.user?.id === friendship.sender_id 
+                      ? friendship.receiver 
+                      : friendship.sender;
+                    
+                    if (!friend) return null;
+                    
+                    const getInitials = (name?: string) => {
+                      if (!name) return 'U';
+                      return name
+                        .split(' ')
+                        .map(n => n[0])
+                        .join('')
+                        .toUpperCase()
+                        .slice(0, 2);
+                    };
+
+                    return (
+                      <Link
+                        key={friendship.id}
+                        href={`/profile/${friend.id}`}
+                        className="flex items-center gap-3 p-2 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg cursor-pointer"
+                      >
+                        <div className="relative">
+                          <Avatar className="w-8 h-8">
+                            <AvatarImage src={friend.profile_photo || ''} />
+                            <AvatarFallback>{getInitials(friend.full_name)}</AvatarFallback>
+                          </Avatar>
+                          <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white dark:border-zinc-900"></div>
+                        </div>
+                        <div className="font-medium text-sm">{friend.full_name || friend.username || 'Unknown'}</div>
+                      </Link>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-4 text-zinc-500 text-sm">Belum ada kontak</div>
+                )}
               </div>
             </div>
           </div>

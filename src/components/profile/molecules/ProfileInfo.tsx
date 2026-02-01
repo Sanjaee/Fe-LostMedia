@@ -10,44 +10,48 @@ interface ProfileInfoProps {
   className?: string;
 }
 
+interface InfoItemProps {
+  icon: React.ReactNode;
+  label: string;
+  value?: string;
+  onEdit?: () => void;
+  isOwnProfile?: boolean;
+}
+
+const InfoItem: React.FC<InfoItemProps> = ({ icon, label, value, onEdit, isOwnProfile = false }) => {
+  if (!value && !isOwnProfile) return null;
+
+  return (
+    <div className="flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700 last:border-0">
+      <div className="flex items-center gap-3 flex-1">
+        <div className="text-gray-500 dark:text-gray-400">{icon}</div>
+        <div className="flex-1">
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</p>
+          {value ? (
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{value}</p>
+          ) : (
+            <p className="text-sm text-gray-400 dark:text-gray-500 italic mt-1">Not set</p>
+          )}
+        </div>
+      </div>
+      {isOwnProfile && onEdit && (
+        <button
+          onClick={onEdit}
+          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+        >
+          <Edit className="h-4 w-4" />
+        </button>
+      )}
+    </div>
+  );
+};
+
 export const ProfileInfo: React.FC<ProfileInfoProps> = ({
   profile,
   isOwnProfile = false,
   onEditClick,
   className,
 }) => {
-  const InfoItem: React.FC<{
-    icon: React.ReactNode;
-    label: string;
-    value?: string;
-    onEdit?: () => void;
-  }> = ({ icon, label, value, onEdit }) => {
-    if (!value && !isOwnProfile) return null;
-
-    return (
-      <div className="flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700 last:border-0">
-        <div className="flex items-center gap-3 flex-1">
-          <div className="text-gray-500 dark:text-gray-400">{icon}</div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</p>
-            {value ? (
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{value}</p>
-            ) : (
-              <p className="text-sm text-gray-400 dark:text-gray-500 italic mt-1">Not set</p>
-            )}
-          </div>
-        </div>
-        {isOwnProfile && onEdit && (
-          <button
-            onClick={onEdit}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-          >
-            <Edit className="h-4 w-4" />
-          </button>
-        )}
-      </div>
-    );
-  };
 
   return (
     <div className={cn("bg-white dark:bg-gray-900 rounded-lg shadow-sm p-4", className)}>
@@ -80,6 +84,7 @@ export const ProfileInfo: React.FC<ProfileInfoProps> = ({
           label="Info kontak"
           value={profile.user?.email}
           onEdit={onEditClick}
+          isOwnProfile={isOwnProfile}
         />
 
         {/* Location */}
@@ -89,6 +94,7 @@ export const ProfileInfo: React.FC<ProfileInfoProps> = ({
             label="Lokasi"
             value={profile.location}
             onEdit={onEditClick}
+            isOwnProfile={isOwnProfile}
           />
         )}
 
@@ -99,6 +105,7 @@ export const ProfileInfo: React.FC<ProfileInfoProps> = ({
             label="Kota"
             value={profile.city}
             onEdit={onEditClick}
+            isOwnProfile={isOwnProfile}
           />
         )}
 
@@ -109,6 +116,7 @@ export const ProfileInfo: React.FC<ProfileInfoProps> = ({
             label="Kampung Halaman"
             value={profile.hometown}
             onEdit={onEditClick}
+            isOwnProfile={isOwnProfile}
           />
         )}
 
@@ -119,6 +127,7 @@ export const ProfileInfo: React.FC<ProfileInfoProps> = ({
             label="Website"
             value={profile.website}
             onEdit={onEditClick}
+            isOwnProfile={isOwnProfile}
           />
         )}
 
@@ -129,6 +138,7 @@ export const ProfileInfo: React.FC<ProfileInfoProps> = ({
             label="Pekerjaan"
             value={profile.work}
             onEdit={onEditClick}
+            isOwnProfile={isOwnProfile}
           />
         )}
 
@@ -139,6 +149,7 @@ export const ProfileInfo: React.FC<ProfileInfoProps> = ({
             label="Pendidikan"
             value={profile.education}
             onEdit={onEditClick}
+            isOwnProfile={isOwnProfile}
           />
         )}
 
@@ -149,6 +160,7 @@ export const ProfileInfo: React.FC<ProfileInfoProps> = ({
             label="Status Hubungan"
             value={profile.relationship_status}
             onEdit={onEditClick}
+            isOwnProfile={isOwnProfile}
           />
         )}
 

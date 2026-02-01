@@ -47,8 +47,11 @@ export const PostList: React.FC<PostListProps> = ({
   const loadPosts = async () => {
     try {
       setLoading(true);
+      // Get posts by user ID - this returns only posts created by this specific user
+      // Used in profile page to show user's own posts
       const response = await api.getPostsByUserID(userId, 50, 0);
       const postsList = response.posts || response.data?.posts || [];
+      // Only show posts from this specific user (no filtering needed, backend handles it)
       setPosts(postsList);
     } catch (error: any) {
       console.error("Failed to load posts:", error);
@@ -163,9 +166,6 @@ export const PostList: React.FC<PostListProps> = ({
                       addSuffix: true,
                       locale: id,
                     })}
-                    {post.privacy !== "public" && (
-                      <span className="ml-1">• {post.privacy}</span>
-                    )}
                   </p>
                 </div>
               </div>

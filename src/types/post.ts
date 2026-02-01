@@ -5,7 +5,6 @@ export interface Post {
   content?: string;
   image_urls?: string[]; // Array of image URLs
   shared_post_id?: string;
-  privacy: "public" | "friends" | "only_me";
   is_pinned: boolean;
   created_at: string;
   updated_at: string;
@@ -42,7 +41,6 @@ export interface CreatePostRequest {
   image_urls?: string[]; // Array of image URLs
   shared_post_id?: string;
   group_id?: string;
-  privacy?: "public" | "friends" | "only_me";
   is_pinned?: boolean;
   tags?: string[]; // Array of user IDs to tag
   location?: {
@@ -55,7 +53,6 @@ export interface CreatePostRequest {
 export interface UpdatePostRequest {
   content?: string;
   image_urls?: string[]; // Array of image URLs
-  privacy?: "public" | "friends" | "only_me";
   is_pinned?: boolean;
 }
 

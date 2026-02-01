@@ -9,13 +9,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -42,7 +35,6 @@ export const PostDialog: React.FC<PostDialogProps> = ({
   const { api } = useApi();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<CreatePostRequest>({
-    privacy: "public",
     content: "",
     image_urls: [],
   });
@@ -51,17 +43,13 @@ export const PostDialog: React.FC<PostDialogProps> = ({
 
   useEffect(() => {
     if (post && open) {
-      // Populate form with post data for edit
       setFormData({
-        privacy: post.privacy,
         content: post.content || "",
         image_urls: post.image_urls || [],
         is_pinned: post.is_pinned,
       });
     } else if (open) {
-      // Reset form for create
       setFormData({
-        privacy: "public",
         content: "",
         image_urls: [],
       });
@@ -73,24 +61,23 @@ export const PostDialog: React.FC<PostDialogProps> = ({
     setLoading(true);
 
     try {
+      const cleanImageUrls = formData.image_urls?.filter(url => url?.trim()) || [];
+      
       if (isEditMode && post) {
         const updateData: UpdatePostRequest = {
-          content: formData.content || undefined,
-          image_urls: formData.image_urls && formData.image_urls.length > 0 ? formData.image_urls : undefined,
-          privacy: formData.privacy,
+          content: formData.content?.trim() || undefined,
+          image_urls: cleanImageUrls.length > 0 ? cleanImageUrls : undefined,
           is_pinned: formData.is_pinned,
         };
         await api.updatePost(post.id, updateData);
-        toast({
-          title: "Success",
-          description: "Post updated successfully",
-        });
+        toast({ title: "Success", description: "Post updated successfully" });
       } else {
-        await api.createPost(formData as CreatePostRequest);
-        toast({
-          title: "Success",
-          description: "Post created successfully",
-        });
+        const createData: CreatePostRequest = {
+          content: formData.content?.trim() || undefined,
+          image_urls: cleanImageUrls.length > 0 ? cleanImageUrls : undefined,
+        };
+        await api.createPost(createData);
+        toast({ title: "Success", description: "Post created successfully" });
       }
 
       onSuccess();
@@ -199,24 +186,6 @@ export const PostDialog: React.FC<PostDialogProps> = ({
                 No images added. Click &quot;Add Image&quot; to add image URLs.
               </p>
             )}
-          </div>
-
-          {/* Privacy */}
-          <div className="space-y-2">
-            <Label htmlFor="privacy">Privacy</Label>
-            <Select
-              value={formData.privacy || "public"}
-              onValueChange={(value) => handleInputChange("privacy", value)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="public">Public</SelectItem>
-                <SelectItem value="friends">Friends</SelectItem>
-                <SelectItem value="only_me">Only Me</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           {/* Is Pinned (only for edit) */}
