@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 // import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Bell, UserPlus, Check, X, Loader2, User as UserIcon } from "lucide-react";
+import { Bell, UserPlus, Check, X, Loader2, User as UserIcon, Trash2 } from "lucide-react";
 import { useRouter } from "next/router";
 import type { Notification } from "@/types/notification";
 import { formatDistanceToNow } from "date-fns";
@@ -67,7 +67,11 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
         }
         return [notification, ...prev];
       });
-      setUnreadCount((prev) => prev + 1);
+      
+      // Only increment unread count if notification is not read
+      if (!notification.is_read) {
+        setUnreadCount((prev) => prev + 1);
+      }
       
       // If notification is related to friendship, trigger refresh from DB
       if (notification.type === "friend_request" || notification.type === "friend_accepted" || notification.type === "friend_rejected") {
@@ -355,6 +359,48 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
     }
   };
 
+  const handleDeleteNotification = async (notificationId: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation(); // Prevent marking as read when clicking delete button
+    }
+    
+    try {
+      // Get notification before deleting to check if it was unread
+      const notification = notifications.find((n) => n.id === notificationId);
+      
+      await api.deleteNotification(notificationId);
+      
+      // Remove notification from state
+      setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
+      
+      // Update unread count if notification was unread
+      if (notification && !notification.is_read) {
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+      }
+      
+      // Also reload unread count from server to ensure accuracy
+      await loadUnreadCount();
+      
+      // Remove from friendship statuses if exists
+      setFriendshipStatuses((prev) => {
+        const next = { ...prev };
+        delete next[notificationId];
+        return next;
+      });
+      
+      toast({
+        title: "Berhasil",
+        description: "Notifikasi dihapus",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Gagal menghapus notifikasi",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case "friend_request":
@@ -536,9 +582,19 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
                             )}
                           </p>
                         </div>
-                        {!notification.is_read && (
-                          <div className="h-2 w-2 rounded-full bg-blue-500 flex-shrink-0 mt-1" />
-                        )}
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          {!notification.is_read && (
+                            <div className="h-2 w-2 rounded-full bg-blue-500" />
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                            onClick={(e) => handleDeleteNotification(notification.id, e)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                       {getNotificationAction(notification)}
                     </div>
