@@ -13,7 +13,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Loader2, MoreVertical, Edit, Trash2, Pin, Image } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Loader2, MoreHorizontal, Edit, Trash2, Pin, Image } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { id } from "date-fns/locale";
 import type { Post } from "@/types/post";
@@ -40,6 +50,8 @@ export const PostList: React.FC<PostListProps> = ({
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [postToDelete, setPostToDelete] = useState<Post | null>(null);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
@@ -71,23 +83,28 @@ export const PostList: React.FC<PostListProps> = ({
     }
   };
 
-  const handleDelete = async (postId: string) => {
-    if (!confirm("Are you sure you want to delete this post?")) {
-      return;
-    }
+  const handleDeleteClick = (post: Post) => {
+    setPostToDelete(post);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!postToDelete) return;
 
     try {
-      setDeletingId(postId);
-      await api.deletePost(postId);
+      setDeletingId(postToDelete.id);
+      await api.deletePost(postToDelete.id);
       toast({
-        title: "Success",
-        description: "Post deleted successfully",
+        title: "Berhasil",
+        description: "Post berhasil dihapus",
       });
       loadPosts();
+      setDeleteDialogOpen(false);
+      setPostToDelete(null);
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Failed to delete post",
+        description: error.message || "Gagal menghapus post",
         variant: "destructive",
       });
     } finally {
@@ -265,24 +282,29 @@ export const PostList: React.FC<PostListProps> = ({
               </Link>
 
               {/* Actions Menu */}
-              {isOwnProfile && currentUserId === post.user_id && (
+              {isOwnProfile && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <MoreVertical className="h-4 w-4" />
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      className="h-8 w-8 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    >
+                      <MoreHorizontal className="h-5 w-5" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
+                  <DropdownMenuContent align="end" className="w-40">
                     <DropdownMenuItem onClick={() => handleEdit(post)}>
                       <Edit className="h-4 w-4 mr-2" />
-                      Edit
+                      Edit Post
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => handleDelete(post.id)}
-                      className="text-red-600"
+                      onClick={() => handleDeleteClick(post)}
+                      variant="destructive"
+                      className="text-red-600 dark:text-red-400"
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
-                      Delete
+                      Hapus
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -411,6 +433,37 @@ export const PostList: React.FC<PostListProps> = ({
         post={editingPost}
         userId={currentUserId || userId}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Post?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin menghapus post ini? Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPostToDelete(null)}>
+              Batal
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+              disabled={deletingId !== null}
+            >
+              {deletingId ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Menghapus...
+                </>
+              ) : (
+                "Hapus"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Photo Modal */}
       {selectedPost && (
