@@ -72,7 +72,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
     return (
       <form onSubmit={handleSubmit} className="flex items-center gap-2">
         <Avatar className="h-8 w-8">
-          <AvatarImage src={session?.user?.image} alt={session?.user?.name} />
+          <AvatarImage src={session?.user?.image || undefined} alt={session?.user?.name || undefined} />
           <AvatarFallback>
             {getInitials(session?.user?.name || "User")}
           </AvatarFallback>
@@ -108,7 +108,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
     <form onSubmit={handleSubmit} className="space-y-2">
       <div className="flex items-start gap-3">
         <Avatar className="h-9 w-9">
-          <AvatarImage src={session?.user?.image} alt={session?.user?.name} />
+          <AvatarImage src={session?.user?.image || undefined} alt={session?.user?.name || undefined} />
           <AvatarFallback>
             {getInitials(session?.user?.name || "User")}
           </AvatarFallback>
