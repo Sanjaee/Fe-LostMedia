@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { useApi } from "@/components/contex/ApiProvider";
@@ -23,7 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, MoreHorizontal, Edit, Trash2, Pin, Image } from "lucide-react";
+import { Loader2, MoreHorizontal, Edit, Trash2, Pin, Image, MessageCircle, Share2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { id } from "date-fns/locale";
 import type { Post } from "@/types/post";
@@ -31,6 +31,9 @@ import { PostDialog } from "./PostDialog";
 import { parseTextWithLinks } from "@/utils/textUtils";
 import PhotoModal from "@/components/ui/PhotoModal";
 import { cn } from "@/lib/utils";
+import { LikeButton } from "@/components/post/LikeButton";
+import { CommentDialog } from "@/components/post/CommentDialog";
+import { useSession } from "next-auth/react";
 
 interface PostListProps {
   userId: string;
@@ -46,6 +49,7 @@ export const PostList: React.FC<PostListProps> = ({
   const router = useRouter();
   const { api } = useApi();
   const { toast } = useToast();
+  const { data: session } = useSession();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
@@ -55,13 +59,11 @@ export const PostList: React.FC<PostListProps> = ({
   const [postToDelete, setPostToDelete] = useState<Post | null>(null);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-
-  useEffect(() => {
-    if (userId) {
-      loadPosts();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  const [commentDialogOpen, setCommentDialogOpen] = useState(false);
+  const [selectedPostForComment, setSelectedPostForComment] = useState<Post | null>(null);
+  const [postLikeCounts, setPostLikeCounts] = useState<Record<string, number>>({});
+  const [postUserLikes, setPostUserLikes] = useState<Record<string, any>>({});
+  const [postCommentCounts, setPostCommentCounts] = useState<Record<string, number>>({});
 
   const loadPosts = async () => {
     try {
@@ -83,6 +85,92 @@ export const PostList: React.FC<PostListProps> = ({
       setLoading(false);
     }
   };
+
+  const loadPostEngagements = useCallback(async () => {
+    if (posts.length === 0) return;
+
+    try {
+      const engagements = await Promise.all(
+        posts.map(async (post) => {
+          try {
+            const [likeCountRes, commentCountRes, likesRes] = await Promise.all([
+              api.getLikeCount("post", post.id),
+              api.getCommentCount(post.id),
+              api.getLikes("post", post.id, 100, 0).catch(() => ({ likes: [] })),
+            ]);
+
+            // Check if current user has liked this post
+            const userId = currentUserId || session?.user?.id;
+            const userLike = likesRes.likes?.find(
+              (like: any) => like.user_id === userId
+            ) || null;
+
+            return {
+              postId: post.id,
+              likeCount: likeCountRes.count || 0,
+              commentCount: commentCountRes.count || 0,
+              userLike,
+            };
+          } catch (error) {
+            return {
+              postId: post.id,
+              likeCount: 0,
+              commentCount: 0,
+              userLike: null,
+            };
+          }
+        })
+      );
+
+      const likeCounts: Record<string, number> = {};
+      const commentCounts: Record<string, number> = {};
+      const userLikes: Record<string, any> = {};
+
+      engagements.forEach((eng) => {
+        likeCounts[eng.postId] = eng.likeCount;
+        commentCounts[eng.postId] = eng.commentCount;
+        if (eng.userLike) {
+          userLikes[eng.postId] = eng.userLike;
+        }
+      });
+
+      setPostLikeCounts(likeCounts);
+      setPostCommentCounts(commentCounts);
+      setPostUserLikes(userLikes);
+    } catch (error) {
+      console.error("Failed to load post engagements:", error);
+    }
+  }, [posts, api, currentUserId, session]);
+
+  // Load posts when userId changes
+  useEffect(() => {
+    if (userId) {
+      loadPosts();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
+
+  // Load like and comment counts for posts
+  useEffect(() => {
+    if (posts.length > 0 && !loading) {
+      loadPostEngagements();
+    }
+  }, [posts.length, loading, loadPostEngagements]);
+
+  const handleOpenCommentDialog = (post: Post) => {
+    setSelectedPostForComment(post);
+    setCommentDialogOpen(true);
+  };
+
+  const handleCloseCommentDialog = () => {
+    setCommentDialogOpen(false);
+    setSelectedPostForComment(null);
+    loadPostEngagements(); // Reload counts after closing
+  };
+
+  const handleLikeChange = useCallback((postId: string, liked: boolean, likeCount: number) => {
+    setPostLikeCounts((prev) => ({ ...prev, [postId]: likeCount }));
+  }, []);
 
   const handleDeleteClick = (post: Post) => {
     setPostToDelete(post);
@@ -452,6 +540,57 @@ export const PostList: React.FC<PostListProps> = ({
                 <span>{post.image_urls.length} {post.image_urls.length === 1 ? 'image' : 'images'}</span>
               </div>
             )}
+
+            {/* Engagement Section */}
+            <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+              {/* Like Count */}
+              {postLikeCounts[post.id] > 0 && (
+                <div className="flex items-center gap-2 mb-2 text-sm text-gray-600 dark:text-gray-400">
+                  <div className="flex items-center -space-x-1">
+                    <div className="h-5 w-5 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs">
+                      👍
+                    </div>
+                    <div className="h-5 w-5 rounded-full bg-red-500 flex items-center justify-center text-white text-xs">
+                      ❤️
+                    </div>
+                  </div>
+                  <span>{postLikeCounts[post.id]}</span>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1 flex-1">
+                  <LikeButton
+                    targetType="post"
+                    targetID={post.id}
+                    initialLikeCount={postLikeCounts[post.id] || 0}
+                    initialUserLike={postUserLikes[post.id] || null}
+                    onLikeChange={(liked, count) => handleLikeChange(post.id, liked, count)}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleOpenCommentDialog(post)}
+                    className="flex-1 h-9 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  >
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Komentar
+                    {postCommentCounts[post.id] > 0 && (
+                      <span className="ml-2">({postCommentCounts[post.id]})</span>
+                    )}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex-1 h-9 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  >
+                    <Share2 className="h-4 w-4 mr-2" />
+                    Bagikan
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
         ))}
       </div>
@@ -506,6 +645,21 @@ export const PostList: React.FC<PostListProps> = ({
           onNavigateImage={handleNavigateImage}
         />
       )}
+
+      {/* Comment Dialog */}
+      <CommentDialog
+        open={commentDialogOpen}
+        onClose={handleCloseCommentDialog}
+        post={selectedPostForComment}
+        onCommentCountChange={(count) => {
+          if (selectedPostForComment) {
+            setPostCommentCounts((prev) => ({
+              ...prev,
+              [selectedPostForComment.id]: count,
+            }));
+          }
+        }}
+      />
     </>
   );
 };

@@ -37,6 +37,18 @@ import type {
   UpdatePostRequest,
   PostResponse,
 } from "@/types/post";
+import type {
+  Comment,
+  CreateCommentRequest,
+  UpdateCommentRequest,
+  CommentResponse,
+} from "@/types/comment";
+import type {
+  Like,
+  LikePostRequest,
+  LikeCommentRequest,
+  LikeResponse,
+} from "@/types/like";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.194.248:5000";
 
@@ -571,6 +583,127 @@ class ApiClient {
   async countPostsByUserID(userID: string): Promise<{ count: number }> {
     return this.request<{ count: number }>(
       `/api/v1/posts/user/${userID}/count`,
+      {
+        method: "GET",
+      }
+    );
+  }
+
+  // Comment endpoints
+  async createComment(data: CreateCommentRequest): Promise<CommentResponse> {
+    return this.request<CommentResponse>("/api/v1/comments", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getComment(commentID: string): Promise<CommentResponse> {
+    return this.request<CommentResponse>(`/api/v1/comments/${commentID}`, {
+      method: "GET",
+    });
+  }
+
+  async getCommentsByPostID(
+    postID: string,
+    limit: number = 20,
+    offset: number = 0
+  ): Promise<CommentResponse> {
+    return this.request<CommentResponse>(
+      `/api/v1/posts/${postID}/comments?limit=${limit}&offset=${offset}`,
+      {
+        method: "GET",
+      }
+    );
+  }
+
+  async getCommentCount(postID: string): Promise<{ count: number }> {
+    return this.request<{ count: number }>(
+      `/api/v1/posts/${postID}/comments/count`,
+      {
+        method: "GET",
+      }
+    );
+  }
+
+  async getReplies(
+    commentID: string,
+    limit: number = 20,
+    offset: number = 0
+  ): Promise<CommentResponse> {
+    return this.request<CommentResponse>(
+      `/api/v1/comments/${commentID}/replies?limit=${limit}&offset=${offset}`,
+      {
+        method: "GET",
+      }
+    );
+  }
+
+  async updateComment(
+    commentID: string,
+    data: UpdateCommentRequest
+  ): Promise<CommentResponse> {
+    return this.request<CommentResponse>(`/api/v1/comments/${commentID}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteComment(commentID: string): Promise<void> {
+    return this.request<void>(`/api/v1/comments/${commentID}`, {
+      method: "DELETE",
+    });
+  }
+
+  // Like endpoints
+  async likePost(postID: string, data?: LikePostRequest): Promise<LikeResponse> {
+    return this.request<LikeResponse>(`/api/v1/posts/${postID}/like`, {
+      method: "POST",
+      body: JSON.stringify(data || {}),
+    });
+  }
+
+  async unlikePost(postID: string): Promise<void> {
+    return this.request<void>(`/api/v1/posts/${postID}/like`, {
+      method: "DELETE",
+    });
+  }
+
+  async likeComment(
+    commentID: string,
+    data?: LikeCommentRequest
+  ): Promise<LikeResponse> {
+    return this.request<LikeResponse>(`/api/v1/comments/${commentID}/like`, {
+      method: "POST",
+      body: JSON.stringify(data || {}),
+    });
+  }
+
+  async unlikeComment(commentID: string): Promise<void> {
+    return this.request<void>(`/api/v1/comments/${commentID}/like`, {
+      method: "DELETE",
+    });
+  }
+
+  async getLikes(
+    targetType: "post" | "comment",
+    targetID: string,
+    limit: number = 20,
+    offset: number = 0
+  ): Promise<LikeResponse> {
+    return this.request<LikeResponse>(
+      `/api/v1/likes?target_type=${targetType}&target_id=${targetID}&limit=${limit}&offset=${offset}`,
+      {
+        method: "GET",
+      }
+    );
+  }
+
+  async getLikeCount(
+    targetType: "post" | "comment",
+    targetID: string
+  ): Promise<{ count: number }> {
+    return this.request<{ count: number }>(
+      `/api/v1/likes/count?target_type=${targetType}&target_id=${targetID}`,
       {
         method: "GET",
       }

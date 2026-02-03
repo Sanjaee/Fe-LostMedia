@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import { id } from "date-fns/locale";
@@ -23,6 +23,8 @@ import PhotoModal from "@/components/ui/PhotoModal";
 import { PostDialog } from "@/components/profile/organisms/PostDialog";
 import { useApi } from "@/components/contex/ApiProvider";
 import { parseTextWithLinks } from "@/utils/textUtils";
+import { LikeButton } from "@/components/post/LikeButton";
+import { CommentDialog } from "@/components/post/CommentDialog";
 
 import type { Post } from "@/types/post";
 import type { Friendship } from "@/types/friendship";
@@ -48,6 +50,11 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
   const [friends, setFriends] = useState<Friendship[]>([]);
   const [loadingFriends, setLoadingFriends] = useState(false);
+  const [commentDialogOpen, setCommentDialogOpen] = useState(false);
+  const [selectedPostForComment, setSelectedPostForComment] = useState<Post | null>(null);
+  const [postLikeCounts, setPostLikeCounts] = useState<Record<string, number>>({});
+  const [postUserLikes, setPostUserLikes] = useState<Record<string, any>>({});
+  const [postCommentCounts, setPostCommentCounts] = useState<Record<string, number>>({});
 
   // Check URL params for photo modal
   const fbid = searchParams?.get('fbid');
@@ -188,6 +195,84 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
       setPosts(initialPosts);
     }
   }, [initialPosts]);
+
+  // Load like and comment counts for posts
+  const loadPostEngagements = useCallback(async () => {
+    if (posts.length === 0) return;
+
+    try {
+      const engagements = await Promise.all(
+        posts.map(async (post) => {
+          try {
+            const [likeCountRes, commentCountRes, likesRes] = await Promise.all([
+              api.getLikeCount("post", post.id),
+              api.getCommentCount(post.id),
+              api.getLikes("post", post.id, 100, 0).catch(() => ({ likes: [] })),
+            ]);
+
+            // Check if current user has liked this post
+            const userId = session?.user?.id;
+            const userLike = likesRes.likes?.find(
+              (like: any) => like.user_id === userId
+            ) || null;
+
+            return {
+              postId: post.id,
+              likeCount: likeCountRes.count || 0,
+              commentCount: commentCountRes.count || 0,
+              userLike,
+            };
+          } catch (error) {
+            return {
+              postId: post.id,
+              likeCount: 0,
+              commentCount: 0,
+              userLike: null,
+            };
+          }
+        })
+      );
+
+      const likeCounts: Record<string, number> = {};
+      const commentCounts: Record<string, number> = {};
+      const userLikes: Record<string, any> = {};
+
+      engagements.forEach((eng) => {
+        likeCounts[eng.postId] = eng.likeCount;
+        commentCounts[eng.postId] = eng.commentCount;
+        if (eng.userLike) {
+          userLikes[eng.postId] = eng.userLike;
+        }
+      });
+
+      setPostLikeCounts(likeCounts);
+      setPostCommentCounts(commentCounts);
+      setPostUserLikes(userLikes);
+    } catch (error) {
+      console.error("Failed to load post engagements:", error);
+    }
+  }, [posts, api, session]);
+
+  useEffect(() => {
+    if (posts.length > 0) {
+      loadPostEngagements();
+    }
+  }, [posts.length, loadPostEngagements]);
+
+  const handleOpenCommentDialog = (post: Post) => {
+    setSelectedPostForComment(post);
+    setCommentDialogOpen(true);
+  };
+
+  const handleCloseCommentDialog = () => {
+    setCommentDialogOpen(false);
+    setSelectedPostForComment(null);
+    loadPostEngagements(); // Reload counts after closing
+  };
+
+  const handleLikeChange = useCallback((postId: string, liked: boolean, likeCount: number) => {
+    setPostLikeCounts((prev) => ({ ...prev, [postId]: likeCount }));
+  }, []);
 
   // Handle case when posts is undefined (during build/prerender)
   if (!posts || !Array.isArray(posts)) {
@@ -392,31 +477,46 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
                       </div>
                     )}
                     
-                    {/* Stats - Placeholder for now */}
-                    <div className="px-4 py-2 flex items-center justify-between text-zinc-500 text-sm">
-                      <div className="flex items-center gap-1">
-                        <div className="bg-blue-500 rounded-full p-1">
-                          <ThumbsUp className="w-3 h-3 text-white fill-white" />
+                    {/* Stats */}
+                    {(postLikeCounts[post.id] > 0 || postCommentCounts[post.id] > 0) && (
+                      <div className="px-4 py-2 flex items-center justify-between text-zinc-500 text-sm">
+                        {postLikeCounts[post.id] > 0 && (
+                          <div className="flex items-center gap-1">
+                            <div className="bg-blue-500 rounded-full p-1">
+                              <ThumbsUp className="w-3 h-3 text-white fill-white" />
+                            </div>
+                            <span>{postLikeCounts[post.id]}</span>
+                          </div>
+                        )}
+                        <div className="flex gap-4 ml-auto">
+                          {postCommentCounts[post.id] > 0 && (
+                            <span>{postCommentCounts[post.id]} komentar</span>
+                          )}
                         </div>
-                        <span>0</span>
                       </div>
-                      <div className="flex gap-4">
-                        <span>0 komentar</span>
-                        <span>0 kali dibagikan</span>
-                      </div>
-                    </div>
+                    )}
                     
                     <Separator />
 
                     {/* Actions */}
                     <div className="flex px-2 py-1">
-                      <Button variant="ghost" className="flex-1 gap-2 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800">
-                        <ThumbsUp className="w-5 h-5" />
-                        <span>Suka</span>
-                      </Button>
-                      <Button variant="ghost" className="flex-1 gap-2 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                      <LikeButton
+                        targetType="post"
+                        targetID={post.id}
+                        initialLikeCount={postLikeCounts[post.id] || 0}
+                        initialUserLike={postUserLikes[post.id] || null}
+                        onLikeChange={(liked, count) => handleLikeChange(post.id, liked, count)}
+                      />
+                      <Button 
+                        variant="ghost" 
+                        className="flex-1 gap-2 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                        onClick={() => handleOpenCommentDialog(post)}
+                      >
                         <MessageCircle className="w-5 h-5" />
                         <span>Komentari</span>
+                        {postCommentCounts[post.id] > 0 && (
+                          <span className="ml-1">({postCommentCounts[post.id]})</span>
+                        )}
                       </Button>
                       <Button variant="ghost" className="flex-1 gap-2 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800">
                         <Share2 className="w-5 h-5" />
@@ -520,6 +620,21 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
           userId={session.user.id || ''}
         />
       )}
+
+      {/* Comment Dialog */}
+      <CommentDialog
+        open={commentDialogOpen}
+        onClose={handleCloseCommentDialog}
+        post={selectedPostForComment}
+        onCommentCountChange={(count) => {
+          if (selectedPostForComment) {
+            setPostCommentCounts((prev) => ({
+              ...prev,
+              [selectedPostForComment.id]: count,
+            }));
+          }
+        }}
+      />
     </div>
   );
 }
