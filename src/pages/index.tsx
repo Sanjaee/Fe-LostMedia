@@ -3,6 +3,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import FeedClient from "./feed-client";
 import { useApi } from "@/components/contex/ApiProvider";
 import type { Post } from "@/types/post";
@@ -25,10 +26,25 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export default function Home() {
   const { api } = useApi();
-  const { data: session } = useSession();
+  const router = useRouter();
+  const { data: session, status } = useSession();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Redirect to login if no session or session expired
+  useEffect(() => {
+    // Wait for session to finish loading
+    if (status === "loading") {
+      return;
+    }
+
+    // If session is unauthenticated, redirect to login
+    if (status === "unauthenticated" || !session) {
+      router.push("/auth/login");
+      return;
+    }
+  }, [session, status, router]);
 
   useEffect(() => {
     // Clear cache if user changed
@@ -102,6 +118,13 @@ export default function Home() {
       }
     } catch (err: any) {
       console.error("Failed to load feed:", err);
+      
+      // If error is 401 (Unauthorized), session might be expired - redirect to login
+      if (err?.response?.status === 401 || err?.status === 401) {
+        router.push("/auth/login");
+        return;
+      }
+      
       if (!silent) {
         setError(err.message || "Failed to load feed");
       }
@@ -112,7 +135,8 @@ export default function Home() {
     }
   };
 
-  if (loading) {
+  // Show loading while checking session or loading posts
+  if (status === "loading" || loading) {
     return (
       <div
         className={`${geistSans.variable} ${geistMono.variable} flex min-h-screen flex-col items-center justify-center bg-zinc-50 font-sans dark:bg-black`}
@@ -120,6 +144,11 @@ export default function Home() {
         <Loader2 className="w-8 h-8 animate-spin text-zinc-500" />
       </div>
     );
+  }
+
+  // Don't render anything if redirecting (session check will redirect)
+  if (status === "unauthenticated" || !session) {
+    return null;
   }
 
   if (error) {

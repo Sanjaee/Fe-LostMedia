@@ -8,6 +8,7 @@ import { X, MoreHorizontal, ThumbsUp, MessageCircle, Share2, Send, ChevronLeft, 
 import { formatDistanceToNow } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import type { Post } from "@/types/post";
+import { parseTextWithLinks } from "@/utils/textUtils";
 
 interface PhotoModalProps {
   isOpen: boolean;
@@ -127,7 +128,22 @@ export default function PhotoModal({ isOpen, onClose, post, imageIndex, onNaviga
              {/* Caption */}
              {post.content && (
                <div className="mb-4 text-sm text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap">
-                 {post.content}
+                 {parseTextWithLinks(post.content).map((part, index) => {
+                   if (part.type === 'link') {
+                     return (
+                       <a
+                         key={index}
+                         href={part.content}
+                         target="_blank"
+                         rel="noopener noreferrer"
+                         className="text-blue-500 hover:text-blue-600 hover:underline break-all"
+                       >
+                         {part.content}
+                       </a>
+                     );
+                   }
+                   return <span key={index}>{part.content}</span>;
+                 })}
                </div>
              )}
              

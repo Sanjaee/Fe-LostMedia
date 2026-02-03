@@ -28,6 +28,7 @@ import { formatDistanceToNow } from "date-fns";
 import { id } from "date-fns/locale";
 import type { Post } from "@/types/post";
 import { PostDialog } from "./PostDialog";
+import { parseTextWithLinks } from "@/utils/textUtils";
 import PhotoModal from "@/components/ui/PhotoModal";
 import { cn } from "@/lib/utils";
 
@@ -314,7 +315,22 @@ export const PostList: React.FC<PostListProps> = ({
             {/* Post Content */}
             {post.content && (
               <p className="text-gray-900 dark:text-white mb-3 whitespace-pre-wrap">
-                {post.content}
+                {parseTextWithLinks(post.content).map((part, index) => {
+                  if (part.type === 'link') {
+                    return (
+                      <a
+                        key={index}
+                        href={part.content}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:text-blue-600 hover:underline break-all"
+                      >
+                        {part.content}
+                      </a>
+                    );
+                  }
+                  return <span key={index}>{part.content}</span>;
+                })}
               </p>
             )}
 
@@ -399,7 +415,22 @@ export const PostList: React.FC<PostListProps> = ({
                 </div>
                 {post.shared_post.content && (
                   <p className="text-sm text-gray-900 dark:text-white">
-                    {post.shared_post.content}
+                    {parseTextWithLinks(post.shared_post.content).map((part, index) => {
+                      if (part.type === 'link') {
+                        return (
+                          <a
+                            key={index}
+                            href={part.content}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-500 hover:text-blue-600 hover:underline break-all"
+                          >
+                            {part.content}
+                          </a>
+                        );
+                      }
+                      return <span key={index}>{part.content}</span>;
+                    })}
                   </p>
                 )}
                 {post.shared_post.image_urls && post.shared_post.image_urls.length > 0 && (

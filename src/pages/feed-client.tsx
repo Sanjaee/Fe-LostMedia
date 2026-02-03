@@ -22,6 +22,7 @@ import { Separator } from "@/components/ui/separator";
 import PhotoModal from "@/components/ui/PhotoModal";
 import { PostDialog } from "@/components/profile/organisms/PostDialog";
 import { useApi } from "@/components/contex/ApiProvider";
+import { parseTextWithLinks } from "@/utils/textUtils";
 
 import type { Post } from "@/types/post";
 import type { Friendship } from "@/types/friendship";
@@ -331,7 +332,26 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
                   <CardContent className="p-0">
                     {/* Post Content */}
                     <div className="px-4 py-2">
-                      {post.content && <p className="text-base whitespace-pre-wrap">{post.content}</p>}
+                      {post.content && (
+                        <p className="text-base whitespace-pre-wrap">
+                          {parseTextWithLinks(post.content).map((part, index) => {
+                            if (part.type === 'link') {
+                              return (
+                                <a
+                                  key={index}
+                                  href={part.content}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-500 hover:text-blue-600 hover:underline break-all"
+                                >
+                                  {part.content}
+                                </a>
+                              );
+                            }
+                            return <span key={index}>{part.content}</span>;
+                          })}
+                        </p>
+                      )}
                     </div>
 
                     {/* Post Images */}
