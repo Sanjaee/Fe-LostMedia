@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -13,8 +13,10 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useApi } from "@/components/contex/ApiProvider";
-import { Loader2, X, Plus } from "lucide-react";
+import { Loader2, X, Plus, Upload, Image as ImageIcon } from "lucide-react";
 import type { Post, CreatePostRequest, UpdatePostRequest } from "@/types/post";
+import { uploadMultipleImagesToCloudinary } from "@/lib/cloudinary";
+import Image from "next/image";
 
 interface PostDialogProps {
   open: boolean;
@@ -33,7 +35,14 @@ export const PostDialog: React.FC<PostDialogProps> = ({
 }) => {
   const { toast } = useToast();
   const { api } = useApi();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [imageFiles, setImageFiles] = useState<File[]>([]); // Store File objects
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]); // Local preview URLs from File objects
+  const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]); // Existing URLs from edit mode
   const [formData, setFormData] = useState<CreatePostRequest>({
     content: "",
     image_urls: [],
@@ -48,25 +57,70 @@ export const PostDialog: React.FC<PostDialogProps> = ({
         image_urls: post.image_urls || [],
         is_pinned: post.is_pinned,
       });
+      setExistingImageUrls(post.image_urls || []);
+      setImagePreviews(post.image_urls || []);
+      setImageFiles([]); // Clear file objects in edit mode
     } else if (open) {
       setFormData({
         content: "",
         image_urls: [],
       });
+      setExistingImageUrls([]);
+      setImagePreviews([]);
+      setImageFiles([]);
     }
   }, [post, open]);
+
+  // Cleanup preview URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      // Cleanup all blob URLs on unmount
+      imagePreviews.forEach((preview) => {
+        if (preview.startsWith("blob:")) {
+          URL.revokeObjectURL(preview);
+        }
+      });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setUploading(true);
+    setUploadProgress(0);
 
     try {
-      const cleanImageUrls = formData.image_urls?.filter(url => url?.trim()) || [];
-      
+      let finalImageUrls: string[] = [];
+
+      // Upload new images to Cloudinary if there are any
+      if (imageFiles.length > 0) {
+        setUploadProgress(10);
+        const uploadedUrls = await uploadMultipleImagesToCloudinary(
+          imageFiles,
+          (progress) => {
+            // Map progress from 10-90% (reserve 10% for final submission)
+            setUploadProgress(10 + (progress * 0.8));
+          }
+        );
+        finalImageUrls = [...uploadedUrls];
+        setUploadProgress(90);
+      }
+
+      // Combine with existing URLs (from edit mode or manual URLs)
+      const manualUrls = formData.image_urls?.filter(url => url?.trim() && !url.startsWith("blob:")) || [];
+      finalImageUrls = [...finalImageUrls, ...existingImageUrls, ...manualUrls];
+
+      // Remove duplicates
+      finalImageUrls = [...new Set(finalImageUrls)];
+
+      setUploadProgress(100);
+
+      // Submit to backend
       if (isEditMode && post) {
         const updateData: UpdatePostRequest = {
           content: formData.content?.trim() || undefined,
-          image_urls: cleanImageUrls.length > 0 ? cleanImageUrls : undefined,
+          image_urls: finalImageUrls.length > 0 ? finalImageUrls : undefined,
           is_pinned: formData.is_pinned,
         };
         await api.updatePost(post.id, updateData);
@@ -74,7 +128,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
       } else {
         const createData: CreatePostRequest = {
           content: formData.content?.trim() || undefined,
-          image_urls: cleanImageUrls.length > 0 ? cleanImageUrls : undefined,
+          image_urls: finalImageUrls.length > 0 ? finalImageUrls : undefined,
         };
         await api.createPost(createData);
         toast({ title: "Success", description: "Post created successfully" });
@@ -90,6 +144,8 @@ export const PostDialog: React.FC<PostDialogProps> = ({
       });
     } finally {
       setLoading(false);
+      setUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -105,13 +161,27 @@ export const PostDialog: React.FC<PostDialogProps> = ({
       ...prev,
       image_urls: [...(prev.image_urls || []), ""],
     }));
+    // Add empty preview for manual URL input
+    setImagePreviews((prev) => [...prev, ""]);
   };
 
   const handleRemoveImageURL = (index: number) => {
+    // Remove from form data (manual URL input index)
     setFormData((prev) => ({
       ...prev,
       image_urls: prev.image_urls?.filter((_, i) => i !== index) || [],
     }));
+    
+    // Find and remove from previews
+    // Manual URLs are at: imageFiles.length + existingImageUrls.length + index
+    const previewIndex = imageFiles.length + existingImageUrls.length + index;
+    if (previewIndex < imagePreviews.length) {
+      const previewToRemove = imagePreviews[previewIndex];
+      if (previewToRemove && previewToRemove.startsWith("blob:")) {
+        URL.revokeObjectURL(previewToRemove);
+      }
+      setImagePreviews((prev) => prev.filter((_, i) => i !== previewIndex));
+    }
   };
 
   const handleImageURLChange = (index: number, value: string) => {
@@ -120,10 +190,156 @@ export const PostDialog: React.FC<PostDialogProps> = ({
       newImageURLs[index] = value;
       return { ...prev, image_urls: newImageURLs };
     });
+    
+    // Update preview - find the correct index in previews array
+    // Manual URLs come after imageFiles and existingImageUrls
+    const previewIndex = imageFiles.length + existingImageUrls.length + index;
+    setImagePreviews((prev) => {
+      const newPreviews = [...prev];
+      if (value && value.trim() !== "") {
+        // If URL is valid, add/update it in previews
+        if (previewIndex < newPreviews.length) {
+          newPreviews[previewIndex] = value;
+        } else {
+          newPreviews.push(value);
+        }
+      } else {
+        // If URL is empty, remove from previews
+        if (previewIndex < newPreviews.length) {
+          newPreviews.splice(previewIndex, 1);
+        }
+      }
+      return newPreviews;
+    });
+  };
+
+  const processFiles = (files: File[]) => {
+    const imageFiles = files.filter((file) => file.type.startsWith("image/"));
+
+    if (imageFiles.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please select image files only",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check current number of images in state
+    const currentImageCount = imageFiles.length + imagePreviews.length;
+    
+    // Validate maximum 3 images total
+    if (currentImageCount > 3) {
+      const remainingSlots = 3 - imagePreviews.length;
+      toast({
+        title: "Error",
+        description: `Maximum 3 images allowed. You can add ${remainingSlots} more image(s).`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file sizes (max 3MB each)
+    const maxSize = 3 * 1024 * 1024; // 3MB
+    const invalidFiles = imageFiles.filter((file) => file.size > maxSize);
+    if (invalidFiles.length > 0) {
+      toast({
+        title: "Error",
+        description: `Some images exceed 3MB limit. Maximum file size is 3MB per image.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Store File objects in state
+    setImageFiles((prev) => [...prev, ...imageFiles]);
+
+    // Create preview URLs for selected files
+    const newPreviews: string[] = [];
+    imageFiles.forEach((file) => {
+      const previewUrl = URL.createObjectURL(file);
+      newPreviews.push(previewUrl);
+    });
+
+    setImagePreviews((prev) => [...prev, ...newPreviews]);
+
+    toast({
+      title: "Success",
+      description: `${imageFiles.length} image(s) added. They will be uploaded when you submit.`,
+    });
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const fileArray = Array.from(files);
+    processFiles(fileArray);
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      processFiles(files);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleRemoveImage = (index: number) => {
+    // Check if it's a File object or existing URL
+    const isFileObject = index < imageFiles.length;
+    
+    if (isFileObject) {
+      // Remove File object
+      setImageFiles((prev) => prev.filter((_, i) => i !== index));
+    } else {
+      // Remove existing URL (from edit mode)
+      const urlIndex = index - imageFiles.length;
+      setExistingImageUrls((prev) => prev.filter((_, i) => i !== urlIndex));
+    }
+
+    // Remove from previews and cleanup
+    const previewToRemove = imagePreviews[index];
+    if (previewToRemove && previewToRemove.startsWith("blob:")) {
+      URL.revokeObjectURL(previewToRemove);
+    }
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleClose = () => {
+    // Cleanup blob URLs before closing
+    imagePreviews.forEach((preview) => {
+      if (preview.startsWith("blob:")) {
+        URL.revokeObjectURL(preview);
+      }
+    });
+    onClose();
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEditMode ? "Edit Post" : "Create Post"}</DialogTitle>
@@ -143,49 +359,172 @@ export const PostDialog: React.FC<PostDialogProps> = ({
             />
           </div>
 
-          {/* Image URLs */}
+          {/* Image Upload */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label>Image URLs</Label>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleAddImageURL}
-              >
-                <Plus className="h-4 w-4 mr-1" />
-                Add Image
-              </Button>
-            </div>
-            {formData.image_urls && formData.image_urls.length > 0 ? (
-              <div className="space-y-2">
-                {formData.image_urls.map((url, index) => (
-                  <div key={index} className="flex gap-2">
-                    <Input
-                      type="url"
-                      value={url}
-                      onChange={(e) =>
-                        handleImageURLChange(index, e.target.value)
-                      }
-                      placeholder="https://example.com/image.jpg"
-                      className="flex-1"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRemoveImageURL(index)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
+              <Label>Images</Label>
+              <div className="flex gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleFileSelect}
+                  className="hidden"
+                  id="image-upload"
+                  disabled={loading || uploading || imagePreviews.length >= 3}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={loading || uploading || imagePreviews.length >= 3}
+                  title={imagePreviews.length >= 3 ? "Maximum 3 images allowed" : "Select up to 3 images (max 3MB each)"}
+                >
+                  <Upload className="h-4 w-4 mr-1" />
+                  Select Images {imagePreviews.length > 0 && `(${imagePreviews.length}/3)`}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAddImageURL}
+                  disabled={loading || uploading || imagePreviews.length >= 3}
+                  title={imagePreviews.length >= 3 ? "Maximum 3 images allowed" : "Add image URL"}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add URL
+                </Button>
               </div>
-            ) : (
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                No images added. Click &quot;Add Image&quot; to add image URLs.
+            </div>
+
+            {/* Drag and Drop Zone */}
+            <div
+              ref={dropZoneRef}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                imagePreviews.length === 0 && (!formData.image_urls || formData.image_urls.length === 0)
+                  ? "border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 hover:border-gray-400 dark:hover:border-gray-600"
+                  : "border-transparent"
+              } ${imagePreviews.length >= 3 ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              {imagePreviews.length === 0 && (!formData.image_urls || formData.image_urls.length === 0) ? (
+                <div className="flex flex-col items-center justify-center">
+                  <ImageIcon className="h-12 w-12 text-gray-400 mb-2" />
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                    Drag and drop images here, or click &quot;Select Images&quot;
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-500">
+                    Maximum 3 images, 3MB per image. Images will be uploaded when you submit.
+                  </p>
+                </div>
+              ) : null}
+            </div>
+
+            {/* Image count indicator */}
+            {imagePreviews.length > 0 && (
+              <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
+                {imagePreviews.length}/3 images selected (max 3MB each)
               </p>
             )}
+
+            {/* Upload Progress (only shown during submit) */}
+            {uploading && uploadProgress > 0 && (
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600 dark:text-gray-400">
+                    Uploading images
+                  </span>
+                  <span className="text-gray-600 dark:text-gray-400">
+                    {Math.round(uploadProgress)}%
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700">
+                  <div
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Image Previews */}
+            {imagePreviews.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+                {imagePreviews.map((preview, index) => {
+                  // Skip empty previews
+                  if (!preview || preview.trim() === "") return null;
+                  
+                  return (
+                    <div key={`preview-${index}-${preview.substring(0, 20)}`} className="relative group">
+                      <div className="aspect-square relative rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                        <Image
+                          src={preview}
+                          alt={`Preview ${index + 1}`}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 768px) 50vw, 33vw"
+                          onError={(e) => {
+                            // Hide broken images
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = "none";
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => handleRemoveImage(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Manual URL Input (only for empty URLs) */}
+            {formData.image_urls && formData.image_urls.some(url => !url || url.trim() === "") && (
+              <div className="space-y-2 mt-4">
+                <Label className="text-sm text-gray-600 dark:text-gray-400">
+                  Add image URLs manually:
+                </Label>
+                {formData.image_urls.map((url, index) => {
+                  // Only show input for empty URLs
+                  if (url && url.trim() !== "") return null;
+                  
+                  return (
+                    <div key={`url-${index}`} className="flex gap-2">
+                      <Input
+                        type="url"
+                        value={url || ""}
+                        onChange={(e) =>
+                          handleImageURLChange(index, e.target.value)
+                        }
+                        placeholder="https://example.com/image.jpg"
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveImageURL(index)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
           </div>
 
           {/* Is Pinned (only for edit) */}
