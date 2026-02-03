@@ -1,3 +1,5 @@
+import type { Like } from "./like";
+
 export interface Comment {
   id: string;
   post_id: string;
