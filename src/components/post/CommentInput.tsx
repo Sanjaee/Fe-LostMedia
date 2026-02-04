@@ -43,10 +43,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
       });
 
       setContent("");
-      toast({
-        title: "Berhasil",
-        description: "Komentar berhasil ditambahkan",
-      });
+      // Auto reload comments without toast
       onCommentAdded?.();
     } catch (error: any) {
       toast({

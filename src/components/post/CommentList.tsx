@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useApi } from "@/components/contex/ApiProvider";
@@ -22,11 +22,13 @@ import { useSession } from "next-auth/react";
 interface CommentListProps {
   postID: string;
   onCommentCountChange?: (count: number) => void;
+  refreshTrigger?: number; // Trigger to force refresh
 }
 
 export const CommentList: React.FC<CommentListProps> = ({
   postID,
   onCommentCountChange,
+  refreshTrigger,
 }) => {
   const { api } = useApi();
   const { toast } = useToast();
@@ -36,22 +38,29 @@ export const CommentList: React.FC<CommentListProps> = ({
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
-
+  
+  // Use ref to store callbacks to avoid dependency issues
+  const onCommentCountChangeRef = useRef(onCommentCountChange);
+  const apiRef = useRef(api);
+  const toastRef = useRef(toast);
+  
   useEffect(() => {
-    loadComments();
-  }, [postID]);
+    onCommentCountChangeRef.current = onCommentCountChange;
+    apiRef.current = api;
+    toastRef.current = toast;
+  }, [onCommentCountChange, api, toast]);
 
-  const loadComments = async () => {
+  const loadComments = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await api.getCommentsByPostID(postID, 50, 0);
+      const response = await apiRef.current.getCommentsByPostID(postID, 50, 0);
       const commentsList = response.comments || response.data?.comments || [];
       const totalCount = response.total || response.data?.total || commentsList.length;
       setComments(commentsList);
-      onCommentCountChange?.(totalCount);
+      onCommentCountChangeRef.current?.(totalCount);
     } catch (error: any) {
       console.error("Failed to load comments:", error);
-      toast({
+      toastRef.current({
         title: "Error",
         description: error.message || "Failed to load comments",
         variant: "destructive",
@@ -59,11 +68,11 @@ export const CommentList: React.FC<CommentListProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [postID]);
 
-  const handleCommentAdded = () => {
+  useEffect(() => {
     loadComments();
-  };
+  }, [loadComments, refreshTrigger]);
 
   const handleDelete = async (commentID: string) => {
     try {

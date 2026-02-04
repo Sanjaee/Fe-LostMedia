@@ -31,6 +31,7 @@ export const CommentDialog: React.FC<CommentDialogProps> = ({
   const { api } = useApi();
   const [commentCount, setCommentCount] = useState(0);
   const [loadingCount, setLoadingCount] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     if (open && post) {
@@ -53,6 +54,8 @@ export const CommentDialog: React.FC<CommentDialogProps> = ({
   };
 
   const handleCommentAdded = () => {
+    // Trigger CommentList refresh
+    setRefreshTrigger(prev => prev + 1);
     loadCommentCount();
   };
 
@@ -88,6 +91,7 @@ export const CommentDialog: React.FC<CommentDialogProps> = ({
         <div className="flex-1 overflow-y-auto space-y-4 pr-2">
           <CommentList
             postID={post.id}
+            refreshTrigger={refreshTrigger}
             onCommentCountChange={(count) => {
               setCommentCount(count);
               onCommentCountChange?.(count);

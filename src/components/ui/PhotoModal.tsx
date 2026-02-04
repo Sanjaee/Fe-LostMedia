@@ -1,14 +1,19 @@
-import React from 'react';
+"use client";
+
+import React, { useState, useEffect } from 'react';
 import Link from "next/link";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { X, MoreHorizontal, ThumbsUp, MessageCircle, Share2, Send, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, MoreHorizontal, ThumbsUp, MessageCircle, Share2, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
+import { useApi } from "@/components/contex/ApiProvider";
 import type { Post } from "@/types/post";
 import { parseTextWithLinks } from "@/utils/textUtils";
+import { CommentList } from "@/components/post/CommentList";
+import { CommentInput } from "@/components/post/CommentInput";
 
 interface PhotoModalProps {
   isOpen: boolean;
@@ -19,6 +24,57 @@ interface PhotoModalProps {
 }
 
 export default function PhotoModal({ isOpen, onClose, post, imageIndex, onNavigateImage }: PhotoModalProps) {
+  const { api } = useApi();
+  const [likeCount, setLikeCount] = useState(0);
+  const [commentCount, setCommentCount] = useState(0);
+  const [loadingStats, setLoadingStats] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  useEffect(() => {
+    if (isOpen && post) {
+      const loadStats = async () => {
+        if (!post) return;
+        
+        try {
+          setLoadingStats(true);
+          const [likeRes, commentRes] = await Promise.all([
+            api.getLikeCount("post", post.id).catch(() => ({ count: 0 })),
+            api.getCommentCount(post.id).catch(() => ({ count: 0 })),
+          ]);
+          setLikeCount(likeRes.count || 0);
+          setCommentCount(commentRes.count || 0);
+        } catch (error) {
+          console.error("Failed to load stats:", error);
+        } finally {
+          setLoadingStats(false);
+        }
+      };
+      loadStats();
+    }
+  }, [isOpen, post, api]);
+
+  const handleCommentAdded = () => {
+    // Trigger CommentList refresh
+    setRefreshTrigger(prev => prev + 1);
+    
+    // Update stats
+    if (post) {
+      const loadStats = async () => {
+        try {
+          const [likeRes, commentRes] = await Promise.all([
+            api.getLikeCount("post", post.id).catch(() => ({ count: 0 })),
+            api.getCommentCount(post.id).catch(() => ({ count: 0 })),
+          ]);
+          setLikeCount(likeRes.count || 0);
+          setCommentCount(commentRes.count || 0);
+        } catch (error) {
+          console.error("Failed to load stats:", error);
+        }
+      };
+      loadStats();
+    }
+  };
+
   if (!post) return null;
   const imageUrl = post.image_urls && post.image_urls[imageIndex] ? post.image_urls[imageIndex] : '';
   const totalImages = post.image_urls?.length || 0;
@@ -151,16 +207,28 @@ export default function PhotoModal({ isOpen, onClose, post, imageIndex, onNaviga
              
              {/* Stats */}
              <div className="flex items-center justify-between text-zinc-500 text-xs mb-4">
-                <div className="flex items-center gap-1">
-                  <div className="bg-blue-500 rounded-full p-1">
-                    <ThumbsUp className="w-2 h-2 text-white fill-white" />
+                {loadingStats ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <span>Memuat...</span>
                   </div>
-                  <span>0</span>
-                </div>
-                <div className="flex gap-2">
-                  <span>0 komentar</span>
-                  <span>0 dibagikan</span>
-                </div>
+                ) : (
+                  <>
+                    {likeCount > 0 && (
+                      <div className="flex items-center gap-1">
+                        <div className="bg-blue-500 rounded-full p-1">
+                          <ThumbsUp className="w-2 h-2 text-white fill-white" />
+                        </div>
+                        <span>{likeCount}</span>
+                      </div>
+                    )}
+                    <div className="flex gap-2 ml-auto">
+                      {commentCount > 0 && (
+                        <span>{commentCount} komentar</span>
+                      )}
+                    </div>
+                  </>
+                )}
              </div>
 
              {/* Action Buttons */}
@@ -176,48 +244,27 @@ export default function PhotoModal({ isOpen, onClose, post, imageIndex, onNaviga
                 </Button>
              </div>
 
-             {/* Comments Placeholder */}
+             {/* Comments */}
              <div className="space-y-4">
                <p className="text-sm font-semibold text-zinc-500">Komentar Terbaru</p>
-               {/* Dummy Comments */}
-               {[1, 2, 3].map((i) => (
-                 <div key={i} className="flex gap-2">
-                   <Avatar className="w-8 h-8">
-                     <AvatarFallback>U{i}</AvatarFallback>
-                   </Avatar>
-                   <div className="flex-1">
-                     <div className="bg-zinc-100 dark:bg-zinc-800 rounded-2xl px-3 py-2 inline-block">
-                       <span className="font-semibold text-xs block">User {i}</span>
-                       <span className="text-sm">Keren banget fotonya! 🔥</span>
-                     </div>
-                     <div className="flex gap-3 mt-1 ml-2 text-xs text-zinc-500 font-semibold">
-                       <span className="cursor-pointer hover:underline">Suka</span>
-                       <span className="cursor-pointer hover:underline">Balas</span>
-                       <span>1j</span>
-                     </div>
-                   </div>
-                 </div>
-               ))}
+               <CommentList
+                 postID={post.id}
+                 refreshTrigger={refreshTrigger}
+                 onCommentCountChange={(count) => {
+                   setCommentCount(count);
+                 }}
+               />
              </div>
           </div>
 
           {/* Footer: Input Comment */}
           <div className="p-3 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
-             <div className="flex gap-2 items-center">
-                <Avatar className="w-8 h-8">
-                  <AvatarFallback>Me</AvatarFallback>
-                </Avatar>
-                <div className="flex-1 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center px-3 py-2">
-                   <input 
-                    type="text" 
-                    placeholder="Tulis komentar..." 
-                    className="bg-transparent border-none outline-none text-sm w-full"
-                   />
-                   <Button variant="ghost" size="icon" className="h-6 w-6 text-blue-500 hover:bg-blue-50 hover:text-blue-600 rounded-full">
-                     <Send className="w-4 h-4" />
-                   </Button>
-                </div>
-             </div>
+             <CommentInput
+               postID={post.id}
+               placeholder="Tulis komentar..."
+               onCommentAdded={handleCommentAdded}
+               compact
+             />
           </div>
 
           {/* Thumbnail Navigation (if multiple images) */}

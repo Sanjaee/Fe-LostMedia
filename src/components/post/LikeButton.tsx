@@ -90,7 +90,7 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
         setLikeCount(newCount);
         onLikeChange?.(true, newCount);
       }
-      setShowReactions(false);
+      // Keep reactions visible after selection - only hide on mouse leave
     } catch (error: any) {
       toast({
         title: "Error",
@@ -112,15 +112,17 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
 
   if (compact) {
     return (
-      <div className="relative">
+      <div 
+        className="relative"
+        onMouseEnter={() => setShowReactions(true)}
+        onMouseLeave={() => setShowReactions(false)}
+      >
         <Button
           variant="ghost"
           size="sm"
           onClick={() => handleLike("like")}
           disabled={loading}
-          className={`h-8 px-2 ${liked ? reactionColor : "text-gray-600 dark:text-gray-400"}`}
-          onMouseEnter={() => setShowReactions(true)}
-          onMouseLeave={() => setShowReactions(false)}
+          className={`h-8 px-2 ${liked ? reactionColor : "text-zinc-600 dark:text-zinc-400"}`}
         >
           {loading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -131,17 +133,20 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
 
         {showReactions && (
           <div
-            className="absolute bottom-full left-0 mb-2 flex gap-1 bg-white dark:bg-gray-800 rounded-full shadow-lg p-1 border border-gray-200 dark:border-gray-700 z-10"
-            onMouseEnter={() => setShowReactions(true)}
-            onMouseLeave={() => setShowReactions(false)}
+            className="absolute bottom-full left-0 mb-2 flex gap-1 bg-white dark:bg-zinc-800 rounded-full shadow-lg p-1 border border-zinc-200 dark:border-zinc-700 z-10"
           >
             {REACTIONS.map((reaction) => {
               const Icon = reaction.icon;
+              const isSelected = currentReaction === reaction.type;
               return (
                 <button
                   key={reaction.type}
                   onClick={() => handleLike(reaction.type)}
-                  className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  className={`p-2 rounded-full transition-colors ${
+                    isSelected 
+                      ? "bg-zinc-100 dark:bg-zinc-700" 
+                      : "hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                  }`}
                   title={reaction.label}
                 >
                   <Icon className={`h-5 w-5 ${reaction.color}`} />
@@ -155,15 +160,17 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
   }
 
   return (
-    <div className="relative">
+    <div 
+      className="relative"
+      onMouseEnter={() => setShowReactions(true)}
+      onMouseLeave={() => setShowReactions(false)}
+    >
       <Button
         variant="ghost"
         size="sm"
         onClick={() => handleLike("like")}
         disabled={loading}
-        className={`h-9 px-3 ${liked ? reactionColor : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"}`}
-        onMouseEnter={() => setShowReactions(true)}
-        onMouseLeave={() => setShowReactions(false)}
+        className={`h-9 px-3 ${liked ? reactionColor : "text-gray-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"}`}
       >
         {loading ? (
           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -175,17 +182,20 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
 
       {showReactions && (
         <div
-          className="absolute bottom-full left-0 mb-2 flex gap-1 bg-white dark:bg-gray-800 rounded-full shadow-lg p-1 border border-gray-200 dark:border-gray-700 z-10"
-          onMouseEnter={() => setShowReactions(true)}
-          onMouseLeave={() => setShowReactions(false)}
+          className="absolute bottom-full left-0 mb-2 flex gap-1 bg-white dark:bg-zinc-800 rounded-full shadow-lg p-1 border border-zinc-200 dark:border-zinc-700 z-10"
         >
           {REACTIONS.map((reaction) => {
             const Icon = reaction.icon;
+            const isSelected = currentReaction === reaction.type;
             return (
               <button
                 key={reaction.type}
                 onClick={() => handleLike(reaction.type)}
-                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                className={`p-2 rounded-full transition-colors ${
+                  isSelected 
+                    ? "bg-zinc-100 dark:bg-zinc-700" 
+                    : "hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                }`}
                 title={reaction.label}
               >
                 <Icon className={`h-6 w-6 ${reaction.color}`} />
