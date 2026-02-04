@@ -480,15 +480,17 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
                     {/* Stats */}
                     {(postLikeCounts[post.id] > 0 || postCommentCounts[post.id] > 0) && (
                       <div className="px-4 py-2 flex items-center justify-between text-zinc-500 text-sm">
-                        {postLikeCounts[post.id] > 0 && (
-                          <div className="flex items-center gap-1">
-                            <div className="bg-blue-500 rounded-full p-1">
-                              <ThumbsUp className="w-3 h-3 text-white fill-white" />
-                            </div>
-                            <span>{postLikeCounts[post.id]}</span>
-                          </div>
-                        )}
-                        <div className="flex gap-4 ml-auto">
+                        <div className="flex items-center gap-1">
+                          {postLikeCounts[post.id] > 0 && (
+                            <>
+                              <div className="bg-blue-500 rounded-full p-1">
+                                <ThumbsUp className="w-3 h-3 text-white fill-white" />
+                              </div>
+                              <span>{postLikeCounts[post.id]}</span>
+                            </>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-4">
                           {postCommentCounts[post.id] > 0 && (
                             <span>{postCommentCounts[post.id]} komentar</span>
                           )}
@@ -499,14 +501,16 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
                     <Separator />
 
                     {/* Actions */}
-                    <div className="flex px-2 py-1">
-                      <LikeButton
-                        targetType="post"
-                        targetID={post.id}
-                        initialLikeCount={postLikeCounts[post.id] || 0}
-                        initialUserLike={postUserLikes[post.id] || null}
-                        onLikeChange={(liked, count) => handleLikeChange(post.id, liked, count)}
-                      />
+                    <div className="flex items-center px-4 py-1 gap-0">
+                      <div className="flex-1 flex justify-center">
+                        <LikeButton
+                          targetType="post"
+                          targetID={post.id}
+                          initialLikeCount={postLikeCounts[post.id] || 0}
+                          initialUserLike={postUserLikes[post.id] || null}
+                          onLikeChange={(liked, count) => handleLikeChange(post.id, liked, count)}
+                        />
+                      </div>
                       <Button 
                         variant="ghost" 
                         className="flex-1 gap-2 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
