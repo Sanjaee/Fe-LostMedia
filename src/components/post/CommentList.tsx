@@ -22,7 +22,7 @@ import { useSession } from "next-auth/react";
 interface CommentListProps {
   postID: string;
   onCommentCountChange?: (count: number) => void;
-  refreshTrigger?: number; // Trigger to force refresh
+  refreshTrigger?: number;
 }
 
 export const CommentList: React.FC<CommentListProps> = ({
@@ -39,7 +39,6 @@ export const CommentList: React.FC<CommentListProps> = ({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
   
-  // Use ref to store callbacks to avoid dependency issues
   const onCommentCountChangeRef = useRef(onCommentCountChange);
   const apiRef = useRef(api);
   const toastRef = useRef(toast);
@@ -56,6 +55,7 @@ export const CommentList: React.FC<CommentListProps> = ({
       const response = await apiRef.current.getCommentsByPostID(postID, 50, 0);
       const commentsList = response.comments || response.data?.comments || [];
       const totalCount = response.total || response.data?.total || commentsList.length;
+      
       setComments(commentsList);
       onCommentCountChangeRef.current?.(totalCount);
     } catch (error: any) {
@@ -121,14 +121,16 @@ export const CommentList: React.FC<CommentListProps> = ({
       .slice(0, 2);
   };
 
-  const renderComment = (comment: Comment, isReply = false) => {
+  const renderComment = (comment: Comment, level = 0) => {
     const isOwnComment = comment.user_id === session?.user?.id;
     const isEditing = editingId === comment.id;
+    const isReply = level > 0;
 
     return (
-      <div key={comment.id} className={isReply ? "ml-12 mt-3" : ""}>
-        <div className="flex items-start gap-3">
-          <Avatar className="h-8 w-8">
+      <div key={comment.id} className="space-y-3">
+        {/* Comment Container */}
+        <div className={`flex items-start gap-3 ${isReply ? "ml-12" : ""}`}>
+          <Avatar className="h-8 w-8 flex-shrink-0">
             <AvatarImage
               src={comment.user?.profile_photo}
               alt={comment.user?.full_name}
@@ -137,24 +139,40 @@ export const CommentList: React.FC<CommentListProps> = ({
               {getInitials(comment.user?.full_name || "User")}
             </AvatarFallback>
           </Avatar>
-          <div className="flex-1">
+          
+          <div className="flex-1 min-w-0">
             <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-3">
-              <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-sm text-gray-900 dark:text-white">
-                    {comment.user?.full_name}
-                  </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
+              <div className="flex items-center justify-between mb-1 gap-2">
+                <div className="flex items-center gap-2 flex-wrap min-w-0">
+                  {isReply && comment.parent?.user ? (
+                    <>
+                      <span className="font-semibold text-sm text-gray-900 dark:text-white truncate">
+                        {comment.user?.full_name}
+                      </span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
+                        balas
+                      </span>
+                      <span className="font-semibold text-sm text-blue-600 dark:text-blue-400 truncate">
+                        {comment.parent.user.full_name}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="font-semibold text-sm text-gray-900 dark:text-white truncate">
+                      {comment.user?.full_name}
+                    </span>
+                  )}
+                  <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
                     {formatDistanceToNow(new Date(comment.created_at), {
                       addSuffix: true,
                       locale: id,
                     })}
                   </span>
                 </div>
+                
                 {isOwnComment && !isEditing && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-6 w-6">
+                      <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0">
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -177,6 +195,7 @@ export const CommentList: React.FC<CommentListProps> = ({
                   </DropdownMenu>
                 )}
               </div>
+              
               {isEditing ? (
                 <div className="space-y-2">
                   <textarea
@@ -206,11 +225,12 @@ export const CommentList: React.FC<CommentListProps> = ({
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">
+                <p className="text-sm text-gray-900 dark:text-white whitespace-pre-wrap break-words">
                   {comment.content}
                 </p>
               )}
             </div>
+            
             <div className="flex items-center gap-4 mt-1">
               <LikeButton
                 targetType="comment"
@@ -218,25 +238,23 @@ export const CommentList: React.FC<CommentListProps> = ({
                 initialLikeCount={comment.like_count || 0}
                 compact
               />
-              {!isReply && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() =>
-                    setReplyingTo(replyingTo === comment.id ? null : comment.id)
-                  }
-                  className="h-8 px-2 text-gray-600 dark:text-gray-400"
-                >
-                  <Reply className="h-4 w-4 mr-1" />
-                  Balas
-                </Button>
-              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
+                className="h-8 px-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+              >
+                <Reply className="h-4 w-4 mr-1" />
+                Balas
+              </Button>
             </div>
+            
             {replyingTo === comment.id && (
               <div className="mt-2">
                 <CommentInput
                   postID={postID}
                   parentID={comment.id}
+                  parentUserName={comment.user?.full_name}
                   placeholder="Tulis balasan..."
                   onCommentAdded={() => {
                     setReplyingTo(null);
@@ -246,13 +264,15 @@ export const CommentList: React.FC<CommentListProps> = ({
                 />
               </div>
             )}
-            {comment.replies && comment.replies.length > 0 && (
-              <div className="mt-3">
-                {comment.replies.map((reply) => renderComment(reply, true))}
-              </div>
-            )}
           </div>
         </div>
+        
+        {/* Nested Replies - Rendered BELOW parent comment */}
+        {comment.replies && comment.replies.length > 0 && (
+          <div>
+            {comment.replies.map((reply) => renderComment(reply, level + 1))}
+          </div>
+        )}
       </div>
     );
   };
@@ -283,7 +303,7 @@ export const CommentList: React.FC<CommentListProps> = ({
 
   return (
     <div className="space-y-4">
-      {comments.map((comment) => renderComment(comment))}
+      {comments.map((comment) => renderComment(comment, 0))}
     </div>
   );
 };

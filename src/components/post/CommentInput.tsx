@@ -12,6 +12,7 @@ import { useSession } from "next-auth/react";
 interface CommentInputProps {
   postID: string;
   parentID?: string;
+  parentUserName?: string;
   placeholder?: string;
   onCommentAdded?: () => void;
   compact?: boolean;
@@ -20,10 +21,19 @@ interface CommentInputProps {
 export const CommentInput: React.FC<CommentInputProps> = ({
   postID,
   parentID,
-  placeholder = "Tulis komentar...",
+  parentUserName,
+  placeholder,
   onCommentAdded,
   compact = false,
 }) => {
+  // Set default placeholder based on whether it's a reply or new comment
+  const defaultPlaceholder = parentID && parentUserName 
+    ? `Balas kepada ${parentUserName}...`
+    : parentID 
+    ? "Tulis balasan..."
+    : "Tulis komentar...";
+  
+  const finalPlaceholder = placeholder || defaultPlaceholder;
   const { data: session } = useSession();
   const { api } = useApi();
   const { toast } = useToast();
@@ -79,7 +89,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
             type="text"
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder={placeholder}
+            placeholder={finalPlaceholder}
             className="flex-1 bg-transparent border-none outline-none text-sm"
             disabled={loading}
           />
@@ -114,7 +124,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
           <Textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder={placeholder}
+            placeholder={finalPlaceholder}
             rows={3}
             className="resize-none"
             disabled={loading}

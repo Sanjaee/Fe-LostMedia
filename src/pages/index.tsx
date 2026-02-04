@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import FeedClient from "./feed-client";
 import { useApi } from "@/components/contex/ApiProvider";
 import type { Post } from "@/types/post";
-import { Loader2 } from "lucide-react";
+import { PostSkeletonList } from "@/components/post/PostSkeleton";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -139,9 +139,40 @@ export default function Home() {
   if (status === "loading" || loading) {
     return (
       <div
-        className={`${geistSans.variable} ${geistMono.variable} flex min-h-screen flex-col items-center justify-center bg-zinc-50 font-sans dark:bg-black`}
+        className={`${geistSans.variable} ${geistMono.variable} flex min-h-screen flex-col bg-zinc-50 font-sans dark:bg-black`}
       >
-        <Loader2 className="w-8 h-8 animate-spin text-zinc-500" />
+        <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 pt-4">
+          <div className="container mx-auto max-w-7xl px-4">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+              {/* Left Sidebar - Skeleton */}
+              <div className="hidden lg:block lg:col-span-1">
+                <div className="sticky top-20 space-y-2">
+                  <div className="h-10 w-full bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse" />
+                  <div className="h-10 w-full bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse" />
+                </div>
+              </div>
+
+              {/* Main Feed - Skeleton */}
+              <div className="col-span-1 lg:col-span-2 space-y-6">
+                <PostSkeletonList count={3} />
+              </div>
+
+              {/* Right Sidebar - Skeleton */}
+              <div className="hidden lg:block lg:col-span-1">
+                <div className="sticky top-20">
+                  <div className="h-6 w-24 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse mb-2" />
+                  <div className="h-24 w-full bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse mb-4" />
+                  <div className="h-6 w-24 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse mb-2" />
+                  <div className="space-y-2">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <div key={i} className="h-10 w-full bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse" />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
