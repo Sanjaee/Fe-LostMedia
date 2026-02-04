@@ -15,7 +15,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useApi } from "@/components/contex/ApiProvider";
 import { Loader2, X, Plus, Upload, Image as ImageIcon } from "lucide-react";
 import type { Post, CreatePostRequest, UpdatePostRequest } from "@/types/post";
-import { uploadMultipleImagesToCloudinary } from "@/lib/cloudinary";
 import Image from "next/image";
 
 interface PostDialogProps {
@@ -87,37 +86,13 @@ export const PostDialog: React.FC<PostDialogProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setUploading(true);
-    setUploadProgress(0);
 
     try {
-      let finalImageUrls: string[] = [];
-
-      // Upload new images to Cloudinary if there are any
-      if (imageFiles.length > 0) {
-        setUploadProgress(10);
-        const uploadedUrls = await uploadMultipleImagesToCloudinary(
-          imageFiles,
-          (progress) => {
-            // Map progress from 10-90% (reserve 10% for final submission)
-            setUploadProgress(10 + (progress * 0.8));
-          }
-        );
-        finalImageUrls = [...uploadedUrls];
-        setUploadProgress(90);
-      }
-
-      // Combine with existing URLs (from edit mode or manual URLs)
-      const manualUrls = formData.image_urls?.filter(url => url?.trim() && !url.startsWith("blob:")) || [];
-      finalImageUrls = [...finalImageUrls, ...existingImageUrls, ...manualUrls];
-
-      // Remove duplicates
-      finalImageUrls = [...new Set(finalImageUrls)];
-
-      setUploadProgress(100);
-
-      // Submit to backend
       if (isEditMode && post) {
+        // For edit mode, use existing flow with manual URLs
+        const manualUrls = formData.image_urls?.filter(url => url?.trim() && !url.startsWith("blob:")) || [];
+        const finalImageUrls = [...existingImageUrls, ...manualUrls];
+
         const updateData: UpdatePostRequest = {
           content: formData.content?.trim() || undefined,
           image_urls: finalImageUrls.length > 0 ? finalImageUrls : undefined,
@@ -126,12 +101,28 @@ export const PostDialog: React.FC<PostDialogProps> = ({
         await api.updatePost(post.id, updateData);
         toast({ title: "Success", description: "Post updated successfully" });
       } else {
-        const createData: CreatePostRequest = {
-          content: formData.content?.trim() || undefined,
-          image_urls: finalImageUrls.length > 0 ? finalImageUrls : undefined,
-        };
-        await api.createPost(createData);
-        toast({ title: "Success", description: "Post created successfully" });
+        // For create mode, use new async upload endpoint if there are image files
+        if (imageFiles.length > 0) {
+          // Use async upload endpoint
+          await api.createPostWithImages(
+            formData.content?.trim(),
+            imageFiles,
+            formData.group_id
+          );
+          toast({ 
+            title: "Success", 
+            description: "Post created successfully. Images are being processed." 
+          });
+        } else {
+          // No images, use regular create endpoint
+          const manualUrls = formData.image_urls?.filter(url => url?.trim() && !url.startsWith("blob:")) || [];
+          const createData: CreatePostRequest = {
+            content: formData.content?.trim() || undefined,
+            image_urls: manualUrls.length > 0 ? manualUrls : undefined,
+          };
+          await api.createPost(createData);
+          toast({ title: "Success", description: "Post created successfully" });
+        }
       }
 
       onSuccess();

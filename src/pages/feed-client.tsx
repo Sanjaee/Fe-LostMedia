@@ -25,6 +25,8 @@ import { useApi } from "@/components/contex/ApiProvider";
 import { parseTextWithLinks } from "@/utils/textUtils";
 import { LikeButton } from "@/components/post/LikeButton";
 import { CommentDialog } from "@/components/post/CommentDialog";
+import { useWebSocket } from "@/hooks/useWebSocket";
+import { useToast } from "@/hooks/use-toast";
 
 import type { Post } from "@/types/post";
 import type { Friendship } from "@/types/friendship";
@@ -43,6 +45,7 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { api } = useApi();
+  const { toast } = useToast();
   const scrollRestoredRef = useRef(false);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -274,11 +277,6 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
     setPostLikeCounts((prev) => ({ ...prev, [postId]: likeCount }));
   }, []);
 
-  // Handle case when posts is undefined (during build/prerender)
-  if (!posts || !Array.isArray(posts)) {
-    return null;
-  }
-
   // Handle post creation success
   const handlePostSuccess = async () => {
     try {
@@ -299,10 +297,58 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
         // Update posts with the latest feed
         setPosts(newPosts);
       }
-    } catch (error) {
-      console.error("Failed to refresh posts:", error);
+    } catch (err) {
+      console.error("Failed to refresh posts:", err);
     }
   };
+
+  // WebSocket connection for realtime post upload notifications
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const wsUrl = apiUrl.replace(/^https?:\/\//, "").replace(/\/$/, "");
+  const protocol = typeof window !== "undefined" && window.location.protocol === "https:" ? "wss:" : "ws:";
+  const wsUrlString = typeof window !== "undefined" ? `${protocol}//${wsUrl}/ws` : "";
+
+  useWebSocket(wsUrlString, {
+    onMessage: (data: any) => {
+      // Handle WebSocket message format
+      // Backend sends: { type: "notification", payload: {...} }
+      let messageData: any;
+      if (data.type === "notification" && data.payload) {
+        messageData = data.payload;
+      } else {
+        messageData = data;
+      }
+
+      // Handle post upload notifications
+      // For pending: direct WebSocket message (not saved to DB)
+      if (messageData.type === "post_upload_pending") {
+        toast({
+          title: "Upload Dimulai",
+          description: messageData.message || "Post sedang diproses, gambar sedang diupload...",
+        });
+      } 
+      // For completed: notification from DB (saved notification)
+      else if (messageData.type === "post_upload_completed" || 
+               (messageData.type === "notification" && messageData.payload?.type === "post_upload_completed")) {
+        const notification = messageData.type === "notification" ? messageData.payload : messageData;
+        toast({
+          title: notification.title || "Upload Selesai",
+          description: notification.message || `Post berhasil diupload dengan ${notification.data?.image_count || 0} gambar`,
+        });
+        
+        // Refresh posts to show the newly uploaded post with images
+        handlePostSuccess();
+      }
+    },
+    onError: (err) => {
+      console.error("WebSocket error in FeedClient:", err);
+    },
+  });
+
+  // Handle case when posts is undefined (during build/prerender)
+  if (!posts || !Array.isArray(posts)) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 pt-4">
