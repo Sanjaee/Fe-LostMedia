@@ -33,7 +33,7 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
   const router = useRouter();
   const { toast } = useToast();
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Only loading when dialog is open
   const [unreadCount, setUnreadCount] = useState(0);
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
   const [friendshipStatuses, setFriendshipStatuses] = useState<Record<string, string>>({});
@@ -59,18 +59,21 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
         return; // Invalid message format
       }
 
-      // Only add if it's a new notification (not already in the list)
-      setNotifications((prev) => {
-        const exists = prev.some(n => n.id === notification.id);
-        if (exists) {
-          return prev; // Don't add duplicate
-        }
-        return [notification, ...prev];
-      });
-      
       // Only increment unread count if notification is not read
       if (!notification.is_read) {
         setUnreadCount((prev) => prev + 1);
+        
+        // Only add to notifications list if dialog is open
+        if (open) {
+          setNotifications((prev) => {
+            const exists = prev.some(n => n.id === notification.id);
+            if (exists) {
+              return prev; // Don't add duplicate
+            }
+            // Add to the beginning of the list (newest first)
+            return [notification, ...prev];
+          });
+        }
       }
       
       // If notification is related to friendship, trigger refresh from DB
@@ -79,20 +82,30 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
         window.dispatchEvent(new Event('friendship-changed'));
       }
       
-      // Show toast notification
-      toast({
-        title: "Notifikasi Baru",
-        description: notification.message || notification.content || notification.title,
-      });
+      // Show toast notification (only if dialog is not open to avoid spam)
+      if (!open) {
+        toast({
+          title: "Notifikasi Baru",
+          description: notification.message || notification.content || notification.title,
+        });
+      }
     },
     onError: (error) => {
       console.error("WebSocket error:", error);
     },
   });
 
+  // Load unread count on mount (always, not just when dialog opens)
+  useEffect(() => {
+    loadUnreadCount();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Only load notifications list when dialog opens
   useEffect(() => {
     if (open) {
       loadNotifications();
+      // Also refresh unread count when dialog opens
       loadUnreadCount();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -408,6 +421,7 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
       case "friend_accepted":
         return <Check className="h-5 w-5 text-green-500" />;
       case "comment_reply":
+      case "post_comment":
         return <MessageCircle className="h-5 w-5 text-blue-500" />;
       default:
         return <Bell className="h-5 w-5 text-gray-500" />;
@@ -508,11 +522,10 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
       );
     }
     
-    // Show action button for comment_reply notifications
-    if (notification.type === "comment_reply") {
-      // Get post_id and comment_id from data or target_id
+    // Show action button for comment_reply and post_comment notifications
+    if (notification.type === "comment_reply" || notification.type === "post_comment") {
+      // Get post_id from data
       let postID: string | null = null;
-      let commentID: string | null = null;
       
       if ((notification as any).data) {
         try {
@@ -520,15 +533,9 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
             ? JSON.parse((notification as any).data) 
             : (notification as any).data;
           postID = data?.post_id || null;
-          commentID = data?.comment_id || null;
         } catch {
           // Ignore parse errors
         }
-      }
-      
-      // If no post_id in data, try target_id (might be comment_id)
-      if (!postID && notification.target_id) {
-        commentID = notification.target_id;
       }
       
       // If we have post_id, show button to view post

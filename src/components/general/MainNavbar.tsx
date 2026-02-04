@@ -49,9 +49,26 @@ export default function MainNavbar() {
       : "";
 
   useWebSocket(wsUrl, {
-    onMessage: () => {
-      // Update unread count when new notification arrives
-      setUnreadCount((prev) => prev + 1);
+    onMessage: (data: any) => {
+      // Handle WebSocket message format
+      // Backend sends: { type: "notification", payload: {...} }
+      let notification: any;
+      if (data.type === "notification" && data.payload) {
+        notification = data.payload;
+      } else if (data.id) {
+        // Direct notification object
+        notification = data;
+      } else {
+        return; // Invalid message format
+      }
+
+      // Only increment unread count if notification is not read
+      if (!notification.is_read) {
+        setUnreadCount((prev) => prev + 1);
+      }
+    },
+    onError: (error) => {
+      console.error("WebSocket error in MainNavbar:", error);
     },
   });
 
