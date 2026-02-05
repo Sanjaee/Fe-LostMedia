@@ -20,6 +20,8 @@ import { CommentDialog } from "@/components/post/CommentDialog";
 import { PostCard } from "@/components/post/PostCard";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
+import { Eye } from "lucide-react";
 
 import type { Post } from "@/types/post";
 import type { Friendship } from "@/types/friendship";
@@ -385,9 +387,39 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
       else if (messageData.type === "post_upload_completed" || 
                (messageData.type === "notification" && messageData.payload?.type === "post_upload_completed")) {
         const notification = messageData.type === "notification" ? messageData.payload : messageData;
+        
+        // Get post_id from notification data or target_id
+        let postID: string | null = notification.target_id || null;
+        if (!postID && notification.data) {
+          try {
+            const data = typeof notification.data === 'string' 
+              ? JSON.parse(notification.data) 
+              : notification.data;
+            postID = data?.post_id || null;
+          } catch {
+            // Ignore parse errors
+          }
+        }
+        
+        // Create action button if post_id is available
+        const action = postID ? (
+          <ToastAction
+            altText="Lihat Post"
+            onClick={() => {
+              // Navigate to feed with photo modal format: /?fbid=POST_ID&set=pcb.POST_ID.0
+              const redirectUrl = `/?fbid=${postID}&set=pcb.${postID}.0`;
+              router.push(redirectUrl);
+            }}
+          >
+            <Eye className="h-4 w-4 mr-1" />
+            Lihat Post
+          </ToastAction>
+        ) : undefined;
+        
         toast({
           title: notification.title || "Upload Selesai",
           description: notification.message || `Post berhasil diupload dengan ${notification.data?.image_count || 0} gambar`,
+          action: action,
         });
         
         // Refresh posts to show the newly uploaded post with images

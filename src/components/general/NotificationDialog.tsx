@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 // import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Bell, UserPlus, Check, X, Loader2, User as UserIcon, Trash2, MessageCircle, Eye } from "lucide-react";
+import { Bell, UserPlus, Check, X, Loader2, User as UserIcon, Trash2, MessageCircle } from "lucide-react";
 import { useRouter } from "next/router";
 import type { Notification } from "@/types/notification";
 import { formatDistanceToNow } from "date-fns";
@@ -426,6 +426,8 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
         return <MessageCircle className="h-5 w-5 text-blue-500" />;
       case "post_liked":
         return <span className="text-2xl">👍</span>;
+      case "post_upload_completed":
+        return <Check className="h-5 w-5 text-green-500" />;
       default:
         return <Bell className="h-5 w-5 text-gray-500" />;
     }
@@ -567,6 +569,46 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
     
     // Show action button for post_liked notifications
     if (notification.type === "post_liked") {
+      // Get post_id from data or target_id
+      let postID: string | null = notification.target_id || null;
+      
+      if (!postID && (notification as any).data) {
+        try {
+          const data = typeof (notification as any).data === 'string' 
+            ? JSON.parse((notification as any).data) 
+            : (notification as any).data;
+          postID = data?.post_id || null;
+        } catch {
+          // Ignore parse errors
+        }
+      }
+      
+      // If we have post_id, show button to view post
+      if (postID) {
+        return (
+          <div className="flex gap-2 mt-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={(e) => {
+                e.stopPropagation();
+                // Navigate to feed with photo modal format: /?fbid=POST_ID&set=pcb.POST_ID.0
+                const redirectUrl = `/?fbid=${postID}&set=pcb.${postID}.0`;
+                router.push(redirectUrl);
+                onOpenChange(false);
+              }}
+              className="h-8"
+            >
+              <EyeIcon className="h-4 w-4 mr-1" />
+              Lihat Post
+            </Button>
+          </div>
+        );
+      }
+    }
+    
+    // Show action button for post_upload_completed notifications
+    if (notification.type === "post_upload_completed") {
       // Get post_id from data or target_id
       let postID: string | null = notification.target_id || null;
       
