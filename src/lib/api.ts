@@ -643,6 +643,31 @@ class ApiClient {
     );
   }
 
+  // Admin APIs
+  async getAllUsers(limit: number = 50, offset: number = 0): Promise<{
+    users: any[];
+    total: number;
+    limit: number;
+    offset: number;
+  }> {
+    return this.request(
+      `/api/v1/admin/users?limit=${limit}&offset=${offset}`,
+      {
+        method: "GET",
+      }
+    );
+  }
+
+  async getUserStats(): Promise<{
+    total: number;
+    by_type: { admin: number; member: number };
+    by_verification: { verified: number; unverified: number };
+  }> {
+    return this.request(`/api/v1/admin/stats`, {
+      method: "GET",
+    });
+  }
+
   async updatePost(
     postID: string,
     data: UpdatePostRequest

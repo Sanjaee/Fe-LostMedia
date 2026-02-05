@@ -11,11 +11,14 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith(route)
   );
 
+  // Admin routes (require admin role)
+  const isAdminRoute = pathname.startsWith("/admin");
+
   // Routes that should redirect if already authenticated
   const authRoutes = ["/auth/login", "/auth/register"];
   const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
 
-  if (isProtectedRoute) {
+  if (isProtectedRoute || isAdminRoute) {
     const token = await getToken({
       req: request,
       secret: process.env.NEXTAUTH_SECRET,
@@ -30,6 +33,14 @@ export async function middleware(request: NextRequest) {
       // Only use pathname for callbackUrl, not full URL with query params
       url.searchParams.set("callbackUrl", encodeURIComponent(pathname));
       return NextResponse.redirect(url);
+    }
+
+    // For admin routes, check role (will be validated by backend)
+    if (isAdminRoute) {
+      const userType = (token as any)?.userType || (token as any)?.role;
+      if (userType !== "admin") {
+        return NextResponse.redirect(new URL("/", request.url));
+      }
     }
   }
 

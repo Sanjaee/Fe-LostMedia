@@ -18,6 +18,8 @@ declare module "next-auth" {
       email?: string | null;
       image?: string | null;
       role?: string;
+      userType?: string;
+      user_type?: string;
       username?: string;
     };
     accessToken?: string;

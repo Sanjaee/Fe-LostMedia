@@ -213,7 +213,7 @@ export const authOptions: NextAuthOptions = {
               };
             }
           }
-        } catch (error) {
+        } catch {
           // Failed to fetch updated user data
           // Continue with existing token if fetch fails
         }
@@ -248,6 +248,8 @@ export const authOptions: NextAuthOptions = {
         session.user.image = (token.image as string) || session.user.image || undefined;
         session.user.name = (token.name as string) || session.user.name || "";
         session.user.role = token.userType as string; // Add role alias
+        session.user.userType = token.userType as string; // Add userType to user object for consistency
+        session.user.user_type = token.userType as string; // Add user_type alias for compatibility
         session.user.username = (token.name as string) || session.user.name; // Add username alias
       }
       
