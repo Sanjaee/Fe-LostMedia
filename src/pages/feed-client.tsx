@@ -200,62 +200,71 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
     }
   }, [initialPosts]);
 
-  // Load like and comment counts for posts
+  // Load like and comment counts for posts (only if not already in post data)
   const loadPostEngagements = useCallback(async () => {
     if (posts.length === 0) return;
 
-    try {
-      const engagements = await Promise.all(
-        posts.map(async (post) => {
-          try {
-            const [likeCountRes, commentCountRes, likesRes] = await Promise.all([
-              api.getLikeCount("post", post.id),
-              api.getCommentCount(post.id),
-              api.getLikes("post", post.id, 100, 0).catch(() => ({ likes: [] })),
-            ]);
+    // First, use counts from post data if available (from backend)
+    const likeCounts: Record<string, number> = {};
+    const commentCounts: Record<string, number> = {};
+    const userLikes: Record<string, any> = {};
 
-            // Check if current user has liked this post
-            const userId = session?.user?.id;
-            const userLike = likesRes.likes?.find(
-              (like: any) => like.user_id === userId
-            ) || null;
+    // Extract counts from post data if available
+    posts.forEach((post) => {
+      if (post.likes_count !== undefined) {
+        likeCounts[post.id] = post.likes_count;
+      }
+      if (post.comments_count !== undefined) {
+        commentCounts[post.id] = post.comments_count;
+      }
+      if (post.user_liked !== undefined && post.user_liked) {
+        userLikes[post.id] = { user_id: session?.user?.id, post_id: post.id };
+      }
+    });
 
-            return {
-              postId: post.id,
-              likeCount: likeCountRes.count || 0,
-              commentCount: commentCountRes.count || 0,
-              userLike,
-            };
-          } catch {
-            return {
-              postId: post.id,
-              likeCount: 0,
-              commentCount: 0,
-              userLike: null,
-            };
-          }
-        })
-      );
+    // Only fetch counts for posts that don't have them
+    const postsNeedingCounts = posts.filter(
+      (post) => post.likes_count === undefined || post.comments_count === undefined
+    );
 
-      const likeCounts: Record<string, number> = {};
-      const commentCounts: Record<string, number> = {};
-      const userLikes: Record<string, any> = {};
+    if (postsNeedingCounts.length > 0) {
+      try {
+        const engagements = await Promise.all(
+          postsNeedingCounts.map(async (post) => {
+            try {
+              const [likeCountRes, commentCountRes] = await Promise.all([
+                api.getLikeCount("post", post.id).catch(() => ({ count: 0 })),
+                api.getCommentCount(post.id).catch(() => ({ count: 0 })),
+              ]);
 
-      engagements.forEach((eng) => {
-        likeCounts[eng.postId] = eng.likeCount;
-        commentCounts[eng.postId] = eng.commentCount;
-        if (eng.userLike) {
-          userLikes[eng.postId] = eng.userLike;
-        }
-      });
+              return {
+                postId: post.id,
+                likeCount: likeCountRes.count || 0,
+                commentCount: commentCountRes.count || 0,
+              };
+            } catch {
+              return {
+                postId: post.id,
+                likeCount: 0,
+                commentCount: 0,
+              };
+            }
+          })
+        );
+
+        engagements.forEach((eng) => {
+          likeCounts[eng.postId] = eng.likeCount;
+          commentCounts[eng.postId] = eng.commentCount;
+        });
+      } catch (error) {
+        console.error("Failed to load post engagements:", error);
+      }
+    }
 
       setPostLikeCounts(likeCounts);
       setPostCommentCounts(commentCounts);
       setPostUserLikes(userLikes);
-    } catch (error) {
-      console.error("Failed to load post engagements:", error);
-    }
-  }, [posts, api, session]);
+  }, [posts, api, session?.user?.id]);
 
   useEffect(() => {
     if (posts.length > 0) {

@@ -8,6 +8,9 @@ export interface Post {
   is_pinned: boolean;
   created_at: string;
   updated_at: string;
+  likes_count?: number; // Count from backend
+  comments_count?: number; // Count from backend
+  user_liked?: boolean; // Whether current user liked this post
   user?: {
     id: string;
     full_name: string;

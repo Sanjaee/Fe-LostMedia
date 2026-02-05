@@ -184,25 +184,31 @@ export function PostCard({
         )}
         
         {/* Stats */}
-        {(postLikeCounts[post.id] > 0 || postCommentCounts[post.id] > 0) && (
-          <div className="px-4 py-2 flex items-center justify-between text-zinc-500 text-sm">
-            <div className="flex items-center gap-1">
-              {postLikeCounts[post.id] > 0 && (
-                <>
-                  <div className="bg-blue-500 rounded-full p-1">
-                    <ThumbsUp className="w-3 h-3 text-white fill-white" />
-                  </div>
-                  <span>{postLikeCounts[post.id]}</span>
-                </>
-              )}
+        {(() => {
+          // Use counts from post data if available, otherwise use from props
+          const likeCount = post.likes_count !== undefined ? post.likes_count : (postLikeCounts[post.id] || 0);
+          const commentCount = post.comments_count !== undefined ? post.comments_count : (postCommentCounts[post.id] || 0);
+          
+          return (likeCount > 0 || commentCount > 0) ? (
+            <div className="px-4 py-2 flex items-center justify-between text-zinc-500 text-sm">
+              <div className="flex items-center gap-1">
+                {likeCount > 0 && (
+                  <>
+                    <div className="bg-blue-500 rounded-full p-1">
+                      <ThumbsUp className="w-3 h-3 text-white fill-white" />
+                    </div>
+                    <span>{likeCount}</span>
+                  </>
+                )}
+              </div>
+              <div className="flex items-center gap-4">
+                {commentCount > 0 && (
+                  <span>{commentCount} komentar</span>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-4">
-              {postCommentCounts[post.id] > 0 && (
-                <span>{postCommentCounts[post.id]} komentar</span>
-              )}
-            </div>
-          </div>
-        )}
+          ) : null;
+        })()}
         
         <Separator />
 
@@ -212,8 +218,8 @@ export function PostCard({
             <LikeButton
               targetType="post"
               targetID={post.id}
-              initialLikeCount={postLikeCounts[post.id] || 0}
-              initialUserLike={postUserLikes[post.id] || null}
+              initialLikeCount={post.likes_count !== undefined ? post.likes_count : (postLikeCounts[post.id] || 0)}
+              initialUserLike={post.user_liked ? { user_id: post.user_id, post_id: post.id } : (postUserLikes[post.id] || null)}
               onLikeChange={(liked, count) => handleLikeChange(post.id, liked, count)}
             />
           </div>
@@ -224,9 +230,12 @@ export function PostCard({
           >
             <MessageCircle className="w-5 h-5" />
             <span>Komentari</span>
-            {postCommentCounts[post.id] > 0 && (
-              <span className="ml-1">({postCommentCounts[post.id]})</span>
-            )}
+            {(() => {
+              const commentCount = post.comments_count !== undefined ? post.comments_count : (postCommentCounts[post.id] || 0);
+              return commentCount > 0 ? (
+                <span className="ml-1">({commentCount})</span>
+              ) : null;
+            })()}
           </Button>
           <Button variant="ghost" className="flex-1 gap-2 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800">
             <Share2 className="w-5 h-5" />
