@@ -608,45 +608,52 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
                 {/* Contacts List */}
                 {loadingFriends ? (
                   <div className="text-center py-4 text-zinc-500 text-sm">Memuat kontak...</div>
-                ) : friends.length > 0 ? (
-                  friends.slice(0, 10).map((friendship) => {
-                    // Determine which user is the friend (not the current user)
-                    const friend = session?.user?.id === friendship.sender_id 
-                      ? friendship.receiver 
-                      : friendship.sender;
-                    
-                    if (!friend) return null;
-                    
-                    const getInitials = (name?: string) => {
-                      if (!name) return 'U';
-                      return name
-                        .split(' ')
-                        .map(n => n[0])
-                        .join('')
-                        .toUpperCase()
-                        .slice(0, 2);
-                    };
+                ) : (() => {
+                  // Filter only accepted friendships
+                  const acceptedFriends = friends.filter((friendship) => friendship.status === "accepted");
+                  
+                  return acceptedFriends.length > 0 ? (
+                    <div className="max-h-[400px] overflow-y-auto space-y-1">
+                      {acceptedFriends.map((friendship) => {
+                        // Determine which user is the friend (not the current user)
+                        const friend = session?.user?.id === friendship.sender_id 
+                          ? friendship.receiver 
+                          : friendship.sender;
+                        
+                        if (!friend) return null;
+                        
+                        const getInitials = (name?: string) => {
+                          if (!name) return 'U';
+                          return name
+                            .split(' ')
+                            .map(n => n[0])
+                            .join('')
+                            .toUpperCase()
+                            .slice(0, 2);
+                        };
 
-                    return (
-                      <Link
-                        key={friendship.id}
-                        href={`/profile/${friend.id}`}
-                        className="flex items-center gap-3 p-2 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg cursor-pointer"
-                      >
-                        <div className="relative">
-                          <Avatar className="w-8 h-8">
-                            <AvatarImage src={friend.profile_photo || ''} />
-                            <AvatarFallback>{getInitials(friend.full_name)}</AvatarFallback>
-                          </Avatar>
-                          <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white dark:border-zinc-900"></div>
-                        </div>
-                        <div className="font-medium text-sm">{friend.full_name || friend.username || 'Unknown'}</div>
-                      </Link>
-                    );
-                  })
-                ) : (
-                  <div className="text-center py-4 text-zinc-500 text-sm">Belum ada kontak</div>
-                )}
+                        return (
+                          <Link
+                            key={friendship.id}
+                            href={`/profile/${friend.id}`}
+                            className="flex items-center gap-3 p-2 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg cursor-pointer transition-colors"
+                          >
+                            <div className="relative">
+                              <Avatar className="w-8 h-8">
+                                <AvatarImage src={friend.profile_photo || ''} />
+                                <AvatarFallback>{getInitials(friend.full_name)}</AvatarFallback>
+                              </Avatar>
+                              <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white dark:border-zinc-900"></div>
+                            </div>
+                            <div className="font-medium text-sm truncate">{friend.full_name || friend.username || 'Unknown'}</div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 text-zinc-500 text-sm">Belum ada kontak</div>
+                  );
+                })()}
               </div>
             </div>
           </div>

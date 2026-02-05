@@ -27,7 +27,8 @@ import {
   ChevronDown,
   LogOut,
   User,
-  Settings
+  Settings,
+  Shield
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationDialog } from "./NotificationDialog";
@@ -272,6 +273,30 @@ export default function MainNavbar() {
                   <Settings className="mr-2 h-4 w-4" />
                   Settings
                 </DropdownMenuItem>
+                {/* Admin menu - only show if user is admin */}
+                {(() => {
+                  const userType = session.userType || 
+                    session.user?.userType || 
+                    session.user?.user_type || 
+                    session.user?.role || 
+                    (session.user as any)?.userType;
+                  
+                  if (userType === "admin") {
+                    return (
+                      <>
+                        <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
+                        <DropdownMenuItem
+                          onClick={() => router.push("/admin")}
+                          className="cursor-pointer text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                        >
+                          <Shield className="mr-2 h-4 w-4" />
+                          Admin Dashboard
+                        </DropdownMenuItem>
+                      </>
+                    );
+                  }
+                  return null;
+                })()}
                 <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
                 <DropdownMenuItem
                   onClick={handleSignOut}

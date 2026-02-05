@@ -171,6 +171,10 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
       );
 
       setNotifications(filteredNotifs);
+      
+      // Mark all notifications as read after successfully loading
+      // This ensures all notifications are marked as read when dialog opens
+      await handleMarkAllAsRead();
     } catch (error: any) {
       console.error("Failed to load notifications:", error);
       toast({
@@ -189,6 +193,21 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
       setUnreadCount(response.count || response.data?.count || 0);
     } catch (error) {
       console.error("Failed to load unread count:", error);
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      await api.markAllNotificationsAsRead();
+      // Update all notifications to read status
+      setNotifications((prev) =>
+        prev.map((n) => ({ ...n, is_read: true }))
+      );
+      // Reset unread count to 0
+      setUnreadCount(0);
+    } catch (error) {
+      console.error("Failed to mark all notifications as read:", error);
+      // Don't show error toast as this is a background operation
     }
   };
 
