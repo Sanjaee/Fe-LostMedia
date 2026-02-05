@@ -134,7 +134,7 @@ export const LoginForm = () => {
         if (result?.ok) {
           toast({
             title: "✅ Login Berhasil!",
-            description: "Selamat datang kembali di template zacode!",
+            description: "Selamat datang kembali di Lost Media!",
           });
           router.push(callbackUrl);
         } else {
@@ -204,7 +204,7 @@ export const LoginForm = () => {
         if (result?.ok) {
           toast({
             title: "✅ Login Berhasil!",
-            description: "Selamat datang kembali di template zacode!",
+            description: "Selamat datang kembali di Lost Media!",
           });
           router.push(callbackUrl);
         } else {
@@ -338,7 +338,7 @@ export const LoginForm = () => {
     <Card className="w-full max-w-md mx-auto dark:bg-gray-800 dark:border-gray-700">
       <CardHeader className="text-center">
         <CardTitle className="text-3xl font-bold text-gray-900 dark:text-gray-50">
-          Template Zacode
+          Lost Media
         </CardTitle>
         <CardDescription className="text-gray-600 dark:text-gray-400">
           Masuk ke akun Anda

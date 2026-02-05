@@ -78,23 +78,12 @@ export default function Home() {
       }
     }
     
-    // Load fresh data - newest first for initial load
-    loadFeed(false, "newest");
+    // Load fresh data - popular first for initial load
+    loadFeed(false, "popular");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.user?.id]);
   
-  // Auto-refresh with popular sorting after initial load
-  useEffect(() => {
-    if (session?.user?.id && posts && posts.length > 0) {
-      // After 3 seconds, refresh with popular sorting
-      const timer = setTimeout(() => {
-        loadFeed(true, "popular"); // Silent refresh
-      }, 3000);
-      
-      return () => clearTimeout(timer);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.user?.id, posts?.length]);
+  // No auto-refresh needed - we load popular directly from the start
 
   const loadFeed = async (silent = false, sort: "newest" | "popular" = "newest") => {
     try {
