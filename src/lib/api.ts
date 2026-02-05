@@ -632,10 +632,11 @@ class ApiClient {
 
   async getFeed(
     limit: number = 20,
-    offset: number = 0
+    offset: number = 0,
+    sort: "newest" | "popular" = "newest"
   ): Promise<PostResponse> {
     return this.request<PostResponse>(
-      `/api/v1/posts/feed?limit=${limit}&offset=${offset}`,
+      `/api/v1/posts/feed?limit=${limit}&offset=${offset}&sort=${sort}`,
       {
         method: "GET",
       }

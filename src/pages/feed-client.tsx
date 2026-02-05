@@ -274,8 +274,8 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
   // Handle post creation success
   const handlePostSuccess = async () => {
     try {
-      // Fetch the latest posts to get the newly created post
-      const response = await api.getFeed(50, 0);
+      // Fetch the latest posts to get the newly created post (newest first)
+      const response = await api.getFeed(50, 0, "newest");
       
       // Handle different response structures
       let newPosts: Post[] = [];
@@ -288,13 +288,36 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
       }
       
       if (newPosts.length > 0) {
-        // Update posts with the latest feed
+        // Update posts with the latest feed (newest first for new posts)
         setPosts(newPosts);
       }
     } catch (err) {
       console.error("Failed to refresh posts:", err);
     }
   };
+  
+  // Load feed with sorting option
+  const loadFeed = useCallback(async (sort: "newest" | "popular" = "popular") => {
+    try {
+      const response = await api.getFeed(50, 0, sort);
+      
+      // Handle different response structures
+      let feedPosts: Post[] = [];
+      if (response.data?.posts && Array.isArray(response.data.posts)) {
+        feedPosts = response.data.posts;
+      } else if (response.posts && Array.isArray(response.posts)) {
+        feedPosts = response.posts;
+      } else if (Array.isArray(response)) {
+        feedPosts = response;
+      }
+      
+      if (feedPosts.length > 0) {
+        setPosts(feedPosts);
+      }
+    } catch (err) {
+      console.error("Failed to load feed:", err);
+    }
+  }, [api]);
 
   // WebSocket connection for realtime post upload notifications
   // Use useMemo to prevent URL from changing on every render
@@ -342,6 +365,23 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
       console.error("WebSocket error in FeedClient:", err);
     },
   });
+
+  // Auto-refresh feed with popular sorting after initial load
+  useEffect(() => {
+    if (session?.user?.id && initialPosts && initialPosts.length > 0) {
+      // Use initial posts first (newest first from server-side)
+      // After page is loaded, refresh with popular sorting
+      const timer = setTimeout(() => {
+        loadFeed("popular");
+      }, 3000); // Wait 3 seconds then switch to popular sorting
+      
+      return () => clearTimeout(timer);
+    } else if (session?.user?.id && (!posts || posts.length === 0)) {
+      // If no initial posts, load with popular sorting
+      loadFeed("popular");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user?.id, initialPosts?.length, posts.length]);
 
   // Handle case when posts is undefined (during build/prerender)
   if (!posts || !Array.isArray(posts)) {

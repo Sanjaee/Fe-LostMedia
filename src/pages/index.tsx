@@ -68,8 +68,8 @@ export default function Home() {
           const parsedPosts = JSON.parse(cachedPosts);
           setPosts(parsedPosts);
           setLoading(false);
-          // Load fresh data in background
-          loadFeed(true);
+          // Load fresh data in background with popular sorting
+          loadFeed(true, "popular");
           return;
         } catch (e) {
           // If cache is corrupted, load fresh
@@ -78,21 +78,32 @@ export default function Home() {
       }
     }
     
-    // Load fresh data
-    loadFeed();
+    // Load fresh data - newest first for initial load
+    loadFeed(false, "newest");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.user?.id]);
+  
+  // Auto-refresh with popular sorting after initial load
+  useEffect(() => {
+    if (session?.user?.id && posts && posts.length > 0) {
+      // After 3 seconds, refresh with popular sorting
+      const timer = setTimeout(() => {
+        loadFeed(true, "popular"); // Silent refresh
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user?.id, posts?.length]);
 
-  const loadFeed = async (silent = false) => {
+  const loadFeed = async (silent = false, sort: "newest" | "popular" = "newest") => {
     try {
       if (!silent) {
         setLoading(true);
       }
       setError(null);
-      // Get feed - this should return all posts visible to the user
-      // (public posts + friends posts based on privacy settings)
-      // Backend handles the privacy filtering
-      const response = await api.getFeed(50, 0);
+      // Get feed - newest first for initial load, popular after refresh
+      const response = await api.getFeed(50, 0, sort);
       
       // Handle different response structures
       // Backend returns: { success: true, message: "...", data: { posts: [...] } }
