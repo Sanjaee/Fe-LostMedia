@@ -27,9 +27,15 @@ export function useWebSocket(
       return;
     }
 
-    // Close existing connection if any
-    if (wsRef.current) {
+    // Don't reconnect if already connected
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      return;
+    }
+
+    // Close existing connection if any (but not if already open)
+    if (wsRef.current && wsRef.current.readyState !== WebSocket.OPEN) {
       wsRef.current.close();
+      wsRef.current = null;
     }
 
     try {
@@ -77,13 +83,19 @@ export function useWebSocket(
         setIsConnected(false);
         options.onClose?.();
 
-        // Attempt to reconnect
-        if (reconnectAttempts.current < maxReconnectAttempts) {
+        // Only attempt to reconnect if we have a valid session and URL
+        if (session?.accessToken && url && reconnectAttempts.current < maxReconnectAttempts) {
           reconnectAttempts.current++;
           const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000);
           reconnectTimeoutRef.current = setTimeout(() => {
-            connect();
+            // Check again before reconnecting
+            if (session?.accessToken && url) {
+              connect();
+            }
           }, delay);
+        } else {
+          // Reset attempts if we can't reconnect
+          reconnectAttempts.current = 0;
         }
       };
 
@@ -94,19 +106,29 @@ export function useWebSocket(
   };
 
   useEffect(() => {
-    if (session?.accessToken) {
-      connect();
+    if (!session?.accessToken || !url) {
+      return;
     }
+
+    // Only connect if not already connected
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      return;
+    }
+
+    connect();
 
     return () => {
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
       }
       if (wsRef.current) {
         wsRef.current.close();
+        wsRef.current = null;
       }
     };
-  }, [session?.accessToken, url]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.accessToken]); // Remove url from dependencies to prevent reconnection loops
 
   const send = (data: any) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {

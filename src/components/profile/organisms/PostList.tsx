@@ -23,7 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, MoreHorizontal, Edit, Trash2, Pin, Image, MessageCircle, Share2 } from "lucide-react";
+import { Loader2, MoreHorizontal, Edit, Trash2, Pin, Image, MessageCircle, Share2, Eye } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { id } from "date-fns/locale";
 import type { Post } from "@/types/post";
@@ -64,6 +64,7 @@ export const PostList: React.FC<PostListProps> = ({
   const [postLikeCounts, setPostLikeCounts] = useState<Record<string, number>>({});
   const [postUserLikes, setPostUserLikes] = useState<Record<string, any>>({});
   const [postCommentCounts, setPostCommentCounts] = useState<Record<string, number>>({});
+  const [postViewCounts, setPostViewCounts] = useState<Record<string, number>>({});
 
   const loadPosts = async () => {
     try {
@@ -93,9 +94,10 @@ export const PostList: React.FC<PostListProps> = ({
       const engagements = await Promise.all(
         posts.map(async (post) => {
           try {
-            const [likeCountRes, commentCountRes, likesRes] = await Promise.all([
+            const [likeCountRes, commentCountRes, viewCountRes, likesRes] = await Promise.all([
               api.getLikeCount("post", post.id),
               api.getCommentCount(post.id),
+              api.getPostViewCount(post.id).catch(() => ({ count: 0 })),
               api.getLikes("post", post.id, 100, 0).catch(() => ({ likes: [] })),
             ]);
 
@@ -109,13 +111,15 @@ export const PostList: React.FC<PostListProps> = ({
               postId: post.id,
               likeCount: likeCountRes.count || 0,
               commentCount: commentCountRes.count || 0,
+              viewCount: viewCountRes.count || 0,
               userLike,
             };
-          } catch (error) {
+          } catch {
             return {
               postId: post.id,
               likeCount: 0,
               commentCount: 0,
+              viewCount: 0,
               userLike: null,
             };
           }
@@ -124,11 +128,13 @@ export const PostList: React.FC<PostListProps> = ({
 
       const likeCounts: Record<string, number> = {};
       const commentCounts: Record<string, number> = {};
+      const viewCounts: Record<string, number> = {};
       const userLikes: Record<string, any> = {};
 
       engagements.forEach((eng) => {
         likeCounts[eng.postId] = eng.likeCount;
         commentCounts[eng.postId] = eng.commentCount;
+        viewCounts[eng.postId] = eng.viewCount;
         if (eng.userLike) {
           userLikes[eng.postId] = eng.userLike;
         }
@@ -136,6 +142,7 @@ export const PostList: React.FC<PostListProps> = ({
 
       setPostLikeCounts(likeCounts);
       setPostCommentCounts(commentCounts);
+      setPostViewCounts(viewCounts);
       setPostUserLikes(userLikes);
     } catch (error) {
       console.error("Failed to load post engagements:", error);
@@ -533,13 +540,26 @@ export const PostList: React.FC<PostListProps> = ({
               </div>
             )}
 
-            {/* Image Count Badge */}
-            {post.image_urls && post.image_urls.length > 0 && (
-              <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-2">
-                <Image className="h-4 w-4" />
-                <span>{post.image_urls.length} {post.image_urls.length === 1 ? 'image' : 'images'}</span>
+            {/* Stats Section - Image Count and View Count */}
+            {(post.image_urls && post.image_urls.length > 0) || postViewCounts[post.id] > 0 ? (
+              <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 mt-2 mb-3 px-1">
+                {/* Image Count */}
+                {post.image_urls && post.image_urls.length > 0 && (
+                  <div className="flex items-center gap-1.5 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+                    <Image className="h-4 w-4 shrink-0" />
+                    <span className="font-medium">{post.image_urls.length} gambar</span>
+                  </div>
+                )}
+                
+                {/* View Count */}
+                {postViewCounts[post.id] > 0 && (
+                  <div className="flex items-center gap-1.5 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+                    <Eye className="h-4 w-4 shrink-0" />
+                    <span className="font-medium">{postViewCounts[post.id]} dilihat</span>
+                  </div>
+                )}
               </div>
-            )}
+            ) : null}
 
             {/* Engagement Section */}
             <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
@@ -547,14 +567,14 @@ export const PostList: React.FC<PostListProps> = ({
               {postLikeCounts[post.id] > 0 && (
                 <div className="flex items-center gap-2 mb-2 text-sm text-gray-600 dark:text-gray-400">
                   <div className="flex items-center -space-x-1">
-                    <div className="h-5 w-5 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs">
+                    <div className="h-5 w-5 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs border-2 border-white dark:border-gray-900">
                       👍
                     </div>
-                    <div className="h-5 w-5 rounded-full bg-red-500 flex items-center justify-center text-white text-xs">
+                    <div className="h-5 w-5 rounded-full bg-red-500 flex items-center justify-center text-white text-xs border-2 border-white dark:border-gray-900">
                       ❤️
                     </div>
                   </div>
-                  <span>{postLikeCounts[post.id]}</span>
+                  <span className="font-medium">{postLikeCounts[post.id]}</span>
                 </div>
               )}
 

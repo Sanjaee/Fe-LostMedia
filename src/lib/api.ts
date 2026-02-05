@@ -658,6 +658,18 @@ class ApiClient {
     });
   }
 
+  async trackPostView(postID: string): Promise<void> {
+    return this.request<void>(`/api/v1/posts/${postID}/view`, {
+      method: "POST",
+    });
+  }
+
+  async getPostViewCount(postID: string): Promise<{ count: number }> {
+    return this.request<{ count: number }>(`/api/v1/posts/${postID}/views/count`, {
+      method: "GET",
+    });
+  }
+
   async countPostsByUserID(userID: string): Promise<{ count: number }> {
     return this.request<{ count: number }>(
       `/api/v1/posts/user/${userID}/count`,
