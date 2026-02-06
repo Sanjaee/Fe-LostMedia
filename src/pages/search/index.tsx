@@ -112,7 +112,7 @@ const SearchPage: React.FC = () => {
         {/* Content */}
         <div className="mt-4">
           {activeTab === "people" ? (
-            <PeopleSearchList keyword={query} limit={3} onCountChange={setPeopleCount} />
+            <PeopleSearchList keyword={query} limit={10} onCountChange={setPeopleCount} />
           ) : (
             <PostSearchList keyword={query} limit={5} onCountChange={setPostsCount} />
           )}

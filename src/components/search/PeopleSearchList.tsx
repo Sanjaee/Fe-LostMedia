@@ -19,7 +19,7 @@ interface PeopleSearchListProps {
 
 export const PeopleSearchList: React.FC<PeopleSearchListProps> = ({ 
   keyword, 
-  limit = 3,
+  limit = 10,
   onCountChange
 }) => {
   const router = useRouter();
@@ -28,15 +28,27 @@ export const PeopleSearchList: React.FC<PeopleSearchListProps> = ({
   const { toast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
   const [friendshipStatuses, setFriendshipStatuses] = useState<Record<string, string>>({});
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (keyword?.trim()) {
-      searchUsers();
+      // Reset when keyword changes
+      setUsers([]);
+      setOffset(0);
+      setHasMore(false);
+      searchUsers(true);
     } else {
       setUsers([]);
       setFriendshipStatuses({});
+      setOffset(0);
+      setHasMore(false);
+      if (onCountChange) {
+        onCountChange(0);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [keyword]);
@@ -81,7 +93,7 @@ export const PeopleSearchList: React.FC<PeopleSearchListProps> = ({
     };
   }, [users, api]);
 
-  const searchUsers = async () => {
+  const searchUsers = async (reset: boolean = false) => {
     if (!keyword?.trim()) {
       setUsers([]);
       setFriendshipStatuses({});
@@ -92,26 +104,43 @@ export const PeopleSearchList: React.FC<PeopleSearchListProps> = ({
     }
 
     try {
-      setLoading(true);
-      const response = await api.searchUsers(keyword, limit, 0);
+      if (reset) {
+        setLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
+      
+      const currentOffset = reset ? 0 : offset;
+      const response = await api.searchUsers(keyword, limit, currentOffset);
       const usersList = (response as any).users || response.data?.users || [];
       
       // Filter out current user from search results
       const currentUserId = session?.user?.id;
       const filteredUsers = currentUserId 
-        ? usersList.filter((user: User) => user.id !== currentUserId).slice(0, limit)
-        : usersList.slice(0, limit);
+        ? usersList.filter((user: User) => user.id !== currentUserId)
+        : usersList;
       
-      setUsers(filteredUsers);
+      // Check if there are more results
+      setHasMore(filteredUsers.length >= limit);
       
-      // Notify parent of count change
+      // Update users list
+      if (reset) {
+        setUsers(filteredUsers);
+        setOffset(filteredUsers.length);
+      } else {
+        setUsers(prev => [...prev, ...filteredUsers]);
+        setOffset(prev => prev + filteredUsers.length);
+      }
+      
+      // Notify parent of total count change (total users displayed)
       if (onCountChange) {
-        onCountChange(filteredUsers.length);
+        const totalCount = reset ? filteredUsers.length : users.length + filteredUsers.length;
+        onCountChange(totalCount);
       }
 
-      // Load friendship statuses
-      const loadStatuses = async (): Promise<void> => {
-        const statusPromises = filteredUsers.map(async (user: User) => {
+      // Load friendship statuses for new users
+      const loadStatuses = async (usersToLoad: User[]): Promise<void> => {
+        const statusPromises = usersToLoad.map(async (user: User) => {
           try {
             const statusResponse = await api.getFriendshipStatus(user.id) as any;
             const status = statusResponse?.status || statusResponse?.data?.status || "none";
@@ -129,17 +158,27 @@ export const PeopleSearchList: React.FC<PeopleSearchListProps> = ({
           statusMap[item.userId] = item.status;
         });
         
-        setFriendshipStatuses(statusMap);
+        setFriendshipStatuses(prev => ({ ...prev, ...statusMap }));
       };
 
-      await loadStatuses();
+      await loadStatuses(filteredUsers);
     } catch (error: any) {
       console.error("Failed to search users:", error);
-      if (onCountChange) {
+      if (onCountChange && reset) {
         onCountChange(0);
       }
     } finally {
-      setLoading(false);
+      if (reset) {
+        setLoading(false);
+      } else {
+        setLoadingMore(false);
+      }
+    }
+  };
+
+  const handleLoadMore = () => {
+    if (!loadingMore && hasMore) {
+      searchUsers(false);
     }
   };
 
@@ -295,6 +334,33 @@ export const PeopleSearchList: React.FC<PeopleSearchListProps> = ({
           </div>
         </div>
       ))}
+      
+      {/* Load More Button */}
+      {hasMore && (
+        <div className="flex justify-center pt-4">
+          <Button
+            variant="outline"
+            onClick={handleLoadMore}
+            disabled={loadingMore}
+            className="w-full"
+          >
+            {loadingMore ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Memuat...
+              </>
+            ) : (
+              "Muat Lebih Banyak"
+            )}
+          </Button>
+        </div>
+      )}
+      
+      {!hasMore && users.length > 0 && (
+        <div className="text-center py-4 text-sm text-gray-500 dark:text-gray-400">
+          Semua hasil telah dimuat
+        </div>
+      )}
     </div>
   );
 };
