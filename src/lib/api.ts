@@ -643,6 +643,19 @@ class ApiClient {
     );
   }
 
+  async searchPosts(
+    keyword: string,
+    limit: number = 20,
+    offset: number = 0
+  ): Promise<PostResponse> {
+    return this.request<PostResponse>(
+      `/api/v1/posts/search?q=${encodeURIComponent(keyword)}&limit=${limit}&offset=${offset}`,
+      {
+        method: "GET",
+      }
+    );
+  }
+
   // Admin APIs
   async getAllUsers(limit: number = 50, offset: number = 0): Promise<{
     users: any[];

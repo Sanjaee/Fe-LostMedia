@@ -6,7 +6,7 @@ import { ProfileForm } from "./ProfileForm";
 import { PostDialog } from "./PostDialog";
 import { PostList } from "./PostList";
 import { Profile } from "@/types/profile";
-import { Image, Video, Radio, Plus } from "lucide-react";
+import { Image as ImageIcon, Video, Smile, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -93,45 +93,36 @@ export const ProfileLayout: React.FC<ProfileLayoutProps> = ({
             {/* Post Creation Area */}
             {isOwnProfile && (
               <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm p-4">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4 mb-4">
                   <Avatar className="h-10 w-10">
                     <AvatarImage src={userAvatar} alt={userName} />
                     <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
                       {getInitials(userName)}
                     </AvatarFallback>
                   </Avatar>
-                  <Button
-                    variant="outline"
-                    className="flex-1 justify-start text-left text-gray-500 dark:text-gray-400"
+                  <button
                     onClick={() => setIsPostDialogOpen(true)}
+                    className="flex-1 w-full h-10 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center px-4 text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer text-left"
                   >
-                    <span className="text-sm">Apa yang Anda pikirkan sekarang?</span>
-                  </Button>
+                    Apa yang Anda pikirkan, {userName.split(' ')[0]}?
+                  </button>
                 </div>
-                <div className="flex gap-4 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <Button
-                    variant="ghost"
-                    className="flex-1"
-                    onClick={() => setIsPostDialogOpen(true)}
-                  >
-                    <Image className="h-5 w-5 mr-2" />
-                    Foto/video
+                <div className="flex justify-between px-4">
+                  <Button variant="ghost" className="flex-1 gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">
+                    <Video className="w-6 h-6" />
+                    <span className="hidden sm:inline">Video Langsung</span>
                   </Button>
-                  <Button
-                    variant="ghost"
-                    className="flex-1"
+                  <Button 
+                    variant="ghost" 
+                    className="flex-1 gap-2 text-green-500 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
                     onClick={() => setIsPostDialogOpen(true)}
                   >
-                    <Video className="h-5 w-5 mr-2" />
-                    Reel
+                    <ImageIcon className="w-6 h-6" />
+                    <span className="hidden sm:inline">Foto/Video</span>
                   </Button>
-                  <Button
-                    variant="ghost"
-                    className="flex-1"
-                    onClick={() => setIsPostDialogOpen(true)}
-                  >
-                    <Radio className="h-5 w-5 mr-2" />
-                    Video siaran langsung
+                  <Button variant="ghost" className="flex-1 gap-2 text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20">
+                    <Smile className="w-6 h-6" />
+                    <span className="hidden sm:inline">Perasaan/Aktivitas</span>
                   </Button>
                 </div>
               </div>

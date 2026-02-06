@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -22,7 +21,7 @@ import { useWebSocket } from "@/hooks/useWebSocket";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { Eye } from "lucide-react";
-import { ContactsList } from "@/components/general/ContactsList";
+import { AppLayout } from "@/components/layout/AppLayout";
 
 import type { Post } from "@/types/post";
 import type { Friendship } from "@/types/friendship";
@@ -524,153 +523,95 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 pt-4">
-      <div className="container mx-auto max-w-7xl px-4">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          
-          {/* Left Sidebar - Navigation */}
-          <div className="hidden lg:block lg:col-span-1 space-y-4">
-            <div className="sticky top-20 space-y-2">
-              <Button variant="ghost" className="w-full justify-start text-lg font-medium" asChild>
-                <Link href="/">
-                  <div className="mr-3 h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                      <path d="M11.47 3.84a.75.75 0 011.06 0l8.69 8.69a.75.75 0 101.06-1.06l-8.689-8.69a2.25 2.25 0 00-3.182 0l-8.69 8.69a.75.75 0 001.061 1.06l8.69-8.69z" />
-                      <path d="M12 5.432l8.159 8.159c.03.03.06.058.091.086v6.198c0 1.035-.84 1.875-1.875 1.875H15a.75.75 0 01-.75-.75v-4.5a.75.75 0 00-.75-.75h-3a.75.75 0 00-.75.75V21a.75.75 0 01-.75.75H5.625a1.875 1.875 0 01-1.875-1.875v-6.198a2.29 2.29 0 00.091-.086L12 5.43z" />
-                    </svg>
-                  </div>
-                  Beranda
-                </Link>
+    <AppLayout
+      friends={friends}
+      loadingFriends={loadingFriends}
+      showCreatePost={true}
+      onCreatePostClick={() => setIsPostDialogOpen(true)}
+    >
+      {/* Create Post Widget */}
+      {session && (
+        <Card className="border-none shadow-sm">
+          <CardContent className="p-4">
+            <div className="flex gap-4 mb-4">
+              <Avatar className="w-10 h-10">
+                <AvatarImage src={session.user?.image || ''} />
+                <AvatarFallback>{session.user?.name?.[0] || 'U'}</AvatarFallback>
+              </Avatar>
+              <button
+                onClick={() => setIsPostDialogOpen(true)}
+                className="flex-1 w-full h-10 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center px-4 text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer text-left"
+              >
+                Apa yang Anda pikirkan, {session.user?.name?.split(' ')[0]}?
+              </button>
+            </div>
+            <Separator className="mb-4" />
+            <div className="flex justify-between px-4">
+              <Button variant="ghost" className="flex-1 gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">
+                <Video className="w-6 h-6" />
+                <span className="hidden sm:inline">Video Langsung</span>
               </Button>
-              <Button variant="ghost" className="w-full justify-start text-lg font-medium">
-                <div className="mr-3 h-8 w-8 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                    <path d="M4.5 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM14.25 8.625a3.375 3.375 0 116.75 0 3.375 3.375 0 01-6.75 0zM1.5 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63 13.067 13.067 0 01-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 01-.364-.63l-.001-.122zM17.25 19.128l-.001.144a2.25 2.25 0 01-.233.96 10.088 10.088 0 005.06-1.01.75.75 0 00.42-.643 4.875 4.875 0 00-6.957-4.611 8.586 8.586 0 011.71 5.157v.003z" />
-                  </svg>
-                </div>
-                Teman
+              <Button 
+                variant="ghost" 
+                className="flex-1 gap-2 text-green-500 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
+                onClick={() => setIsPostDialogOpen(true)}
+              >
+                <ImageIcon className="w-6 h-6" />
+                <span className="hidden sm:inline">Foto/Video</span>
+              </Button>
+              <Button variant="ghost" className="flex-1 gap-2 text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20">
+                <Smile className="w-6 h-6" />
+                <span className="hidden sm:inline">Perasaan/Aktivitas</span>
               </Button>
             </div>
-          </div>
+          </CardContent>
+        </Card>
+      )}
 
-          {/* Main Feed */}
-          <div className="col-span-1 lg:col-span-2 space-y-6">
+      {/* Posts Feed */}
+      <div className="space-y-4">
+        {posts && posts.length > 0 ? (
+          <>
+            {posts.map((post) => (
+              <PostCard
+                key={post.id}
+                post={post}
+                session={session}
+                api={api}
+                viewedPosts={viewedPosts}
+                setViewedPosts={setViewedPosts}
+                postLikeCounts={postLikeCounts}
+                postUserLikes={postUserLikes}
+                postCommentCounts={postCommentCounts}
+                handleLikeChange={handleLikeChange}
+                handleOpenCommentDialog={handleOpenCommentDialog}
+                handleImageClick={handleImageClick}
+              />
+            ))}
             
-            {/* Create Post Widget */}
-            {session && (
-              <Card className="border-none shadow-sm">
-                <CardContent className="p-4">
-                  <div className="flex gap-4 mb-4">
-                    <Avatar className="w-10 h-10">
-                      <AvatarImage src={session.user?.image || ''} />
-                      <AvatarFallback>{session.user?.name?.[0] || 'U'}</AvatarFallback>
-                    </Avatar>
-                    <button
-                      onClick={() => setIsPostDialogOpen(true)}
-                      className="flex-1 w-full h-10 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center px-4 text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer text-left"
-                    >
-                      Apa yang Anda pikirkan, {session.user?.name?.split(' ')[0]}?
-                    </button>
-                  </div>
-                  <Separator className="mb-4" />
-                  <div className="flex justify-between px-4">
-                    <Button variant="ghost" className="flex-1 gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">
-                      <Video className="w-6 h-6" />
-                      <span className="hidden sm:inline">Video Langsung</span>
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      className="flex-1 gap-2 text-green-500 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
-                      onClick={() => setIsPostDialogOpen(true)}
-                    >
-                      <ImageIcon className="w-6 h-6" />
-                      <span className="hidden sm:inline">Foto/Video</span>
-                    </Button>
-                    <Button variant="ghost" className="flex-1 gap-2 text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20">
-                      <Smile className="w-6 h-6" />
-                      <span className="hidden sm:inline">Perasaan/Aktivitas</span>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Posts Feed */}
-            <div className="space-y-4">
-              {posts && posts.length > 0 ? (
-                <>
-                  {posts.map((post) => (
-                    <PostCard
-                      key={post.id}
-                      post={post}
-                      session={session}
-                      api={api}
-                      viewedPosts={viewedPosts}
-                      setViewedPosts={setViewedPosts}
-                      postLikeCounts={postLikeCounts}
-                      postUserLikes={postUserLikes}
-                      postCommentCounts={postCommentCounts}
-                      handleLikeChange={handleLikeChange}
-                      handleOpenCommentDialog={handleOpenCommentDialog}
-                      handleImageClick={handleImageClick}
-                    />
-                  ))}
-                  
-                  {/* Infinite Scroll Trigger */}
-                  {hasMore && (
-                    <div 
-                      ref={loadMoreRef}
-                      className="h-20 flex items-center justify-center"
-                    >
-                      {loadingMore && (
-                        <div className="text-zinc-500 text-sm">Memuat post lainnya...</div>
-                      )}
-                    </div>
-                  )}
-                  
-                  {!hasMore && posts.length > 0 && (
-                    <div className="text-center py-8 text-zinc-500 text-sm">
-                      <p>Semua post telah dimuat</p>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="text-center py-12 text-zinc-500">
-                  <p>No posts available</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Right Sidebar - Contacts/Sponsored */}
-          <div className="hidden lg:block lg:col-span-1 space-y-4">
-            <div className="sticky top-20">
-              <div className="mb-4">
-                <h3 className="text-zinc-500 font-semibold mb-2 px-2">Disponsori</h3>
-                {/* Ads placeholder */}
-                <div className="flex items-center gap-3 p-2 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg cursor-pointer">
-                  <div className="w-24 h-24 bg-zinc-300 rounded-lg shrink-0"></div>
-                  <div>
-                    <div className="font-semibold text-sm">Iklan Menarik</div>
-                    <div className="text-xs text-zinc-500">website.com</div>
-                  </div>
-                </div>
-              </div>
-              <Separator className="my-2" />
-              <div>
-                <h3 className="text-zinc-500 font-semibold mb-2 px-2">Kontak</h3>
-                {/* Debug: Log friends data being passed */}
-                {process.env.NODE_ENV === 'development' && (
-                  <div className="text-xs text-zinc-400 mb-2 px-2">
-                    Friends count: {friends.length} | Loading: {loadingFriends ? 'Yes' : 'No'}
-                  </div>
+            {/* Infinite Scroll Trigger */}
+            {hasMore && (
+              <div 
+                ref={loadMoreRef}
+                className="h-20 flex items-center justify-center"
+              >
+                {loadingMore && (
+                  <div className="text-zinc-500 text-sm">Memuat post lainnya...</div>
                 )}
-                <ContactsList friends={friends} loading={loadingFriends} />
               </div>
-            </div>
+            )}
+            
+            {!hasMore && posts.length > 0 && (
+              <div className="text-center py-8 text-zinc-500 text-sm">
+                <p>Semua post telah dimuat</p>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="text-center py-12 text-zinc-500">
+            <p>No posts available</p>
           </div>
-
-        </div>
+        )}
       </div>
 
       {/* Photo Modal */}
@@ -708,6 +649,6 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
           }
         }}
       />
-    </div>
+    </AppLayout>
   );
 }
