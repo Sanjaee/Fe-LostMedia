@@ -34,6 +34,7 @@ import { cn } from "@/lib/utils";
 import { NotificationDialog } from "./NotificationDialog";
 import { useApi } from "@/components/contex/ApiProvider";
 import { useWebSocket } from "@/hooks/useWebSocket";
+import Link from "next/link";
 
 export default function MainNavbar() {
   const { data: session, status } = useSession();
@@ -125,12 +126,9 @@ export default function MainNavbar() {
         {/* Left: Logo + Search */}
         <div className="flex items-center gap-3 flex-1">
           {/* Logo */}
-          <button
-            onClick={() => router.push("/")}
-            className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 transition-colors"
-          >
-            <span className="text-white font-bold text-xl">Z</span>
-          </button>
+            <Link href="/">
+              <Image src="/logo.png" alt="Logo" width={35} height={35} className="w-10 h-10" />
+            </Link>
 
           {/* Search Bar */}
           <form onSubmit={handleSearch} className="w-64 max-w-xs">

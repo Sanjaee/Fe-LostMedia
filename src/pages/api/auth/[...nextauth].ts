@@ -139,7 +139,8 @@ export const authOptions: NextAuthOptions = {
             google_id: account.providerAccountId,
           });
 
-          // Store the tokens in the user object for the JWT callback
+          // Store the tokens and user data in the user object for the JWT callback
+          user.id = authResponse.user.id; // IMPORTANT: Set user ID from backend response
           user.accessToken = authResponse.access_token;
           user.refreshToken = authResponse.refresh_token;
           user.isVerified = authResponse.user.is_verified;

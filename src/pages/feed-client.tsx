@@ -22,6 +22,7 @@ import { useWebSocket } from "@/hooks/useWebSocket";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { Eye } from "lucide-react";
+import { ContactsList } from "@/components/general/ContactsList";
 
 import type { Post } from "@/types/post";
 import type { Friendship } from "@/types/friendship";
@@ -172,26 +173,70 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Load friends list
-  useEffect(() => {
-    if (session?.user?.id) {
-      loadFriends();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.user?.id]);
-
-  const loadFriends = async () => {
+  const loadFriends = useCallback(async () => {
     try {
       setLoadingFriends(true);
-      const response = await api.getFriends();
-      const friendsList = response.data?.friends || response.data?.friendships || [];
+      const response = await api.getFriends() as any;
+      // API client unwraps data, so response is { friends: [...] } or { data: { friends: [...] } }
+      // Handle both wrapped and unwrapped responses
+      let friendsList: typeof friends = [];
+      
+      if (Array.isArray(response)) {
+        // If response is directly an array
+        friendsList = response;
+      } else if (response && typeof response === 'object') {
+        // Check for friends property
+        if ('friends' in response && Array.isArray(response.friends)) {
+          friendsList = response.friends;
+        } else if ('data' in response && response.data && typeof response.data === 'object') {
+          const data = response.data;
+          if ('friends' in data && Array.isArray(data.friends)) {
+            friendsList = data.friends;
+          } else if ('friendships' in data && Array.isArray(data.friendships)) {
+            friendsList = data.friendships;
+          }
+        } else if ('friendships' in response && Array.isArray(response.friendships)) {
+          friendsList = response.friendships;
+        }
+      }
+      
+      console.log("FeedClient - Friends loaded:", {
+        count: friendsList.length,
+        friends: friendsList,
+        currentUserId: session?.user?.id
+      });
       setFriends(friendsList);
     } catch (error) {
       console.error("Failed to load friends:", error);
     } finally {
       setLoadingFriends(false);
     }
-  };
+  }, [api, session?.user?.id]);
+
+  // Load friends list
+  useEffect(() => {
+    if (session?.user?.id) {
+      loadFriends();
+    }
+  }, [session?.user?.id, loadFriends]);
+
+  // Listen for friendship changes to refresh friends list
+  useEffect(() => {
+    const handleFriendshipChanged = () => {
+      // Add a small delay to ensure backend has updated the database
+      setTimeout(() => {
+        if (session?.user?.id) {
+          loadFriends();
+        }
+      }, 500);
+    };
+
+    window.addEventListener('friendship-changed', handleFriendshipChanged);
+    
+    return () => {
+      window.removeEventListener('friendship-changed', handleFriendshipChanged);
+    };
+  }, [session?.user?.id, loadFriends]);
 
   // Update posts when initialPosts changes
   useEffect(() => {
@@ -614,55 +659,13 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
               <Separator className="my-2" />
               <div>
                 <h3 className="text-zinc-500 font-semibold mb-2 px-2">Kontak</h3>
-                {/* Contacts List */}
-                {loadingFriends ? (
-                  <div className="text-center py-4 text-zinc-500 text-sm">Memuat kontak...</div>
-                ) : (() => {
-                  // Filter only accepted friendships
-                  const acceptedFriends = friends.filter((friendship) => friendship.status === "accepted");
-                  
-                  return acceptedFriends.length > 0 ? (
-                    <div className="max-h-[400px] overflow-y-auto space-y-1">
-                      {acceptedFriends.map((friendship) => {
-                        // Determine which user is the friend (not the current user)
-                        const friend = session?.user?.id === friendship.sender_id 
-                          ? friendship.receiver 
-                          : friendship.sender;
-                        
-                        if (!friend) return null;
-                        
-                        const getInitials = (name?: string) => {
-                          if (!name) return 'U';
-                          return name
-                            .split(' ')
-                            .map(n => n[0])
-                            .join('')
-                            .toUpperCase()
-                            .slice(0, 2);
-                        };
-
-                        return (
-                          <Link
-                            key={friendship.id}
-                            href={`/profile/${friend.id}`}
-                            className="flex items-center gap-3 p-2 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg cursor-pointer transition-colors"
-                          >
-                            <div className="relative">
-                              <Avatar className="w-8 h-8">
-                                <AvatarImage src={friend.profile_photo || ''} />
-                                <AvatarFallback>{getInitials(friend.full_name)}</AvatarFallback>
-                              </Avatar>
-                              <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white dark:border-zinc-900"></div>
-                            </div>
-                            <div className="font-medium text-sm truncate">{friend.full_name || friend.username || 'Unknown'}</div>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="text-center py-4 text-zinc-500 text-sm">Belum ada kontak</div>
-                  );
-                })()}
+                {/* Debug: Log friends data being passed */}
+                {process.env.NODE_ENV === 'development' && (
+                  <div className="text-xs text-zinc-400 mb-2 px-2">
+                    Friends count: {friends.length} | Loading: {loadingFriends ? 'Yes' : 'No'}
+                  </div>
+                )}
+                <ContactsList friends={friends} loading={loadingFriends} />
               </div>
             </div>
           </div>
