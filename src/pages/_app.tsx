@@ -4,6 +4,7 @@ import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/toaster";
 import { ApiProvider } from "@/components/contex/ApiProvider";
+import { WebSocketProvider } from "@/contexts/WebSocketContext";
 import MainNavbar from "@/components/general/MainNavbar";
 import { useRouter } from "next/router";
 import { Geist, Geist_Mono } from "next/font/google";
@@ -49,8 +50,10 @@ export default function App({
       <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
         <SessionProvider session={session}>
           <ApiProvider>
-            <AppContent Component={Component} pageProps={pageProps} />
+            <WebSocketProvider>
+              <AppContent Component={Component} pageProps={pageProps} />
             <Toaster />
+            </WebSocketProvider>
           </ApiProvider>
         </SessionProvider>
       </ThemeProvider>

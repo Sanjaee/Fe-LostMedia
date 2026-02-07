@@ -100,6 +100,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
         };
         await api.updatePost(post.id, updateData);
         toast({ title: "Success", description: "Post updated successfully" });
+        onSuccess();
       } else {
         // For create mode, use new async upload endpoint if there are image files
         if (imageFiles.length > 0) {
@@ -113,6 +114,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
             title: "Success", 
             description: "Post created successfully. Images are being processed." 
           });
+          // Don't call onSuccess here - wait for WebSocket notification to show the post
         } else {
           // No images, use regular create endpoint
           const manualUrls = formData.image_urls?.filter(url => url?.trim() && !url.startsWith("blob:")) || [];
@@ -122,10 +124,10 @@ export const PostDialog: React.FC<PostDialogProps> = ({
           };
           await api.createPost(createData);
           toast({ title: "Success", description: "Post created successfully" });
+          onSuccess();
         }
       }
 
-      onSuccess();
       onClose();
     } catch (error: any) {
       toast({

@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { 
   Image as ImageIcon,
@@ -17,7 +17,7 @@ import { PostDialog } from "@/components/profile/organisms/PostDialog";
 import { useApi } from "@/components/contex/ApiProvider";
 import { CommentDialog } from "@/components/post/CommentDialog";
 import { PostCard } from "@/components/post/PostCard";
-import { useWebSocket } from "@/hooks/useWebSocket";
+import { useWebSocketSubscription } from "@/contexts/WebSocketContext";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { Eye } from "lucide-react";
@@ -474,81 +474,51 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
     }
   }, [api, currentOffset, currentSort, loadingMore, hasMore, loadViewCounts, postLikeCounts, postCommentCounts]);
 
-  // WebSocket connection for realtime post upload notifications
-  // Use useMemo to prevent URL from changing on every render
-  const wsUrlString = useMemo(() => {
-    if (typeof window === "undefined") return "";
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-    const wsUrl = apiUrl.replace(/^https?:\/\//, "").replace(/\/$/, "");
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    return `${protocol}//${wsUrl}/ws`;
-  }, []);
+  useWebSocketSubscription((data: any) => {
+    let messageData: any;
+    if (data.type === "notification" && data.payload) {
+      messageData = data.payload;
+    } else {
+      messageData = data;
+    }
 
-  useWebSocket(wsUrlString, {
-    onMessage: (data: any) => {
-      // Handle WebSocket message format
-      // Backend sends: { type: "notification", payload: {...} }
-      let messageData: any;
-      if (data.type === "notification" && data.payload) {
-        messageData = data.payload;
-      } else {
-        messageData = data;
-      }
-
-      // Handle post upload notifications
-      // For pending: direct WebSocket message (not saved to DB)
-      if (messageData.type === "post_upload_pending") {
-        toast({
-          title: "Upload Dimulai",
-          description: messageData.message || "Post sedang diproses, gambar sedang diupload...",
-        });
-      } 
-      // For completed: notification from DB (saved notification)
-      else if (messageData.type === "post_upload_completed" || 
-               (messageData.type === "notification" && messageData.payload?.type === "post_upload_completed")) {
-        const notification = messageData.type === "notification" ? messageData.payload : messageData;
-        
-        // Get post_id from notification data or target_id
-        let postID: string | null = notification.target_id || null;
-        if (!postID && notification.data) {
-          try {
-            const data = typeof notification.data === 'string' 
-              ? JSON.parse(notification.data) 
-              : notification.data;
-            postID = data?.post_id || null;
-          } catch {
-            // Ignore parse errors
-          }
+    if (messageData.type === "post_upload_pending") {
+      toast({
+        title: "Upload Dimulai",
+        description: messageData.message || "Post sedang diproses, gambar sedang diupload...",
+      });
+    } else if (
+      messageData.type === "post_upload_completed" ||
+      (messageData.type === "notification" && messageData.payload?.type === "post_upload_completed")
+    ) {
+      const notification = messageData.type === "notification" ? messageData.payload : messageData;
+      let postID: string | null = notification.target_id || null;
+      if (!postID && notification.data) {
+        try {
+          const parsed = typeof notification.data === "string" ? JSON.parse(notification.data) : notification.data;
+          postID = parsed?.post_id || null;
+        } catch {
+          // ignore
         }
-        
-        // Create action button if post_id is available
-        const action = postID ? (
-          <ToastAction
-            altText="Lihat Post"
-            onClick={() => {
-              // Navigate to feed with photo modal format: /?fbid=POST_ID&set=pcb.POST_ID.0
-              const redirectUrl = `/?fbid=${postID}&set=pcb.${postID}.0`;
-              router.push(redirectUrl);
-            }}
-          >
-            <Eye className="h-4 w-4 mr-1" />
-            Lihat Post
-          </ToastAction>
-        ) : undefined;
-        
-        toast({
-          title: notification.title || "Upload Selesai",
-          description: notification.message || `Post berhasil diupload dengan ${notification.data?.image_count || 0} gambar`,
-          action: action,
-        });
-        
-        // Refresh posts to show the newly uploaded post with images
-        handlePostSuccess();
       }
-    },
-    onError: (err) => {
-      console.error("WebSocket error in FeedClient:", err);
-    },
+      const action = postID ? (
+        <ToastAction
+          altText="Lihat Post"
+          onClick={() => {
+            router.push(`/?fbid=${postID}&set=pcb.${postID}.0`);
+          }}
+        >
+          <Eye className="h-4 w-4 mr-1" />
+          Lihat Post
+        </ToastAction>
+      ) : undefined;
+      toast({
+        title: notification.title || "Upload Selesai",
+        description: notification.message || `Post berhasil diupload dengan ${notification.data?.image_count || 0} gambar`,
+        action,
+      });
+      handlePostSuccess();
+    }
   });
 
   // Infinite scroll observer

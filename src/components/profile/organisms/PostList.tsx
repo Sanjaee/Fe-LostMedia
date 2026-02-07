@@ -102,63 +102,39 @@ export const PostList: React.FC<PostListProps> = ({
   const loadPostEngagements = useCallback(async () => {
     if (posts.length === 0) return;
 
+    const likeCounts: Record<string, number> = {};
+    const commentCounts: Record<string, number> = {};
+    const viewCounts: Record<string, number> = {};
+    const userLikes: Record<string, any> = {};
+    const userId = currentUserId || session?.user?.id;
+
+    // Use counts from backend when available (avoids duplicate API hits)
+    posts.forEach((post) => {
+      if (post.likes_count !== undefined) likeCounts[post.id] = post.likes_count;
+      if (post.comments_count !== undefined) commentCounts[post.id] = post.comments_count;
+      if (post.user_liked && userId) {
+        userLikes[post.id] = { user_id: userId, post_id: post.id, reaction: "like" };
+      }
+    });
+
+    // Only fetch view count (backend doesn't include it in post response)
     try {
-      const engagements = await Promise.all(
-        posts.map(async (post) => {
-          try {
-            const [likeCountRes, commentCountRes, viewCountRes, likesRes] = await Promise.all([
-              api.getLikeCount("post", post.id),
-              api.getCommentCount(post.id),
-              api.getPostViewCount(post.id).catch(() => ({ count: 0 })),
-              api.getLikes("post", post.id, 100, 0).catch(() => ({ likes: [] })),
-            ]);
-
-            // Check if current user has liked this post
-            const userId = currentUserId || session?.user?.id;
-            const userLike = likesRes.likes?.find(
-              (like: any) => like.user_id === userId
-            ) || null;
-
-            return {
-              postId: post.id,
-              likeCount: likeCountRes.count || 0,
-              commentCount: commentCountRes.count || 0,
-              viewCount: viewCountRes.count || 0,
-              userLike,
-            };
-          } catch {
-            return {
-              postId: post.id,
-              likeCount: 0,
-              commentCount: 0,
-              viewCount: 0,
-              userLike: null,
-            };
-          }
-        })
+      const viewResults = await Promise.all(
+        posts.map((post) =>
+          api.getPostViewCount(post.id).catch(() => ({ count: 0 }))
+        )
       );
-
-      const likeCounts: Record<string, number> = {};
-      const commentCounts: Record<string, number> = {};
-      const viewCounts: Record<string, number> = {};
-      const userLikes: Record<string, any> = {};
-
-      engagements.forEach((eng) => {
-        likeCounts[eng.postId] = eng.likeCount;
-        commentCounts[eng.postId] = eng.commentCount;
-        viewCounts[eng.postId] = eng.viewCount;
-        if (eng.userLike) {
-          userLikes[eng.postId] = eng.userLike;
-        }
+      viewResults.forEach((res, i) => {
+        viewCounts[posts[i].id] = res.count || 0;
       });
-
-      setPostLikeCounts(likeCounts);
-      setPostCommentCounts(commentCounts);
-      setPostViewCounts(viewCounts);
-      setPostUserLikes(userLikes);
     } catch (error) {
-      console.error("Failed to load post engagements:", error);
+      console.error("Failed to load post view counts:", error);
     }
+
+    setPostLikeCounts((prev) => ({ ...prev, ...likeCounts }));
+    setPostCommentCounts((prev) => ({ ...prev, ...commentCounts }));
+    setPostViewCounts((prev) => ({ ...prev, ...viewCounts }));
+    setPostUserLikes((prev) => ({ ...prev, ...userLikes }));
   }, [posts, api, currentUserId, session]);
 
   // Load posts when userId changes

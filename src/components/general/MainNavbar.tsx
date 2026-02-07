@@ -33,7 +33,7 @@ import {
 import { cn } from "@/lib/utils";
 import { NotificationDialog } from "./NotificationDialog";
 import { useApi } from "@/components/contex/ApiProvider";
-import { useWebSocket } from "@/hooks/useWebSocket";
+import { useWebSocketSubscription } from "@/contexts/WebSocketContext";
 import Link from "next/link";
 import {
   Sheet,
@@ -52,34 +52,18 @@ export default function MainNavbar() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [profileSidebarOpen, setProfileSidebarOpen] = useState(false);
 
-  // WebSocket for realtime notifications
-  const wsUrl =
-    typeof window !== "undefined"
-      ? `${process.env.NEXT_PUBLIC_WS_URL || "wss://lostmedia.zacloth.com"}/ws`
-      : "";
-
-  useWebSocket(wsUrl, {
-    onMessage: (data: any) => {
-      // Handle WebSocket message format
-      // Backend sends: { type: "notification", payload: {...} }
-      let notification: any;
-      if (data.type === "notification" && data.payload) {
-        notification = data.payload;
-      } else if (data.id) {
-        // Direct notification object
-        notification = data;
-      } else {
-        return; // Invalid message format
-      }
-
-      // Only increment unread count if notification is not read
-      if (!notification.is_read) {
-        setUnreadCount((prev) => prev + 1);
-      }
-    },
-    onError: (error) => {
-      console.error("WebSocket error in MainNavbar:", error);
-    },
+  useWebSocketSubscription((data: any) => {
+    let notification: any;
+    if (data.type === "notification" && data.payload) {
+      notification = data.payload;
+    } else if (data.id) {
+      notification = data;
+    } else {
+      return;
+    }
+    if (!notification.is_read) {
+      setUnreadCount((prev) => prev + 1);
+    }
   });
 
   // Load unread count on mount and when notification dialog closes

@@ -18,7 +18,7 @@ import { useRouter } from "next/router";
 import type { Notification } from "@/types/notification";
 import { formatDistanceToNow } from "date-fns";
 import { id } from "date-fns/locale";
-import { useWebSocket } from "@/hooks/useWebSocket";
+import { useWebSocketSubscription } from "@/contexts/WebSocketContext";
 import { EyeIcon } from "lucide-react";
 
 interface NotificationDialogProps {
@@ -39,61 +39,36 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
   const [friendshipStatuses, setFriendshipStatuses] = useState<Record<string, string>>({});
 
-  // WebSocket connection for realtime notifications
-  const wsUrl =
-    typeof window !== "undefined"
-      ? `${process.env.NEXT_PUBLIC_WS_URL || "wss://lostmedia.zacloth.com"}/ws`
-      : "";
+  useWebSocketSubscription((data: any) => {
+    let notification: Notification;
+    if (data.type === "notification" && data.payload) {
+      notification = data.payload as Notification;
+    } else if (data.id) {
+      notification = data as Notification;
+    } else {
+      return;
+    }
 
-  useWebSocket(wsUrl, {
-    onMessage: (data: any) => {
-      // Handle WebSocket message format
-      // Backend sends: { type: "notification", payload: {...} }
-      // Or direct notification object
-      let notification: Notification;
-      if (data.type === "notification" && data.payload) {
-        notification = data.payload as Notification;
-      } else if (data.id) {
-        // Direct notification object
-        notification = data as Notification;
-      } else {
-        return; // Invalid message format
-      }
-
-      // Only increment unread count if notification is not read
-      if (!notification.is_read) {
-        setUnreadCount((prev) => prev + 1);
-        
-        // Only add to notifications list if dialog is open
-        if (open) {
-          setNotifications((prev) => {
-            const exists = prev.some(n => n.id === notification.id);
-            if (exists) {
-              return prev; // Don't add duplicate
-            }
-            // Add to the beginning of the list (newest first)
-            return [notification, ...prev];
-          });
-        }
-      }
-      
-      // If notification is related to friendship, trigger refresh from DB
-      if (notification.type === "friend_request" || notification.type === "friend_accepted" || notification.type === "friend_rejected") {
-        // Trigger event to refresh friendship status from DB (not from WebSocket data)
-        window.dispatchEvent(new Event('friendship-changed'));
-      }
-      
-      // Show toast notification (only if dialog is not open to avoid spam)
-      if (!open) {
-        toast({
-          title: "Notifikasi Baru",
-          description: notification.message || notification.content || notification.title,
+    if (!notification.is_read) {
+      setUnreadCount((prev) => prev + 1);
+      if (open) {
+        setNotifications((prev) => {
+          if (prev.some((n) => n.id === notification.id)) return prev;
+          return [notification, ...prev];
         });
       }
-    },
-    onError: (error) => {
-      console.error("WebSocket error:", error);
-    },
+    }
+
+    if (notification.type === "friend_request" || notification.type === "friend_accepted" || notification.type === "friend_rejected") {
+      window.dispatchEvent(new Event("friendship-changed"));
+    }
+
+    if (!open) {
+      toast({
+        title: "Notifikasi Baru",
+        description: notification.message || notification.content || notification.title,
+      });
+    }
   });
 
   // Load unread count on mount (always, not just when dialog opens)

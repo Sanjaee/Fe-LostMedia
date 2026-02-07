@@ -32,9 +32,14 @@ export default function PhotoModal({ isOpen, onClose, post, imageIndex, onNaviga
 
   useEffect(() => {
     if (isOpen && post) {
+      // Use counts from post when available (avoids duplicate API hit)
+      if (post.likes_count !== undefined && post.comments_count !== undefined) {
+        setLikeCount(post.likes_count);
+        setCommentCount(post.comments_count);
+        return;
+      }
       const loadStats = async () => {
         if (!post) return;
-        
         try {
           setLoadingStats(true);
           const [likeRes, commentRes] = await Promise.all([
@@ -54,24 +59,9 @@ export default function PhotoModal({ isOpen, onClose, post, imageIndex, onNaviga
   }, [isOpen, post, api]);
 
   const handleCommentAdded = () => {
-    // Trigger CommentList refresh
-    setRefreshTrigger(prev => prev + 1);
-    
-    // Update stats
+    setRefreshTrigger((prev) => prev + 1);
     if (post) {
-      const loadStats = async () => {
-        try {
-          const [likeRes, commentRes] = await Promise.all([
-            api.getLikeCount("post", post.id).catch(() => ({ count: 0 })),
-            api.getCommentCount(post.id).catch(() => ({ count: 0 })),
-          ]);
-          setLikeCount(likeRes.count || 0);
-          setCommentCount(commentRes.count || 0);
-        } catch (error) {
-          console.error("Failed to load stats:", error);
-        }
-      };
-      loadStats();
+      api.getCommentCount(post.id).then((res) => setCommentCount(res.count || 0)).catch(() => {});
     }
   };
 
