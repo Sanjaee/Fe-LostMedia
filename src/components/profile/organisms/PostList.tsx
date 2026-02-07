@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { useApi } from "@/components/contex/ApiProvider";
@@ -50,6 +50,18 @@ export const PostList: React.FC<PostListProps> = ({
   const { api } = useApi();
   const { toast } = useToast();
   const { data: session } = useSession();
+  
+  // Check if current user is admin
+  const isAdmin = useMemo(() => {
+    const userType = 
+      session?.userType || 
+      session?.user?.userType || 
+      session?.user?.user_type || 
+      session?.user?.role || 
+      (session?.user as any)?.userType;
+    return userType === "admin";
+  }, [session]);
+
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
@@ -377,8 +389,8 @@ export const PostList: React.FC<PostListProps> = ({
                 </div>
               </Link>
 
-              {/* Actions Menu */}
-              {isOwnProfile && (
+              {/* Actions Menu - Show for own profile or admin */}
+              {(isOwnProfile || isAdmin) && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button 
@@ -390,18 +402,22 @@ export const PostList: React.FC<PostListProps> = ({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-40">
-                    <DropdownMenuItem onClick={() => handleEdit(post)}>
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit Post
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => handleDeleteClick(post)}
-                      variant="destructive"
-                      className="text-red-600 dark:text-red-400"
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Hapus
-                    </DropdownMenuItem>
+                    {isOwnProfile && (
+                      <DropdownMenuItem onClick={() => handleEdit(post)}>
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit Post
+                      </DropdownMenuItem>
+                    )}
+                    {(isOwnProfile || isAdmin) && (
+                      <DropdownMenuItem
+                        onClick={() => handleDeleteClick(post)}
+                        variant="destructive"
+                        className="text-red-600 dark:text-red-400"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        {isAdmin && !isOwnProfile ? "Hapus (Admin)" : "Hapus"}
+                      </DropdownMenuItem>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
@@ -628,9 +644,13 @@ export const PostList: React.FC<PostListProps> = ({
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Hapus Post?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {isAdmin && !isOwnProfile ? "Hapus Post (Admin)?" : "Hapus Post?"}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Apakah Anda yakin ingin menghapus post ini? Tindakan ini tidak dapat dibatalkan.
+              {isAdmin && !isOwnProfile 
+                ? "Sebagai admin, Anda akan menghapus post ini. Tindakan ini tidak dapat dibatalkan."
+                : "Apakah Anda yakin ingin menghapus post ini? Tindakan ini tidak dapat dibatalkan."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
