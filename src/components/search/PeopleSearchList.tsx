@@ -300,23 +300,23 @@ export const PeopleSearchList: React.FC<PeopleSearchListProps> = ({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2 md:space-y-3">
       {users.map((user) => (
         <div
           key={user.id}
-          className="flex items-center gap-4 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+          className="flex items-center gap-3 md:gap-4 p-2 md:p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
         >
           <Link 
             href={`/profile/${user.id}`} 
             className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
           >
-            <Avatar className="h-10 w-10">
+            <Avatar className="h-10 w-10 shrink-0">
               <AvatarImage src={user.profile_photo} alt={user.full_name} />
               <AvatarFallback>
                 {user.full_name.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <div className="flex-1 min-w-0">
+            <div className="flex flex-col min-w-0 flex-1">
               <h3 className="font-semibold text-sm text-gray-900 dark:text-white hover:underline truncate">
                 <UserNameWithRole
                   displayName={user.username || user.full_name}
@@ -332,7 +332,7 @@ export const PeopleSearchList: React.FC<PeopleSearchListProps> = ({
             </div>
           </Link>
           <div 
-            className="shrink-0"
+            className="shrink-0 flex items-center"
             onClick={(e) => e.stopPropagation()}
           >
             {getActionButton(user)}
