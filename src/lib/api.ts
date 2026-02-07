@@ -77,7 +77,6 @@ class ApiClient {
       const refreshToken = TokenManager.getRefreshToken();
       
       if (!refreshToken) {
-        console.warn("No refresh token available");
         // NextAuth will handle token refresh automatically in the JWT callback
         // We just need to wait for the session to update
         return false;
@@ -109,7 +108,7 @@ class ApiClient {
       if (typeof window !== "undefined") {
         // Only redirect if we're not already on an auth page
         if (!window.location.pathname.startsWith("/auth")) {
-          console.log("Token expired, please login again");
+          // Token expired, user will be redirected to login
         }
       }
       return false;

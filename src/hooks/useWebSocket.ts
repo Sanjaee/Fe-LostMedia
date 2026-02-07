@@ -23,7 +23,6 @@ export function useWebSocket(
 
   const connect = () => {
     if (!session?.accessToken || !url) {
-      console.log("WebSocket: Missing token or URL", { hasToken: !!session?.accessToken, url });
       return;
     }
 
@@ -53,11 +52,9 @@ export function useWebSocket(
         wsUrlString = `${protocol}//${host}${url.startsWith("/") ? url : "/" + url}?token=${encodeURIComponent(session.accessToken)}`;
       }
       
-      console.log("WebSocket: Connecting to", wsUrlString.replace(/token=[^&]+/, "token=***"));
       const ws = new WebSocket(wsUrlString);
 
       ws.onopen = () => {
-        console.log("WebSocket connected");
         setIsConnected(true);
         reconnectAttempts.current = 0;
         options.onOpen?.();
@@ -79,7 +76,6 @@ export function useWebSocket(
       };
 
       ws.onclose = () => {
-        console.log("WebSocket disconnected");
         setIsConnected(false);
         options.onClose?.();
 

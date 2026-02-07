@@ -199,18 +199,13 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
         }
       }
       
-      console.log("FeedClient - Friends loaded:", {
-        count: friendsList.length,
-        friends: friendsList,
-        currentUserId: session?.user?.id
-      });
       setFriends(friendsList);
     } catch (error) {
       console.error("Failed to load friends:", error);
     } finally {
       setLoadingFriends(false);
     }
-  }, [api, session?.user?.id]);
+  }, [api]);
 
   // Load friends list
   useEffect(() => {
