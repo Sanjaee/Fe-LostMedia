@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
 import { ProfileLayout } from "@/components/profile/organisms/ProfileLayout";
@@ -15,6 +15,7 @@ const ProfileMePage: React.FC = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [friendsCount, setFriendsCount] = useState({ followers: 0, following: 0 });
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -40,6 +41,19 @@ const ProfileMePage: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, session, api]);
+
+  const loadFriendsCount = useCallback(async (userId: string) => {
+    try {
+      const response = await api.getFriendsCount(userId);
+      setFriendsCount({
+        followers: response.followers || 0,
+        following: response.following || 0,
+      });
+    } catch {
+      // Ignore error, keep default 0
+      console.error("Failed to load friends count");
+    }
+  }, [api]);
 
   const loadProfile = async () => {
     try {
@@ -69,9 +83,29 @@ const ProfileMePage: React.FC = () => {
     }
   };
 
-  const handleProfileUpdate = () => {
-    loadProfile();
+  const handleProfileUpdate = async () => {
+    await loadProfile();
+    // Friends count will be updated by useEffect when profile.user_id changes
   };
+
+  // Load friends count when profile is loaded
+  useEffect(() => {
+    if (profile?.user_id) {
+      loadFriendsCount(profile.user_id);
+    }
+  }, [profile?.user_id, loadFriendsCount]);
+
+  // Listen for friendship changes to update count
+  useEffect(() => {
+    const handleFriendshipChange = () => {
+      if (profile?.user_id) {
+        loadFriendsCount(profile.user_id);
+      }
+    };
+
+    window.addEventListener('friendship-changed', handleFriendshipChange);
+    return () => window.removeEventListener('friendship-changed', handleFriendshipChange);
+  }, [profile?.user_id, loadFriendsCount]);
 
   if (loading) {
     return (
@@ -122,6 +156,7 @@ const ProfileMePage: React.FC = () => {
       sessionName={session?.user?.name || null}
       sessionImage={session?.user?.image || null}
       onProfileUpdate={handleProfileUpdate}
+      friendsCount={friendsCount}
     />
   );
 };
