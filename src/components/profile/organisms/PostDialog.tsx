@@ -233,13 +233,13 @@ export const PostDialog: React.FC<PostDialogProps> = ({
       return;
     }
 
-    // Validate file sizes (max 3MB each)
-    const maxSize = 3 * 1024 * 1024; // 3MB
+    // Validate file sizes (max 10MB each)
+    const maxSize = 10 * 1024 * 1024; // 10MB
     const invalidFiles = imageFiles.filter((file) => file.size > maxSize);
     if (invalidFiles.length > 0) {
       toast({
         title: "Error",
-        description: `Some images exceed 3MB limit. Maximum file size is 3MB per image.`,
+        description: `Some images exceed 10MB limit. Maximum file size is 10MB per image.`,
         variant: "destructive",
       });
       return;
