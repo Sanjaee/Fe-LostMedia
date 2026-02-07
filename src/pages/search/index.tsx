@@ -9,12 +9,14 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Users, FileText } from "lucide-react";
 import { useApi } from "@/components/contex/ApiProvider";
+import { useChat } from "@/contexts/ChatContext";
 import type { Friendship } from "@/types/friendship";
 
 const SearchPage: React.FC = () => {
   const router = useRouter();
   const { data: session } = useSession();
   const { api } = useApi();
+  const { openChat } = useChat();
   const [activeTab, setActiveTab] = useState<"people" | "posts">("people");
   const query = (router.query.q as string) || "";
   const [friends, setFriends] = React.useState<Friendship[]>([]);
@@ -75,6 +77,7 @@ const SearchPage: React.FC = () => {
       friends={friends}
       loadingFriends={loadingFriends}
       showCreatePost={false}
+      onChatClick={(user) => openChat(user)}
     >
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">

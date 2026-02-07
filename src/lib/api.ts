@@ -316,6 +316,20 @@ class ApiClient {
     });
   }
 
+  async deleteAccount(password?: string): Promise<void> {
+    return this.request<void>("/api/v1/auth/account", {
+      method: "DELETE",
+      body: JSON.stringify({ password: password || "" }),
+    });
+  }
+
+  async getMe(): Promise<{ user: { id: string; email: string; full_name: string; login_type?: string } }> {
+    return this.request<{ user: { id: string; email: string; full_name: string; login_type?: string } }>(
+      "/api/v1/auth/me",
+      { method: "GET" }
+    );
+  }
+
   // Profile endpoints
   async createProfile(data: CreateProfileRequest): Promise<ProfileResponse> {
     return this.request<ProfileResponse>("/api/v1/profiles", {
@@ -515,6 +529,12 @@ class ApiClient {
 
   async getChatUnreadCount(): Promise<{ count: number }> {
     return this.request<{ count: number }>("/api/v1/chat/unread/count", {
+      method: "GET",
+    });
+  }
+
+  async getChatUnreadBySenders(): Promise<{ counts: Record<string, number> }> {
+    return this.request<{ counts: Record<string, number> }>("/api/v1/chat/unread/by-senders", {
       method: "GET",
     });
   }

@@ -1,9 +1,11 @@
 "use client";
 
-import React from "react";
-import Link from "next/link";
+import React, { useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { useApi } from "@/components/contex/ApiProvider";
+import { useWebSocketSubscription } from "@/contexts/WebSocketContext";
 import type { Friendship } from "@/types/friendship";
 
 interface ChatUser {
@@ -17,12 +19,56 @@ interface ContactsListProps {
   friends: Friendship[];
   loading?: boolean;
   onChatClick?: (user: ChatUser) => void;
+  refreshUnreadTrigger?: number; // bump to refetch unread counts (e.g. when chat dialog closes)
 }
 
-export const ContactsList: React.FC<ContactsListProps> = ({ friends, loading = false, onChatClick }) => {
+export const ContactsList: React.FC<ContactsListProps> = ({ friends, loading = false, onChatClick, refreshUnreadTrigger }) => {
   const { data: session } = useSession();
+  const { api } = useApi();
   const currentUserId = session?.user?.id;
   const currentUserEmail = session?.user?.email;
+  const [unreadBySender, setUnreadBySender] = React.useState<Record<string, number>>({});
+
+  const loadUnreadBySenders = useCallback(async () => {
+    if (!currentUserId) return;
+    try {
+      const res = await api.getChatUnreadBySenders();
+      const counts = res.counts ?? res.data?.counts ?? {};
+      setUnreadBySender(typeof counts === "object" ? counts : {});
+    } catch {
+      setUnreadBySender({});
+    }
+  }, [currentUserId, api]);
+
+  useEffect(() => {
+    loadUnreadBySenders();
+  }, [loadUnreadBySenders, refreshUnreadTrigger]);
+
+  useEffect(() => {
+    const handleChatClosed = () => loadUnreadBySenders();
+    window.addEventListener("chat-closed", handleChatClosed);
+    return () => window.removeEventListener("chat-closed", handleChatClosed);
+  }, [loadUnreadBySenders]);
+
+  useWebSocketSubscription((data: any) => {
+    const payload = data.type === "chat_message" ? data.payload : (data.type === "notification" && data.payload?.type === "chat_message" ? data.payload.payload : null);
+    if (payload && currentUserId && payload.receiver_id === currentUserId) {
+      const senderId = payload.sender_id;
+      setUnreadBySender((prev) => ({
+        ...prev,
+        [senderId]: (prev[senderId] ?? 0) + 1,
+      }));
+    }
+  });
+
+  const handleChatClick = (user: ChatUser) => {
+    setUnreadBySender((prev) => {
+      const next = { ...prev };
+      delete next[user.id];
+      return next;
+    });
+    onChatClick?.(user);
+  };
 
   // Helper function to get initials
   const getInitials = (name?: string) => {
@@ -129,27 +175,36 @@ export const ContactsList: React.FC<ContactsListProps> = ({ friends, loading = f
 
   return (
     <div className="max-h-[400px] overflow-y-auto space-y-1">
-      {processedFriends.map(({ friendship, friend }) => (
-        <div
-          key={friendship.id}
-          role="button"
-          tabIndex={0}
-          onClick={() => onChatClick?.({ id: friend.id, full_name: friend.full_name, username: friend.username, profile_photo: friend.profile_photo })}
-          onKeyDown={(e) => e.key === "Enter" && onChatClick?.({ id: friend.id, full_name: friend.full_name, username: friend.username, profile_photo: friend.profile_photo })}
-          className="flex items-center gap-3 p-2 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg cursor-pointer transition-colors"
-        >
-          <div className="relative">
-            <Avatar className="w-8 h-8">
-              <AvatarImage src={friend.profile_photo || ''} />
-              <AvatarFallback>{getInitials(friend.full_name)}</AvatarFallback>
-            </Avatar>
-            <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white dark:border-zinc-900"></div>
+      {processedFriends.map(({ friendship, friend }) => {
+        const chatUser = { id: friend.id, full_name: friend.full_name, username: friend.username, profile_photo: friend.profile_photo };
+        const unread = unreadBySender[friend.id] ?? 0;
+        return (
+          <div
+            key={friendship.id}
+            role="button"
+            tabIndex={0}
+            onClick={() => handleChatClick(chatUser)}
+            onKeyDown={(e) => e.key === "Enter" && handleChatClick(chatUser)}
+            className="flex items-center gap-3 p-2 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg cursor-pointer transition-colors"
+          >
+            <div className="relative">
+              <Avatar className="w-8 h-8">
+                <AvatarImage src={friend.profile_photo || ''} />
+                <AvatarFallback>{getInitials(friend.full_name)}</AvatarFallback>
+              </Avatar>
+              <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white dark:border-zinc-900"></div>
+            </div>
+            <div className="font-medium text-sm truncate flex-1">
+              {friend.full_name || friend.username || 'Unknown'}
+            </div>
+            {unread > 0 && (
+              <Badge variant="destructive" className="h-5 min-w-5 px-1.5 text-xs shrink-0">
+                {unread > 99 ? "99+" : unread}
+              </Badge>
+            )}
           </div>
-          <div className="font-medium text-sm truncate flex-1">
-            {friend.full_name || friend.username || 'Unknown'}
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };

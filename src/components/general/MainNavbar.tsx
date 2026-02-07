@@ -32,7 +32,10 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationDialog } from "./NotificationDialog";
+import { ContactsList } from "./ContactsList";
 import { useApi } from "@/components/contex/ApiProvider";
+import { useChat } from "@/contexts/ChatContext";
+import type { Friendship } from "@/types/friendship";
 import { useWebSocketSubscription } from "@/contexts/WebSocketContext";
 import Link from "next/link";
 import {
@@ -47,10 +50,14 @@ export default function MainNavbar() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const { api } = useApi();
+  const { openChat } = useChat();
   const [searchQuery, setSearchQuery] = useState("");
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [profileSidebarOpen, setProfileSidebarOpen] = useState(false);
+  const [messengerOpen, setMessengerOpen] = useState(false);
+  const [friends, setFriends] = useState<Friendship[]>([]);
+  const [loadingFriends, setLoadingFriends] = useState(false);
 
   useWebSocketSubscription((data: any) => {
     let notification: any;
@@ -69,7 +76,6 @@ export default function MainNavbar() {
   // Load unread count on mount and when notification dialog closes
   useEffect(() => {
     if (status === "authenticated") {
-      // Call async function inside effect to avoid synchronous setState
       (async () => {
         try {
           const response = await api.getUnreadCount();
@@ -80,6 +86,44 @@ export default function MainNavbar() {
       })();
     }
   }, [status, notificationOpen, api]);
+
+  // Load friends for messenger dropdown
+  const loadFriends = React.useCallback(async () => {
+    try {
+      setLoadingFriends(true);
+      const response = (await api.getFriends()) as any;
+      let friendsList: Friendship[] = [];
+      if (Array.isArray(response)) friendsList = response;
+      else if (response?.friends) friendsList = response.friends;
+      else if (response?.data?.friends) friendsList = response.data.friends;
+      else if (response?.data?.friendships) friendsList = response.data.friendships;
+      else if (response?.friendships) friendsList = response.friendships;
+      setFriends(friendsList);
+    } catch {
+      setFriends([]);
+    } finally {
+      setLoadingFriends(false);
+    }
+  }, [api]);
+
+  useEffect(() => {
+    if (status === "authenticated" && messengerOpen) {
+      loadFriends();
+    }
+  }, [status, messengerOpen, loadFriends]);
+
+  useEffect(() => {
+    const handleFriendshipChanged = () => {
+      if (status === "authenticated") setTimeout(loadFriends, 300);
+    };
+    window.addEventListener("friendship-changed", handleFriendshipChanged);
+    return () => window.removeEventListener("friendship-changed", handleFriendshipChanged);
+  }, [status, loadFriends]);
+
+  const handleChatClick = (user: { id: string; full_name: string; username?: string; profile_photo?: string }) => {
+    openChat(user);
+    setMessengerOpen(false);
+  };
 
   const handleSignOut = async () => {
     await signOut({ callbackUrl: "/auth/login" });
@@ -181,13 +225,45 @@ export default function MainNavbar() {
             <Grid3x3 className="h-5 w-5 text-gray-300" />
           </button>
 
-          {/* Messenger */}
-          <button
-            className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-700 dark:bg-gray-800 hover:bg-gray-600 dark:hover:bg-gray-700 transition-colors"
-            title="Messenger"
+          {/* Messenger - Dropdown dengan daftar teman */}
+          <DropdownMenu
+            open={messengerOpen}
+            onOpenChange={(open) => {
+              setMessengerOpen(open);
+              if (open) setLoadingFriends(true);
+            }}
           >
-            <MessageCircle className="h-5 w-5 text-gray-300" />
-          </button>
+            <DropdownMenuTrigger asChild>
+              <button
+                className={cn(
+                  "flex items-center justify-center w-10 h-10 rounded-full transition-colors",
+                  messengerOpen
+                    ? "bg-gray-600 dark:bg-gray-700"
+                    : "bg-gray-700 dark:bg-gray-800 hover:bg-gray-600 dark:hover:bg-gray-700"
+                )}
+                title="Messenger"
+              >
+                <MessageCircle className="h-5 w-5 text-gray-300" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="w-72 max-h-[400px] overflow-hidden p-0 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+            >
+              <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="font-semibold text-sm text-gray-900 dark:text-white">Messenger</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Pilih teman untuk chat</p>
+              </div>
+              <div className="max-h-[320px] overflow-y-auto">
+                <ContactsList
+                  friends={friends}
+                  loading={loadingFriends}
+                  onChatClick={handleChatClick}
+                  refreshUnreadTrigger={0}
+                />
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* Notifications */}
           <button
@@ -318,8 +394,19 @@ export default function MainNavbar() {
           )}
         </div>
 
-        {/* Mobile: Profile + Notifications */}
+        {/* Mobile: Message + Notifications + Profile */}
         <div className="md:hidden flex items-center gap-2 ml-2">
+          {/* Message - Mobile: navigate to /message */}
+          <button
+            onClick={() => router.push("/message")}
+            className={cn(
+              "flex items-center justify-center w-10 h-10 rounded-full transition-colors",
+              router.pathname === "/message" ? "bg-gray-600 dark:bg-gray-700" : "bg-gray-700 dark:bg-gray-800 hover:bg-gray-600 dark:hover:bg-gray-700"
+            )}
+            title="Messenger"
+          >
+            <MessageCircle className="h-5 w-5 text-gray-300" />
+          </button>
           {/* Notifications - Mobile */}
           <button
             onClick={() => setNotificationOpen(true)}
@@ -497,7 +584,14 @@ export default function MainNavbar() {
                     </button>
                     
                     <button
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-gray-300 hover:bg-gray-700 dark:hover:bg-gray-800 text-left"
+                      onClick={() => {
+                        router.push("/message");
+                        setProfileSidebarOpen(false);
+                      }}
+                      className={cn(
+                        "w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
+                        router.pathname === "/message" ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-700 dark:hover:bg-gray-800"
+                      )}
                     >
                       <MessageCircle className="h-5 w-5" />
                       <span className="font-medium">Messenger</span>

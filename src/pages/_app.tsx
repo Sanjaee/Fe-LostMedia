@@ -5,6 +5,7 @@ import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/toaster";
 import { ApiProvider } from "@/components/contex/ApiProvider";
 import { WebSocketProvider } from "@/contexts/WebSocketContext";
+import { ChatProvider } from "@/contexts/ChatContext";
 import MainNavbar from "@/components/general/MainNavbar";
 import { useRouter } from "next/router";
 import { Geist, Geist_Mono } from "next/font/google";
@@ -51,8 +52,10 @@ export default function App({
         <SessionProvider session={session}>
           <ApiProvider>
             <WebSocketProvider>
-              <AppContent Component={Component} pageProps={pageProps} />
-            <Toaster />
+              <ChatProvider>
+                <AppContent Component={Component} pageProps={pageProps} />
+                <Toaster />
+              </ChatProvider>
             </WebSocketProvider>
           </ApiProvider>
         </SessionProvider>

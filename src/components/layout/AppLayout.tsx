@@ -28,6 +28,7 @@ interface AppLayoutProps {
   showCreatePost?: boolean;
   onCreatePostClick?: () => void;
   onChatClick?: (user: ChatUser) => void;
+  chatUnreadRefreshTrigger?: number; // bump when chat dialog closes to refresh per-contact unread counts
 }
 
 export const AppLayout: React.FC<AppLayoutProps> = ({
@@ -37,6 +38,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   showCreatePost = false,
   onCreatePostClick,
   onChatClick,
+  chatUnreadRefreshTrigger = 0,
 }) => {
   const { data: session } = useSession();
   const [contactsModalOpen, setContactsModalOpen] = useState(false);
@@ -111,13 +113,13 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                     </div>
                   )}
                 </div>
-                <ContactsList friends={friends} loading={loadingFriends} onChatClick={handleChatClick} />
+                <ContactsList friends={friends} loading={loadingFriends} onChatClick={handleChatClick} refreshUnreadTrigger={chatUnreadRefreshTrigger} />
                 <Dialog open={contactsModalOpen} onOpenChange={setContactsModalOpen}>
                   <DialogContent className="max-w-sm">
                     <DialogHeader>
                       <DialogTitle>Pilih Kontak untuk Chat</DialogTitle>
                     </DialogHeader>
-                    <ContactsList friends={friends} loading={loadingFriends} onChatClick={handleChatClick} />
+                    <ContactsList friends={friends} loading={loadingFriends} onChatClick={handleChatClick} refreshUnreadTrigger={chatUnreadRefreshTrigger} />
                   </DialogContent>
                 </Dialog>
               </div>
