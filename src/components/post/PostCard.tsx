@@ -139,7 +139,7 @@ export function PostCard({
   }, [post.id, session?.user?.id, viewedPosts, api, setViewedPosts]);
 
   return (
-    <Card ref={postRef} className="border-none shadow-sm overflow-hidden">
+    <Card ref={postRef} className="border-none shadow-sm overflow-hidden py-0">
       <CardHeader className="p-4 pb-2">
         <div className="flex items-center justify-between">
           <Link 
