@@ -24,6 +24,7 @@ interface User {
   created_at: string;
   last_login?: string;
   profile_photo?: string;
+  login_type?: string; // "credential" | "google"
 }
 
 interface UserStats {
@@ -318,14 +319,18 @@ export default function AdminPage() {
                         <TableHead>Email</TableHead>
                         <TableHead>Type</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Verified</TableHead>
+                        <TableHead>Login</TableHead>
                         <TableHead>Joined</TableHead>
                         <TableHead>Last Login</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {users.map((user) => (
-                        <TableRow key={user.id}>
+                        <TableRow
+                          key={user.id}
+                          className="cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors"
+                          onClick={() => router.push(`/profile/${user.id}`)}
+                        >
                           <TableCell>
                             <div className="flex items-center gap-3">
                               <Avatar className="h-8 w-8">
@@ -356,8 +361,10 @@ export default function AdminPage() {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Badge variant={user.is_verified ? "default" : "secondary"}>
-                              {user.is_verified ? "Verified" : "Unverified"}
+                            <Badge
+                              variant={user.login_type === "google" ? "default" : "secondary"}
+                            >
+                              {user.login_type === "google" ? "Google" : "Credential"}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-sm text-zinc-500">

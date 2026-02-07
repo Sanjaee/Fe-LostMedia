@@ -110,9 +110,10 @@ export const PostDialog: React.FC<PostDialogProps> = ({
             imageFiles,
             formData.group_id
           );
-          toast({ 
-            title: "Success", 
-            description: "Post created successfully. Images are being processed." 
+          toast({
+            title: "Diproses",
+            description: "Post dibuat. Gambar sedang diproses...",
+            variant: "pending",
           });
           // Don't call onSuccess here - wait for WebSocket notification to show the post
         } else {
