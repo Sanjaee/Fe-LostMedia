@@ -51,7 +51,7 @@ export const PostList: React.FC<PostListProps> = ({
   const { toast } = useToast();
   const { data: session } = useSession();
   
-  // Check if current user is admin
+  // Check if current user is owner
   const isAdmin = useMemo(() => {
     const userType = 
       session?.userType || 
@@ -59,7 +59,7 @@ export const PostList: React.FC<PostListProps> = ({
       session?.user?.user_type || 
       session?.user?.role || 
       (session?.user as any)?.userType;
-    return userType === "admin";
+    return userType === "owner";
   }, [session]);
 
   const [posts, setPosts] = useState<Post[]>([]);

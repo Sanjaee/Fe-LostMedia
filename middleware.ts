@@ -38,7 +38,7 @@ export async function middleware(request: NextRequest) {
     // For admin routes, check role (will be validated by backend)
     if (isAdminRoute) {
       const userType = (token as any)?.userType || (token as any)?.role;
-      if (userType !== "admin") {
+      if (userType !== "owner") {
         return NextResponse.redirect(new URL("/", request.url));
       }
     }

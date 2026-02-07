@@ -176,7 +176,7 @@ export function PostCard({
               session?.user?.role || 
               (session?.user as any)?.userType;
             
-            const isAdminUser = userType === "admin";
+            const isAdminUser = userType === "owner";
             
             if (!isAdminUser) return null;
             

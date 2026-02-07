@@ -1,12 +1,25 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ContactsList } from "@/components/general/ContactsList";
 import type { Friendship } from "@/types/friendship";
+
+interface ChatUser {
+  id: string;
+  full_name: string;
+  username?: string;
+  profile_photo?: string;
+}
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -14,6 +27,7 @@ interface AppLayoutProps {
   loadingFriends?: boolean;
   showCreatePost?: boolean;
   onCreatePostClick?: () => void;
+  onChatClick?: (user: ChatUser) => void;
 }
 
 export const AppLayout: React.FC<AppLayoutProps> = ({
@@ -22,8 +36,15 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   loadingFriends = false,
   showCreatePost = false,
   onCreatePostClick,
+  onChatClick,
 }) => {
   const { data: session } = useSession();
+  const [contactsModalOpen, setContactsModalOpen] = useState(false);
+
+  const handleChatClick = (user: ChatUser) => {
+    onChatClick?.(user);
+    setContactsModalOpen(false);
+  };
 
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 pt-4">
@@ -76,14 +97,29 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
               </div>
               <Separator className="my-2" />
               <div>
-                <h3 className="text-zinc-500 font-semibold mb-2 px-2">Kontak</h3>
-                {/* Debug: Log friends data being passed */}
-                {process.env.NODE_ENV === 'development' && (
-                  <div className="text-xs text-zinc-400 mb-2 px-2">
-                    Friends count: {friends.length} | Loading: {loadingFriends ? 'Yes' : 'No'}
-                  </div>
-                )}
-                <ContactsList friends={friends} loading={loadingFriends} />
+                <div
+                  className="cursor-pointer hover:opacity-80"
+                  onClick={() => friends.length > 0 && setContactsModalOpen(true)}
+                  onKeyDown={(e) => e.key === "Enter" && friends.length > 0 && setContactsModalOpen(true)}
+                  role="button"
+                  tabIndex={0}
+                >
+                  <h3 className="text-zinc-500 font-semibold mb-2 px-2">Kontak</h3>
+                  {process.env.NODE_ENV === "development" && (
+                    <div className="text-xs text-zinc-400 mb-2 px-2">
+                      Friends count: {friends.length} | Loading: {loadingFriends ? "Yes" : "No"}
+                    </div>
+                  )}
+                </div>
+                <ContactsList friends={friends} loading={loadingFriends} onChatClick={handleChatClick} />
+                <Dialog open={contactsModalOpen} onOpenChange={setContactsModalOpen}>
+                  <DialogContent className="max-w-sm">
+                    <DialogHeader>
+                      <DialogTitle>Pilih Kontak untuk Chat</DialogTitle>
+                    </DialogHeader>
+                    <ContactsList friends={friends} loading={loadingFriends} onChatClick={handleChatClick} />
+                  </DialogContent>
+                </Dialog>
               </div>
             </div>
           </div>

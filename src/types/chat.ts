@@ -1,3 +1,25 @@
+// Direct message (1:1 chat) - matches backend ChatMessage
+export interface ChatMessage {
+  id: string;
+  sender_id: string;
+  receiver_id: string;
+  content: string;
+  is_read: boolean;
+  created_at: string;
+  sender?: {
+    id: string;
+    full_name: string;
+    username?: string;
+    profile_photo?: string;
+  };
+  receiver?: {
+    id: string;
+    full_name: string;
+    username?: string;
+    profile_photo?: string;
+  };
+}
+
 export interface User {
   id: number;
   phone_number: string;

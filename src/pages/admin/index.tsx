@@ -30,7 +30,7 @@ interface User {
 interface UserStats {
   total: number;
   by_type: {
-    admin: number;
+    owner: number;
     member: number;
   };
   by_verification: {
@@ -52,7 +52,7 @@ export default function AdminPage() {
   const limit = 50;
 
   useEffect(() => {
-    // Check if user is admin
+    // Check if user is owner
     if (status === "loading") return;
 
     if (status === "unauthenticated" || !session) {
@@ -69,7 +69,7 @@ export default function AdminPage() {
       (session.user as any)?.user_type || 
       (session.user as any)?.userType;
     
-    if (userType !== "admin") {
+    if (userType !== "owner") {
       router.push("/");
       return;
     }
@@ -154,12 +154,12 @@ export default function AdminPage() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Admins</CardTitle>
+                <CardTitle className="text-sm font-medium">Owners</CardTitle>
                 <Shield className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats.by_type.admin}</div>
-                <p className="text-xs text-muted-foreground">Admin users</p>
+                <div className="text-2xl font-bold">{stats.by_type.owner}</div>
+                <p className="text-xs text-muted-foreground">Owner users</p>
               </CardContent>
             </Card>
 
@@ -200,19 +200,19 @@ export default function AdminPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Shield className="h-4 w-4 text-blue-500" />
-                      <span className="text-sm">Admin</span>
+                      <span className="text-sm">Owner</span>
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="w-32 bg-zinc-200 dark:bg-zinc-800 rounded-full h-2">
                         <div
                           className="bg-blue-500 h-2 rounded-full"
                           style={{
-                            width: `${(stats.by_type.admin / stats.total) * 100}%`,
+                            width: `${(stats.by_type.owner / stats.total) * 100}%`,
                           }}
                         />
                       </div>
                       <span className="text-sm font-medium w-12 text-right">
-                        {stats.by_type.admin}
+                        {stats.by_type.owner}
                       </span>
                     </div>
                   </div>
@@ -350,7 +350,7 @@ export default function AdminPage() {
                           <TableCell>{user.email}</TableCell>
                           <TableCell>
                             <Badge
-                              variant={user.user_type === "admin" ? "default" : "secondary"}
+                              variant={user.user_type === "owner" ? "default" : "secondary"}
                             >
                               {user.user_type}
                             </Badge>

@@ -6,12 +6,20 @@ import { useSession } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { Friendship } from "@/types/friendship";
 
+interface ChatUser {
+  id: string;
+  full_name: string;
+  username?: string;
+  profile_photo?: string;
+}
+
 interface ContactsListProps {
   friends: Friendship[];
   loading?: boolean;
+  onChatClick?: (user: ChatUser) => void;
 }
 
-export const ContactsList: React.FC<ContactsListProps> = ({ friends, loading = false }) => {
+export const ContactsList: React.FC<ContactsListProps> = ({ friends, loading = false, onChatClick }) => {
   const { data: session } = useSession();
   const currentUserId = session?.user?.id;
   const currentUserEmail = session?.user?.email;
@@ -122,9 +130,12 @@ export const ContactsList: React.FC<ContactsListProps> = ({ friends, loading = f
   return (
     <div className="max-h-[400px] overflow-y-auto space-y-1">
       {processedFriends.map(({ friendship, friend }) => (
-        <Link
+        <div
           key={friendship.id}
-          href={`/profile/${friend.id}`}
+          role="button"
+          tabIndex={0}
+          onClick={() => onChatClick?.({ id: friend.id, full_name: friend.full_name, username: friend.username, profile_photo: friend.profile_photo })}
+          onKeyDown={(e) => e.key === "Enter" && onChatClick?.({ id: friend.id, full_name: friend.full_name, username: friend.username, profile_photo: friend.profile_photo })}
           className="flex items-center gap-3 p-2 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg cursor-pointer transition-colors"
         >
           <div className="relative">
@@ -134,10 +145,10 @@ export const ContactsList: React.FC<ContactsListProps> = ({ friends, loading = f
             </Avatar>
             <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white dark:border-zinc-900"></div>
           </div>
-          <div className="font-medium text-sm truncate">
+          <div className="font-medium text-sm truncate flex-1">
             {friend.full_name || friend.username || 'Unknown'}
           </div>
-        </Link>
+        </div>
       ))}
     </div>
   );

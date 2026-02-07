@@ -280,7 +280,7 @@ export default function MainNavbar() {
                     session.user?.role || 
                     (session.user as any)?.userType;
                   
-                  if (userType === "admin") {
+                  if (userType === "owner") {
                     return (
                       <>
                         <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
@@ -454,7 +454,7 @@ export default function MainNavbar() {
                         session.user?.role || 
                         (session.user as any)?.userType;
                       
-                      if (userType === "admin") {
+                      if (userType === "owner") {
                         const isAdminActive = router.pathname === "/admin" || router.pathname.startsWith("/admin/");
                         return (
                           <button

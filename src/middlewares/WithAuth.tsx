@@ -6,7 +6,7 @@ import {
 } from "next/server";
 import { getToken } from "next-auth/jwt";
 
-const onlyAdmin = ["/admin"];
+const onlyOwner = ["/admin"];
 
 export default function withAuth(
   middleware: NextMiddleware,
@@ -32,11 +32,11 @@ export default function withAuth(
         return NextResponse.redirect(url);
       }
 
-      // Check admin-only routes
-      const isAdminRoute = onlyAdmin.some((route) =>
+      // Check owner-only routes
+      const isOwnerRoute = onlyOwner.some((route) =>
         pathname.startsWith(route)
       );
-      if (isAdminRoute && token.role !== "admin") {
+      if (isOwnerRoute && token.role !== "owner") {
         return NextResponse.redirect(new URL("/", req.url));
       }
     }

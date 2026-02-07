@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { Eye } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { ChatDialog } from "@/components/chat/ChatDialog";
 
 import type { Post } from "@/types/post";
 import type { Friendship } from "@/types/friendship";
@@ -59,6 +60,8 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
   const [currentOffset, setCurrentOffset] = useState(0); // Current offset for pagination
   const [currentSort, setCurrentSort] = useState<"newest" | "popular">("popular"); // Current sort mode
   const loadMoreRef = useRef<HTMLDivElement>(null); // Ref for infinite scroll trigger
+  const [chatDialogOpen, setChatDialogOpen] = useState(false);
+  const [selectedChatUser, setSelectedChatUser] = useState<{ id: string; full_name: string; username?: string; profile_photo?: string } | null>(null);
 
   // Check URL params for photo modal
   const fbid = searchParams?.get('fbid');
@@ -565,6 +568,10 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
       loadingFriends={loadingFriends}
       showCreatePost={true}
       onCreatePostClick={() => setIsPostDialogOpen(true)}
+      onChatClick={(user) => {
+        setSelectedChatUser(user);
+        setChatDialogOpen(true);
+      }}
     >
       {/* Create Post Widget */}
       {session && (
@@ -689,6 +696,16 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
             }));
           }
         }}
+      />
+
+      {/* Chat Dialog */}
+      <ChatDialog
+        open={chatDialogOpen}
+        onClose={() => {
+          setChatDialogOpen(false);
+          setSelectedChatUser(null);
+        }}
+        user={selectedChatUser}
       />
     </AppLayout>
   );

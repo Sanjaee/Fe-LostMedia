@@ -49,6 +49,7 @@ import type {
   LikeCommentRequest,
   LikeResponse,
 } from "@/types/like";
+import type { ChatMessage } from "@/types/chat";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.194.248:5000";
 
@@ -487,6 +488,37 @@ class ApiClient {
     });
   }
 
+  // Chat endpoints
+  async sendChatMessage(receiverId: string, content: string): Promise<{ message: ChatMessage }> {
+    return this.request<{ message: ChatMessage }>("/api/v1/chat/messages", {
+      method: "POST",
+      body: JSON.stringify({ receiver_id: receiverId, content }),
+    });
+  }
+
+  async getChatConversation(
+    withUserId: string,
+    limit = 50,
+    offset = 0
+  ): Promise<{ messages: ChatMessage[] }> {
+    return this.request<{ messages: ChatMessage[] }>(
+      `/api/v1/chat/messages?with_user_id=${encodeURIComponent(withUserId)}&limit=${limit}&offset=${offset}`,
+      { method: "GET" }
+    );
+  }
+
+  async markChatAsRead(senderId: string): Promise<void> {
+    return this.request<void>(`/api/v1/chat/read/${senderId}`, {
+      method: "PUT",
+    });
+  }
+
+  async getChatUnreadCount(): Promise<{ count: number }> {
+    return this.request<{ count: number }>("/api/v1/chat/unread/count", {
+      method: "GET",
+    });
+  }
+
   // Post endpoints
   async createPost(data: CreatePostRequest): Promise<PostResponse> {
     const cleanData: Record<string, any> = {};
@@ -672,7 +704,7 @@ class ApiClient {
 
   async getUserStats(): Promise<{
     total: number;
-    by_type: { admin: number; member: number };
+    by_type: { owner: number; member: number };
     by_verification: { verified: number; unverified: number };
   }> {
     return this.request(`/api/v1/admin/stats`, {
