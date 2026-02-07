@@ -72,13 +72,6 @@ export function PostCard({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  // Check if current user is admin
-  const isAdmin = session?.userType === "admin" || 
-                  session?.user?.userType === "admin" || 
-                  session?.user?.user_type === "admin" || 
-                  session?.user?.role === "admin" ||
-                  (session?.user as any)?.userType === "admin";
-
   const handleDeleteClick = () => {
     setDeleteDialogOpen(true);
   };
@@ -173,24 +166,39 @@ export function PostCard({
               </div>
             </div>
           </Link>
-          {isAdmin && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
-                  <MoreHorizontal className="w-5 h-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40">
-                <DropdownMenuItem
-                  onClick={handleDeleteClick}
-                  className="text-red-600 dark:text-red-400"
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Hapus (Admin)
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+          {/* Admin Delete Button - Always show button, but only show menu if admin */}
+          {(() => {
+            // Use same check as MainNavbar
+            const userType = 
+              session?.userType || 
+              session?.user?.userType || 
+              session?.user?.user_type || 
+              session?.user?.role || 
+              (session?.user as any)?.userType;
+            
+            const isAdminUser = userType === "admin";
+            
+            if (!isAdminUser) return null;
+            
+            return (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                    <MoreHorizontal className="w-5 h-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-40">
+                  <DropdownMenuItem
+                    onClick={handleDeleteClick}
+                    className="text-red-600 dark:text-red-400 cursor-pointer"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Hapus (Admin)
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            );
+          })()}
         </div>
       </CardHeader>
       
