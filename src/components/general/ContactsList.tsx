@@ -33,7 +33,7 @@ export const ContactsList: React.FC<ContactsListProps> = ({ friends, loading = f
     if (!currentUserId) return;
     try {
       const res = await api.getChatUnreadBySenders();
-      const counts = res.counts ?? res.data?.counts ?? {};
+      const counts = res.counts ?? (res as any).data?.counts ?? {};
       setUnreadBySender(typeof counts === "object" ? counts : {});
     } catch {
       setUnreadBySender({});
@@ -41,8 +41,20 @@ export const ContactsList: React.FC<ContactsListProps> = ({ friends, loading = f
   }, [currentUserId, api]);
 
   useEffect(() => {
-    loadUnreadBySenders();
-  }, [loadUnreadBySenders, refreshUnreadTrigger]);
+    if (!currentUserId) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await api.getChatUnreadBySenders();
+        if (cancelled) return;
+        const counts = res.counts ?? (res as any).data?.counts ?? {};
+        setUnreadBySender(typeof counts === "object" ? counts : {});
+      } catch {
+        if (!cancelled) setUnreadBySender({});
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [currentUserId, api, refreshUnreadTrigger]);
 
   useEffect(() => {
     const handleChatClosed = () => loadUnreadBySenders();
