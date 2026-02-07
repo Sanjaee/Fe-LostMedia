@@ -390,7 +390,7 @@ export const PostList: React.FC<PostListProps> = ({
               </Link>
 
               {/* Actions Menu - Show for own profile or admin */}
-              {(isOwnProfile || isAdmin) && (
+              {isOwnProfile && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button 
@@ -402,24 +402,33 @@ export const PostList: React.FC<PostListProps> = ({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-40">
-                    {isOwnProfile && (
-                      <DropdownMenuItem onClick={() => handleEdit(post)}>
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit Post
-                      </DropdownMenuItem>
-                    )}
-                    {(isOwnProfile || isAdmin) && (
-                      <DropdownMenuItem
-                        onClick={() => handleDeleteClick(post)}
-                        variant="destructive"
-                        className="text-red-600 dark:text-red-400"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        {isAdmin && !isOwnProfile ? "Hapus (Admin)" : "Hapus"}
-                      </DropdownMenuItem>
-                    )}
+                    <DropdownMenuItem onClick={() => handleEdit(post)}>
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit Post
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleDeleteClick(post)}
+                      variant="destructive"
+                      className="text-red-600 dark:text-red-400"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Hapus
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+              )}
+              
+              {/* Admin Delete Button - Only delete, no dropdown */}
+              {isAdmin && !isOwnProfile && (
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className="h-8 w-8 rounded-full hover:bg-red-100 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400"
+                  onClick={() => handleDeleteClick(post)}
+                  title="Hapus Post (Admin)"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               )}
             </div>
 

@@ -658,6 +658,10 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
                 handleLikeChange={handleLikeChange}
                 handleOpenCommentDialog={handleOpenCommentDialog}
                 handleImageClick={handleImageClick}
+                onPostDeleted={(postId) => {
+                  // Remove deleted post from list
+                  setPosts((prev) => prev.filter((p) => p.id !== postId));
+                }}
               />
             ))}
             

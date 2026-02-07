@@ -9,13 +9,33 @@ import {
   MessageCircle, 
   Share2, 
   MoreHorizontal,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { LikeButton } from "@/components/post/LikeButton";
 import { parseTextWithLinks } from "@/utils/textUtils";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
+import { Loader2 } from "lucide-react";
 import type { Post } from "@/types/post";
 
 interface PostCardProps {
@@ -30,6 +50,7 @@ interface PostCardProps {
   handleLikeChange: (postId: string, liked: boolean, likeCount: number) => void;
   handleOpenCommentDialog: (post: Post) => void;
   handleImageClick: (post: Post, imageIndex: number) => void;
+  onPostDeleted?: (postId: string) => void;
 }
 
 export function PostCard({
@@ -44,8 +65,46 @@ export function PostCard({
   handleLikeChange,
   handleOpenCommentDialog,
   handleImageClick,
+  onPostDeleted,
 }: PostCardProps) {
   const postRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  // Check if current user is admin
+  const isAdmin = session?.userType === "admin" || 
+                  session?.user?.userType === "admin" || 
+                  session?.user?.user_type === "admin" || 
+                  session?.user?.role === "admin" ||
+                  (session?.user as any)?.userType === "admin";
+
+  const handleDeleteClick = () => {
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      setDeleting(true);
+      await api.deletePost(post.id);
+      toast({
+        title: "Berhasil",
+        description: "Post berhasil dihapus",
+      });
+      if (onPostDeleted) {
+        onPostDeleted(post.id);
+      }
+      setDeleteDialogOpen(false);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Gagal menghapus post",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   // Track view when post enters viewport
   useEffect(() => {
@@ -114,9 +173,24 @@ export function PostCard({
               </div>
             </div>
           </Link>
-          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
-            <MoreHorizontal className="w-5 h-5" />
-          </Button>
+          {isAdmin && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                  <MoreHorizontal className="w-5 h-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuItem
+                  onClick={handleDeleteClick}
+                  className="text-red-600 dark:text-red-400"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Hapus (Admin)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </CardHeader>
       
@@ -243,6 +317,37 @@ export function PostCard({
           </Button>
         </div>
       </CardContent>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Post (Admin)?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Sebagai admin, Anda akan menghapus post ini. Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeleteDialogOpen(false)}>
+              Batal
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+              disabled={deleting}
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Menghapus...
+                </>
+              ) : (
+                "Hapus"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
