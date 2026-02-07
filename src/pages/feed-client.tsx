@@ -341,6 +341,32 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
     }
   };
   
+  // Load view counts for posts
+  const loadViewCounts = useCallback(async (postIds: string[]) => {
+    try {
+      const counts = await Promise.all(
+        postIds.map(async (postId) => {
+          try {
+            const response = await api.getPostViewCount(postId);
+            return { postId, count: response.count || 0 };
+          } catch {
+            return { postId, count: 0 };
+          }
+        })
+      );
+
+      const countsMap: Record<string, number> = {};
+      counts.forEach(({ postId, count }) => {
+        countsMap[postId] = count;
+      });
+
+      return countsMap;
+    } catch (error) {
+      console.error("Failed to load view counts:", error);
+      return {};
+    }
+  }, [api]);
+
   // Load feed with sorting option (for initial load or refresh)
   const loadFeed = useCallback(async (sort: "newest" | "popular" = "popular", reset: boolean = true) => {
     try {
@@ -355,6 +381,29 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
         feedPosts = response.posts;
       } else if (Array.isArray(response)) {
         feedPosts = response;
+      }
+
+      // If sorting by popular, ensure posts are sorted by engagement
+      if (sort === "popular" && feedPosts.length > 0) {
+        // Load view counts for all posts
+        const postIds = feedPosts.map((p) => p.id);
+        const viewCountsMap = await loadViewCounts(postIds);
+
+        // Sort by engagement score (highest first)
+        // Use post data directly (likes_count, comments_count) or fallback to state
+        feedPosts.sort((a, b) => {
+          const likesA = a.likes_count ?? postLikeCounts[a.id] ?? 0;
+          const commentsA = a.comments_count ?? postCommentCounts[a.id] ?? 0;
+          const viewsA = viewCountsMap[a.id] || 0;
+          const scoreA = (likesA * 2) + (commentsA * 3) + (viewsA * 1);
+
+          const likesB = b.likes_count ?? postLikeCounts[b.id] ?? 0;
+          const commentsB = b.comments_count ?? postCommentCounts[b.id] ?? 0;
+          const viewsB = viewCountsMap[b.id] || 0;
+          const scoreB = (likesB * 2) + (commentsB * 3) + (viewsB * 1);
+
+          return scoreB - scoreA;
+        });
       }
       
       if (reset) {
@@ -373,7 +422,7 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
       console.error("Failed to load feed:", err);
       setHasMore(false);
     }
-  }, [api, currentOffset]);
+  }, [api, currentOffset, loadViewCounts, postLikeCounts, postCommentCounts]);
 
   // Load more posts for infinite scroll
   const loadMore = useCallback(async () => {
@@ -391,6 +440,29 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
       } else if (Array.isArray(response)) {
         feedPosts = response;
       }
+
+      // If sorting by popular, ensure posts are sorted by engagement
+      if (currentSort === "popular" && feedPosts.length > 0) {
+        // Load view counts for new posts
+        const postIds = feedPosts.map((p) => p.id);
+        const viewCountsMap = await loadViewCounts(postIds);
+
+        // Sort by engagement score (highest first)
+        // Use post data directly (likes_count, comments_count) or fallback to state
+        feedPosts.sort((a, b) => {
+          const likesA = a.likes_count ?? postLikeCounts[a.id] ?? 0;
+          const commentsA = a.comments_count ?? postCommentCounts[a.id] ?? 0;
+          const viewsA = viewCountsMap[a.id] || 0;
+          const scoreA = (likesA * 2) + (commentsA * 3) + (viewsA * 1);
+
+          const likesB = b.likes_count ?? postLikeCounts[b.id] ?? 0;
+          const commentsB = b.comments_count ?? postCommentCounts[b.id] ?? 0;
+          const viewsB = viewCountsMap[b.id] || 0;
+          const scoreB = (likesB * 2) + (commentsB * 3) + (viewsB * 1);
+
+          return scoreB - scoreA;
+        });
+      }
       
       if (feedPosts.length > 0) {
         setPosts(prev => [...prev, ...feedPosts]);
@@ -405,7 +477,7 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
     } finally {
       setLoadingMore(false);
     }
-  }, [api, currentOffset, currentSort, loadingMore, hasMore]);
+  }, [api, currentOffset, currentSort, loadingMore, hasMore, loadViewCounts, postLikeCounts, postCommentCounts]);
 
   // WebSocket connection for realtime post upload notifications
   // Use useMemo to prevent URL from changing on every render
