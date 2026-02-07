@@ -7,6 +7,7 @@ import { ApiProvider } from "@/components/contex/ApiProvider";
 import { WebSocketProvider } from "@/contexts/WebSocketContext";
 import { ChatProvider } from "@/contexts/ChatContext";
 import MainNavbar from "@/components/general/MainNavbar";
+import BanDialog from "@/components/general/BanDialog";
 import { useRouter } from "next/router";
 import { Geist, Geist_Mono } from "next/font/google";
 import { cn } from "@/lib/utils";
@@ -37,6 +38,7 @@ function AppContent({ Component, pageProps }: AppContentProps) {
   return (
     <div className={cn(geistSans.variable, geistMono.variable)}>
       {!isAuthPage && <MainNavbar />}
+      {!isAuthPage && <BanDialog />}
       <Component {...pageProps} />
     </div>
   );

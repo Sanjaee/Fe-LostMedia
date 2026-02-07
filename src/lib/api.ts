@@ -189,6 +189,24 @@ class ApiClient {
           errorMessage = `HTTP ${response.status}: ${response.statusText}`;
         }
 
+        // Intercept ban response — dispatch global event so BanDialog can catch it
+        if (
+          response.status === 403 &&
+          errorData.is_banned === true &&
+          errorData.banned_until
+        ) {
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(
+              new CustomEvent("user-banned", {
+                detail: {
+                  banned_until: errorData.banned_until,
+                  ban_reason: errorData.ban_reason || "Melanggar ketentuan layanan",
+                },
+              })
+            );
+          }
+        }
+
         // Create error with response data preserved
         const error = new Error(errorMessage) as Error & {
           response?: {
@@ -323,8 +341,8 @@ class ApiClient {
     });
   }
 
-  async getMe(): Promise<{ user: { id: string; email: string; full_name: string; login_type?: string } }> {
-    return this.request<{ user: { id: string; email: string; full_name: string; login_type?: string } }>(
+  async getMe(): Promise<{ user: { id: string; email: string; full_name: string; login_type?: string; is_banned?: boolean; banned_until?: string; ban_reason?: string } }> {
+    return this.request<{ user: { id: string; email: string; full_name: string; login_type?: string; is_banned?: boolean; banned_until?: string; ban_reason?: string } }>(
       "/api/v1/auth/me",
       { method: "GET" }
     );
@@ -729,6 +747,19 @@ class ApiClient {
   }> {
     return this.request(`/api/v1/admin/stats`, {
       method: "GET",
+    });
+  }
+
+  async banUser(userId: string, duration: number, reason?: string): Promise<{ user_id: string; banned_until: string; reason: string }> {
+    return this.request(`/api/v1/admin/users/${userId}/ban`, {
+      method: "POST",
+      body: JSON.stringify({ duration, reason: reason || "" }),
+    });
+  }
+
+  async unbanUser(userId: string): Promise<void> {
+    return this.request<void>(`/api/v1/admin/users/${userId}/unban`, {
+      method: "POST",
     });
   }
 
