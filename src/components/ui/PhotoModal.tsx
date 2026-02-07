@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from "next/link";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserNameWithRole } from "@/components/ui/UserNameWithRole";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { X, MoreHorizontal, ThumbsUp, MessageCircle, Share2, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
@@ -151,7 +152,11 @@ export default function PhotoModal({ isOpen, onClose, post, imageIndex, onNaviga
               </Avatar>
               <div>
                 <Link href={`/profile/${post.user_id}`} className="font-semibold text-sm cursor-pointer block">
-                  {post.user?.full_name || 'Unknown User'}
+                  <UserNameWithRole
+                    displayName={post.user?.username || post.user?.full_name || "Unknown User"}
+                    role={(post.user as any)?.user_type ?? (post.user as any)?.role}
+                    className="truncate inline-block max-w-full"
+                  />
                 </Link>
                 <div className="text-xs text-zinc-500 flex items-center gap-1">
                   {formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: idLocale })}

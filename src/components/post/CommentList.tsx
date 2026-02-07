@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserNameWithRole } from "@/components/ui/UserNameWithRole";
 import { Button } from "@/components/ui/button";
 import { useApi } from "@/components/contex/ApiProvider";
 import { useToast } from "@/hooks/use-toast";
@@ -187,19 +188,31 @@ export const CommentList: React.FC<CommentListProps> = ({
                 <div className="flex items-center gap-2 flex-wrap min-w-0">
                   {isReply && comment.parent?.user ? (
                     <>
-                      <span className="font-semibold text-sm text-gray-900 dark:text-white truncate">
-                        {comment.user?.full_name}
+                      <span className="font-semibold text-sm text-gray-900 dark:text-white truncate inline-flex items-center">
+                        <UserNameWithRole
+                          displayName={comment.user?.username || comment.user?.full_name || "User"}
+                          role={(comment.user as any)?.user_type ?? (comment.user as any)?.role}
+                          className="truncate inline-block max-w-full"
+                        />
                       </span>
                       <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
                         balas
                       </span>
-                      <span className="font-semibold text-sm text-blue-600 dark:text-blue-400 truncate">
-                        {comment.parent.user.full_name}
+                      <span className="font-semibold text-sm text-blue-600 dark:text-blue-400 truncate inline-flex items-center">
+                        <UserNameWithRole
+                          displayName={comment.parent.user?.username || comment.parent.user?.full_name || "User"}
+                          role={(comment.parent.user as any)?.user_type ?? (comment.parent.user as any)?.role}
+                          className="truncate inline-block max-w-full"
+                        />
                       </span>
                     </>
                   ) : (
-                    <span className="font-semibold text-sm text-gray-900 dark:text-white truncate">
-                      {comment.user?.full_name}
+                    <span className="font-semibold text-sm text-gray-900 dark:text-white truncate inline-flex items-center">
+                      <UserNameWithRole
+                        displayName={comment.user?.username || comment.user?.full_name || "User"}
+                        role={(comment.user as any)?.user_type ?? (comment.user as any)?.role}
+                        className="truncate inline-block max-w-full"
+                      />
                     </span>
                   )}
                   <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">

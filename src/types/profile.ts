@@ -21,6 +21,8 @@ export interface Profile {
     email: string;
     username?: string;
     profile_photo?: string;
+    user_type?: string;
+    role?: string;
   };
 }
 

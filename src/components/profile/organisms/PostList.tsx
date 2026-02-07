@@ -7,6 +7,7 @@ import { useApi } from "@/components/contex/ApiProvider";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserNameWithRole } from "@/components/ui/UserNameWithRole";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -350,7 +351,11 @@ export const PostList: React.FC<PostListProps> = ({
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="font-semibold text-gray-900 dark:text-white hover:underline">
-                      {post.user?.full_name}
+                      <UserNameWithRole
+                        displayName={post.user?.username || post.user?.full_name || "User"}
+                        role={(post.user as any)?.user_type ?? (post.user as any)?.role}
+                        className="truncate inline-block max-w-full"
+                      />
                     </h3>
                     {post.is_pinned && (
                       <Pin className="h-4 w-4 text-blue-500" />
@@ -506,7 +511,12 @@ export const PostList: React.FC<PostListProps> = ({
                 <div className="flex items-center gap-2 mb-2">
                   <Image className="h-4 w-4" />
                   <span className="text-sm text-gray-600 dark:text-gray-400">
-                    Shared from {post.shared_post.user?.full_name}
+                    Shared from{" "}
+                    <UserNameWithRole
+                      displayName={post.shared_post.user?.username || post.shared_post.user?.full_name || "User"}
+                      role={(post.shared_post.user as any)?.user_type ?? (post.shared_post.user as any)?.role}
+                      className="inline"
+                    />
                   </span>
                 </div>
                 {post.shared_post.content && (

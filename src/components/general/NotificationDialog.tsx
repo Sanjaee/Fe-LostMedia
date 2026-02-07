@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 // import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Bell, UserPlus, Check, X, Loader2, User as UserIcon, Trash2, MessageCircle } from "lucide-react";
+import { Bell, UserPlus, Check, X, Loader2, User as UserIcon, Trash2, MessageCircle, Shield } from "lucide-react";
 import { useRouter } from "next/router";
 import type { Notification } from "@/types/notification";
 import { formatDistanceToNow } from "date-fns";
@@ -422,6 +422,8 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
         return <span className="text-2xl">👍</span>;
       case "post_upload_completed":
         return <Check className="h-5 w-5 text-green-500" />;
+      case "role_updated":
+        return <Shield className="h-5 w-5 text-amber-500" />;
       default:
         return <Bell className="h-5 w-5 text-gray-500" />;
     }

@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserNameWithRole } from "@/components/ui/UserNameWithRole";
 import { Input } from "@/components/ui/input";
 import { useApi } from "@/components/contex/ApiProvider";
 import { useWebSocketSubscription } from "@/contexts/WebSocketContext";
@@ -23,6 +24,8 @@ interface ChatUser {
   full_name: string;
   username?: string;
   profile_photo?: string;
+  user_type?: string;
+  role?: string;
 }
 
 interface ChatDialogProps {
@@ -118,7 +121,13 @@ export function ChatDialog({ open, onClose, user }: ChatDialogProps) {
               </AvatarFallback>
             </Avatar>
             <div>
-              <div className="font-semibold">{user.full_name || user.username || "User"}</div>
+              <div className="font-semibold">
+                <UserNameWithRole
+                  displayName={user.username || user.full_name || "User"}
+                  role={user.user_type ?? user.role}
+                  className="truncate inline-block max-w-full"
+                />
+              </div>
               {user.username && (
                 <div className="text-xs text-zinc-500 font-normal">@{user.username}</div>
               )}

@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useApi } from "@/components/contex/ApiProvider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserNameWithRole } from "@/components/ui/UserNameWithRole";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, ThumbsUp, MessageCircle, Eye } from "lucide-react";
@@ -262,8 +263,12 @@ export const PostSearchList: React.FC<PostSearchListProps> = ({
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <div className="font-semibold text-sm  cursor-pointer text-gray-900 dark:text-white">
-                    {post.user?.full_name || 'Unknown'}
+                  <div className="font-semibold text-sm cursor-pointer text-gray-900 dark:text-white">
+                    <UserNameWithRole
+                      displayName={post.user?.username || post.user?.full_name || "Unknown"}
+                      role={(post.user as any)?.user_type ?? (post.user as any)?.role}
+                      className="truncate inline-block max-w-full"
+                    />
                   </div>
                   <div className="text-xs text-zinc-500 flex items-center gap-1">
                     {formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: id })}

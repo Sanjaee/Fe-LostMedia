@@ -4,6 +4,7 @@ import React, { useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { UserNameWithRole } from "@/components/ui/UserNameWithRole";
 import { useApi } from "@/components/contex/ApiProvider";
 import { useWebSocketSubscription } from "@/contexts/WebSocketContext";
 import type { Friendship } from "@/types/friendship";
@@ -207,7 +208,11 @@ export const ContactsList: React.FC<ContactsListProps> = ({ friends, loading = f
               <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white dark:border-zinc-900"></div>
             </div>
             <div className="font-medium text-sm truncate flex-1">
-              {friend.full_name || friend.username || 'Unknown'}
+              <UserNameWithRole
+                displayName={friend.username || friend.full_name || "Unknown"}
+                role={(friend as any).user_type ?? (friend as any).role}
+                className="truncate inline-block max-w-full"
+              />
             </div>
             {unread > 0 && (
               <Badge variant="destructive" className="h-5 min-w-5 px-1.5 text-xs shrink-0">

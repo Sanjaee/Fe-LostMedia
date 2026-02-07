@@ -2,6 +2,7 @@ import React from "react";
 import { ProfileAvatar } from "../atoms/ProfileAvatar";
 import { ProfileCover } from "../atoms/ProfileCover";
 import { ProfileButton } from "../atoms/ProfileButton";
+import { UserNameWithRole } from "@/components/ui/UserNameWithRole";
 import { Edit, Settings, UserPlus, Check } from "lucide-react";
 import { Profile } from "@/types/profile";
 import { cn } from "@/lib/utils";
@@ -68,7 +69,11 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             />
             <div className="pt-4 md:pt-0 md:pb-4">
               <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
-                {userName}
+                <UserNameWithRole
+                  displayName={userName}
+                  role={profile.user?.user_type ?? profile.user?.role}
+                  className="truncate inline-block max-w-full"
+                />
               </h1>
               {username && (
                 <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">

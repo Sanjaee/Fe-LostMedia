@@ -10,12 +10,16 @@ export interface Friendship {
     full_name: string;
     username?: string;
     profile_photo?: string;
+    user_type?: string;
+    role?: string;
   };
   receiver?: {
     id: string;
     full_name: string;
     username?: string;
     profile_photo?: string;
+    user_type?: string;
+    role?: string;
   };
 }
 

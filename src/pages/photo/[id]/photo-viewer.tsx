@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserNameWithRole } from "@/components/ui/UserNameWithRole";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { MoreHorizontal, ThumbsUp, MessageCircle, Share2, Send, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
@@ -101,7 +102,11 @@ export default function PhotoViewer({ post, imageIndex }: PhotoViewerProps) {
             </Avatar>
             <div>
               <Link href={`/profile/${post.user_id}`} className="font-semibold text-sm cursor-pointer block">
-                {post.user?.full_name || 'Unknown User'}
+                <UserNameWithRole
+                  displayName={post.user?.username || post.user?.full_name || "Unknown User"}
+                  role={(post.user as any)?.user_type ?? (post.user as any)?.role}
+                  className="truncate inline-block max-w-full"
+                />
               </Link>
               <div className="text-xs text-zinc-500 flex items-center gap-1">
                 {formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: idLocale })}

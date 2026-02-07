@@ -8,6 +8,7 @@ import { useApi } from "@/components/contex/ApiProvider";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserNameWithRole } from "@/components/ui/UserNameWithRole";
 import { Loader2, UserPlus, Check } from "lucide-react";
 import type { User } from "@/types/user";
 
@@ -317,9 +318,13 @@ export const PeopleSearchList: React.FC<PeopleSearchListProps> = ({
             </Avatar>
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-sm text-gray-900 dark:text-white hover:underline truncate">
-                {user.full_name}
+                <UserNameWithRole
+                  displayName={user.username || user.full_name}
+                  role={user.user_type ?? (user as any).role}
+                  className="truncate inline-block max-w-full"
+                />
               </h3>
-              {user.username && (
+              {user.username && user.full_name !== user.username && (
                 <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                   @{user.username}
                 </p>
