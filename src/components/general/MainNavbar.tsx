@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserNameWithRole } from "@/components/ui/UserNameWithRole";
 import { Button } from "@/components/ui/button";
 import { 
   Search, 
@@ -307,11 +308,11 @@ export default function MainNavbar() {
               </DropdownMenuTrigger>
               <DropdownMenuContent 
                 align="end" 
-                className="w-56 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+                className="min-w-56 w-max max-w-[280px] bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
               >
                 <DropdownMenuLabel className="flex flex-col space-y-1 p-0">
-                  <div className="flex items-center gap-3 px-2 py-1.5">
-                    <Avatar className="h-10 w-10">
+                  <div className="flex items-center gap-3 px-2 py-1.5 min-w-0">
+                    <Avatar className="h-10 w-10 shrink-0">
                       <AvatarImage
                         src={session.user.image || undefined}
                         alt={session.user.name || "User"}
@@ -321,9 +322,13 @@ export default function MainNavbar() {
                         {getInitials(session.user.name)}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="flex flex-col">
-                      <span className="font-medium text-sm text-gray-900 dark:text-white">
-                        {session.user.name || "User"}
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="font-medium text-sm text-gray-900 dark:text-white break-words">
+                        <UserNameWithRole
+                          displayName={session.user.name || (session.user as any)?.username || "User"}
+                          role={session.userType || (session.user as any)?.user_type || (session.user as any)?.role}
+                          className="break-words"
+                        />
                       </span>
                       {session.user.email && (
                         <span className="text-xs font-normal text-gray-500 dark:text-gray-400">

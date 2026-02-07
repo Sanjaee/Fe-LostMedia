@@ -8,6 +8,8 @@ export interface ChatUser {
   full_name: string;
   username?: string;
   profile_photo?: string;
+  user_type?: string;
+  role?: string;
 }
 
 interface ChatContextType {

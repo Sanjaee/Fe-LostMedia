@@ -189,7 +189,14 @@ export const ContactsList: React.FC<ContactsListProps> = ({ friends, loading = f
   return (
     <div className="max-h-[400px] overflow-y-auto space-y-1">
       {processedFriends.map(({ friendship, friend }) => {
-        const chatUser = { id: friend.id, full_name: friend.full_name, username: friend.username, profile_photo: friend.profile_photo };
+        const chatUser = {
+          id: friend.id,
+          full_name: friend.full_name,
+          username: friend.username,
+          profile_photo: friend.profile_photo,
+          user_type: (friend as any).user_type,
+          role: (friend as any).role,
+        };
         const unread = unreadBySender[friend.id] ?? 0;
         return (
           <div
