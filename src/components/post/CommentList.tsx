@@ -17,6 +17,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useSession } from "next-auth/react";
 
 interface CommentListProps {
@@ -38,6 +48,9 @@ export const CommentList: React.FC<CommentListProps> = ({
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
   
   const onCommentCountChangeRef = useRef(onCommentCountChange);
   const apiRef = useRef(api);
@@ -74,20 +87,32 @@ export const CommentList: React.FC<CommentListProps> = ({
     loadComments();
   }, [loadComments, refreshTrigger]);
 
-  const handleDelete = async (commentID: string) => {
+  const handleDeleteClick = (commentID: string) => {
+    setCommentToDelete(commentID);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!commentToDelete) return;
+
     try {
-      await api.deleteComment(commentID);
+      setDeleting(true);
+      await api.deleteComment(commentToDelete);
       toast({
         title: "Berhasil",
         description: "Komentar berhasil dihapus",
       });
       loadComments();
+      setDeleteDialogOpen(false);
+      setCommentToDelete(null);
     } catch (error: any) {
       toast({
         title: "Error",
         description: error.message || "Gagal menghapus komentar",
         variant: "destructive",
       });
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -122,7 +147,23 @@ export const CommentList: React.FC<CommentListProps> = ({
   };
 
   const renderComment = (comment: Comment, level = 0) => {
-    const isOwnComment = comment.user_id === session?.user?.id;
+    // Check if comment belongs to current user - check both ID and email as fallback
+    const currentUserId = session?.user?.id;
+    const currentUserEmail = session?.user?.email;
+    const commentUserId = comment.user_id;
+    const commentUserEmail = (comment.user as any)?.email;
+    
+    let isOwnComment = false;
+    if (currentUserId && commentUserId) {
+      // Primary check: compare user IDs (convert to string for comparison)
+      isOwnComment = String(commentUserId) === String(currentUserId);
+      
+      // Fallback: if IDs don't match, check by email (for Google OAuth cases where ID might be different)
+      if (!isOwnComment && currentUserEmail && commentUserEmail) {
+        isOwnComment = String(currentUserEmail).toLowerCase() === String(commentUserEmail).toLowerCase();
+      }
+    }
+    
     const isEditing = editingId === comment.id;
     const isReply = level > 0;
 
@@ -185,8 +226,8 @@ export const CommentList: React.FC<CommentListProps> = ({
                         Edit
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => handleDelete(comment.id)}
-                        className="text-red-600 dark:text-red-400"
+                        onClick={() => handleDeleteClick(comment.id)}
+                        className="text-red-600 dark:text-red-400 cursor-pointer"
                       >
                         <Trash2 className="h-4 w-4 mr-2" />
                         Hapus
@@ -302,8 +343,44 @@ export const CommentList: React.FC<CommentListProps> = ({
   }
 
   return (
-    <div className="space-y-4">
-      {comments.map((comment) => renderComment(comment, 0))}
-    </div>
+    <>
+      <div className="space-y-4">
+        {comments.map((comment) => renderComment(comment, 0))}
+      </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Komentar?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin menghapus komentar ini? Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setDeleteDialogOpen(false);
+              setCommentToDelete(null);
+            }}>
+              Batal
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+              disabled={deleting}
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Menghapus...
+                </>
+              ) : (
+                "Hapus"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
