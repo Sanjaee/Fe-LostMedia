@@ -139,7 +139,6 @@ body {
 .owner_name {
   color: #ff9f00;
   text-shadow: 2px 2px 5px #ff4500 !important;
-
   font-weight: 900;
   background-image: url("/god.gif");
   text-shadow: 0px 0px 5px #090909;
@@ -245,7 +244,6 @@ body {
 .member_name {
   color: white;
   font-weight: 900;
-  background-color: #0a0a0a;
   line-height: 16px;
 }
 .member_badge::before {
@@ -255,4 +253,9 @@ body {
 
 .start {
   color: #f90;
+}
+
+.line-height-30 .owner_name{
+  line-height: 30px !important;
+  margin-left: 5px !important;
 }

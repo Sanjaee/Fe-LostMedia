@@ -72,7 +72,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 <UserNameWithRole
                   displayName={userName}
                   role={profile.user?.user_type ?? profile.user?.role}
-                  className="truncate inline-block max-w-full"
+                  className="truncate inline-block max-w-full line-height-30"
                 />
               </h1>
               {username && (

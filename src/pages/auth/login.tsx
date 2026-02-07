@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { getSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import { LoginForm } from "@/components/auth/LoginForm";
@@ -8,6 +8,7 @@ import { ArrowLeft } from "lucide-react";
 
 const LoginPage = () => {
   const router = useRouter();
+  const sessionCheckedRef = useRef(false);
 
   // Handle OAuth errors from URL parameters
   useEffect(() => {
@@ -45,28 +46,30 @@ const LoginPage = () => {
       // Clean up the URL by removing the error parameter
       router.replace("/auth/login", undefined, { shallow: true });
     }
-  }, [router]);
+  }, [router.query.error]);
 
-  // Redirect if already logged in
+  // Redirect if already logged in (run once on mount to avoid polling when JWT/secret mismatch)
   useEffect(() => {
+    if (!router.isReady || sessionCheckedRef.current) return;
+    sessionCheckedRef.current = true;
+
     const checkSession = async () => {
       const session = await getSession();
       if (session) {
         // Get callback URL from query params or default to dashboard
         let callbackUrl =
           (router.query.callbackUrl as string) || "/";
-        
+
         // Decode callbackUrl if it's encoded
         try {
           callbackUrl = decodeURIComponent(callbackUrl);
         } catch {
           // If decoding fails, use as is
         }
-        
+
         // Remove any duplicate query parameters (like ?id=) from profile URLs
         if (callbackUrl.includes("/profile/") && callbackUrl.includes("?")) {
           const url = new URL(callbackUrl, window.location.origin);
-          // Remove id query param if it matches the pathname id
           const pathId = url.pathname.split("/profile/")[1]?.split("/")[0];
           const queryId = url.searchParams.get("id");
           if (pathId && queryId && pathId === queryId) {
@@ -74,12 +77,12 @@ const LoginPage = () => {
             callbackUrl = url.pathname + (url.search ? url.search : "");
           }
         }
-        
+
         router.push(callbackUrl);
       }
     };
     checkSession();
-  }, [router]);
+  }, [router.isReady]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative">

@@ -51,7 +51,11 @@ export default function App({
   return (
     <div className={cn(geistSans.variable, geistMono.variable)}>
       <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-        <SessionProvider session={session}>
+        <SessionProvider
+          session={session}
+          refetchInterval={0}
+          refetchOnWindowFocus={false}
+        >
           <ApiProvider>
             <WebSocketProvider>
               <ChatProvider>

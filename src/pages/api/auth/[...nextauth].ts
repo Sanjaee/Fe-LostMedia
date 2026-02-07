@@ -220,6 +220,11 @@ export const authOptions: NextAuthOptions = {
         }
       }
 
+      // Don't retry refresh when already failed (JWT/secret mismatch or invalid tokens)
+      if (token.error === "RefreshAccessTokenError") {
+        return token;
+      }
+
       // Return previous token if the access token has not expired yet
       if (token.accessToken && token.accessTokenExpires && Date.now() < (token.accessTokenExpires as number)) {
         return token;
