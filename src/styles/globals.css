@@ -133,3 +133,126 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+
+
+.owner_name {
+  color: #ff9f00;
+  text-shadow: 2px 2px 5px #ff4500 !important;
+
+  font-weight: 900;
+  background-image: url("/god.gif");
+  text-shadow: 0px 0px 5px #090909;
+  background-color: #0a0a0a;
+  line-height: 16px;
+}
+.owner_badge::before {
+  content: "[Owner] ";
+  color: #a50000;
+  font-weight: 800;
+  font-family: Roboto, Arial;
+  font-size: 15px;
+}
+
+.admin_name {
+  color: #000000;
+  font-weight: 900;
+  background-image: url("/admin.gif");
+  text-shadow: 2px 2px 6px #d035c9 !important;
+  background-color: #0a0a0a;
+  line-height: 16px;
+}
+.admin_badge::before {
+  content: "[Admin] ";
+  color: #a50000;
+  font-weight: 800;
+  font-family: Roboto, Arial;
+  font-size: 15px;
+}
+
+.mod_name {
+  color: #c61aff;
+  font-weight: 900;
+  text-shadow: 0px 0px 5px #c61aff !important;
+  background-image: url("/god.gif");
+  background-color: #0a0a0a;
+  line-height: 16px;
+}
+.mod_badge::before {
+  content: "[Mod]+ ";
+  color: #a50000;
+  font-weight: 800;
+  font-family: Roboto, Arial;
+  font-size: 15px;
+}
+
+.mvp_name {
+  color: #e7e7e7;
+  text-shadow: 2px 2px 6px #ffffff !important;
+  font-weight: 900;
+  background-image: url("/mvp.gif");
+  background-color: #0a0a0a;
+  line-height: 16px;
+}
+.mvp_badge::before {
+  content: "\f3a5";
+  color: #e7e7e7;
+  font-family: "Font Awesome 5 Free";
+  font-weight: 900;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  display: inline-block;
+  font-size: 14px;
+}
+
+.god_name {
+  color: #b30000;
+  text-shadow: 2px 2px 6px #b30000 !important;
+  font-weight: 900;
+  background-image: url("/god.gif");
+  background-color: #0a0a0a;
+  line-height: 16px;
+}
+.god_badge::before {
+  content: "\f521";
+  color: #f1c40f;
+  font-family: "Font Awesome 5 Free";
+  font-weight: 900;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  display: inline-block;
+  font-size: 14px;
+}
+
+.vip_name {
+  color: #0c0;
+  font-weight: 900;
+  background-image: url("/vip.gif");
+  background-color: #0a0a0a;
+  line-height: 16px;
+}
+.vip_badge::before {
+  content: "\f521";
+  color: #f1c40f;
+  font-family: "Font Awesome 5 Free";
+  font-weight: 900;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  display: inline-block;
+  font-size: 14px;
+}
+
+.member_name {
+  color: white;
+  font-weight: 900;
+  background-color: #0a0a0a;
+  line-height: 16px;
+}
+.member_badge::before {
+  content: "";
+  display: none;
+}
+
+.start {
+  color: #f90;
+}

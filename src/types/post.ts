@@ -16,6 +16,8 @@ export interface Post {
     full_name: string;
     username?: string;
     profile_photo?: string;
+    role?: string; // owner, admin, mod, mvp, god, vip, member
+    user_type?: string; // fallback from backend (owner, member)
   };
   group?: {
     id: string;

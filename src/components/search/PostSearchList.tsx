@@ -262,7 +262,7 @@ export const PostSearchList: React.FC<PostSearchListProps> = ({
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <div className="font-semibold text-sm hover:underline cursor-pointer text-gray-900 dark:text-white">
+                  <div className="font-semibold text-sm  cursor-pointer text-gray-900 dark:text-white">
                     {post.user?.full_name || 'Unknown'}
                   </div>
                   <div className="text-xs text-zinc-500 flex items-center gap-1">

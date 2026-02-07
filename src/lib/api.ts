@@ -763,6 +763,13 @@ class ApiClient {
     });
   }
 
+  async updateUserRole(userId: string, role: string): Promise<{ user_id: string; role: string }> {
+    return this.request(`/api/v1/admin/users/${userId}/role`, {
+      method: "PUT",
+      body: JSON.stringify({ role }),
+    });
+  }
+
   async updatePost(
     postID: string,
     data: UpdatePostRequest

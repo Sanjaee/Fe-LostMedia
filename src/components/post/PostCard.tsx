@@ -72,6 +72,63 @@ export function PostCard({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  const getRoleDisplayName = (role: string) => {
+    switch (role) {
+      case "owner":
+        return "Owner";
+      case "god":
+        return "God";
+      case "mod":
+        return "Moderator";
+      case "vip":
+        return "VIP Member";
+      default:
+        return "Member";
+    }
+  };
+
+  const getRoleBadge = (role?: string) => {
+    switch (role) {
+      case "owner":
+        return "owner_badge text-[10px]";
+      case "admin":
+        return "admin_badge text-[10px]";
+      case "mod":
+        return "mod_badge text-[10px]";
+      case "mvp":
+        return "mvp_badge text-[10px]";
+      case "god":
+        return "god_badge text-[10px]";
+      case "vip":
+        return "vip_badge text-[10px]";
+      case "member":
+        return "member_badge text-[10px]";
+      default:
+        return "member_badge text-[10px]";
+    }
+  };
+
+  const getRoleNameClass = (role?: string) => {
+    switch (role) {
+      case "owner":
+        return "owner_name";
+      case "admin":
+        return "admin_name";
+      case "mod":
+        return "mod_name";
+      case "mvp":
+        return "mvp_name";
+      case "god":
+        return "god_name";
+      case "vip":
+        return "vip_name";
+      case "member":
+        return "member_name";
+      default:
+        return "member_name";
+    }
+  };
+
   const handleDeleteClick = () => {
     setDeleteDialogOpen(true);
   };
@@ -150,8 +207,23 @@ export function PostCard({
               <AvatarFallback>{post.user?.full_name?.[0] || 'U'}</AvatarFallback>
             </Avatar>
             <div>
-              <div className="font-semibold text-sm hover:underline cursor-pointer">
-                {post.user?.full_name || 'Unknown User'}
+              <div className="font-semibold text-sm cursor-pointer">
+                {(() => {
+                  const role = post.user?.role || (post.user as any)?.user_type;
+                  if (role) {
+                    return (
+                      <>
+                        <span className={`${getRoleBadge(role)} mr-1`}></span>
+                        <span className={getRoleNameClass(role)}>
+                          {post.user?.username || post.user?.full_name || "Unknown"}
+                        </span>
+                      </>
+                    );
+                  }
+                  return (
+                    <span>{post.user?.username || post.user?.full_name || "Unknown User"}</span>
+                  );
+                })()}
               </div>
               <div className="text-xs text-zinc-500 flex items-center gap-1">
                 {formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: id })}

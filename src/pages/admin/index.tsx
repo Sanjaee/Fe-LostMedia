@@ -75,8 +75,19 @@ export default function AdminPage() {
   const [banDurationUnit, setBanDurationUnit] = useState<"minutes" | "hours" | "days">("hours");
   const [banReason, setBanReason] = useState("");
   const [banning, setBanning] = useState(false);
+  const [updatingRole, setUpdatingRole] = useState<string | null>(null); // userId being updated
   const { toast } = useToast();
   const limit = 50;
+
+  const ROLES = [
+    { value: "owner", label: "Owner" },
+    { value: "admin", label: "Admin" },
+    { value: "mod", label: "Moderator" },
+    { value: "mvp", label: "MVP" },
+    { value: "god", label: "God" },
+    { value: "vip", label: "VIP" },
+    { value: "member", label: "Member" },
+  ] as const;
 
   useEffect(() => {
     // Check if user is owner
@@ -198,6 +209,25 @@ export default function AdminPage() {
       loadUsers();
     } catch (err: any) {
       toast({ title: "Gagal unban user", description: err?.message || "Error", variant: "destructive" });
+    }
+  };
+
+  const handleRoleChange = async (user: User, newRole: string) => {
+    const currentRole = user.user_type || "member";
+    if (newRole === currentRole) return;
+    if (user.id === session?.user?.id) {
+      toast({ title: "Tidak bisa mengubah role sendiri", variant: "destructive" });
+      return;
+    }
+    setUpdatingRole(user.id);
+    try {
+      await api.updateUserRole(user.id, newRole);
+      toast({ title: "Role diubah", description: `${user.full_name} sekarang berperan sebagai ${newRole}.` });
+      loadUsers();
+    } catch (err: any) {
+      toast({ title: "Gagal ubah role", description: err?.message || "Error", variant: "destructive" });
+    } finally {
+      setUpdatingRole(null);
     }
   };
 
@@ -470,12 +500,26 @@ export default function AdminPage() {
                             </div>
                           </TableCell>
                           <TableCell>{user.email}</TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={user.user_type === "owner" ? "default" : "secondary"}
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <Select
+                              value={user.user_type || "member"}
+                              onValueChange={(v) => handleRoleChange(user, v)}
+                              disabled={user.id === session?.user?.id || updatingRole === user.id}
                             >
-                              {user.user_type}
-                            </Badge>
+                              <SelectTrigger className="w-28 h-8 text-xs">
+                                {updatingRole === user.id && (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin mr-1 shrink-0" />
+                                )}
+                                <SelectValue placeholder="Role" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {ROLES.map((r) => (
+                                  <SelectItem key={r.value} value={r.value} className="text-xs">
+                                    {r.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           </TableCell>
                           <TableCell>
                             <Badge variant={user.is_active ? "default" : "destructive"}>
