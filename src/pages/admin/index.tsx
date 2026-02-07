@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserNameWithRole } from "@/components/ui/UserNameWithRole";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -492,7 +493,13 @@ export default function AdminPage() {
                                 </AvatarFallback>
                               </Avatar>
                               <div>
-                                <div className="font-medium">{user.full_name}</div>
+                                <div className="font-medium">
+                                  <UserNameWithRole
+                                    displayName={user.full_name || user.username || "User"}
+                                    role={user.user_type}
+                                    className="truncate inline-block max-w-full"
+                                  />
+                                </div>
                                 {user.username && (
                                   <div className="text-sm text-zinc-500">@{user.username}</div>
                                 )}
