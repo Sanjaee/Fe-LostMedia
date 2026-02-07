@@ -264,7 +264,7 @@ export default function AdminPage() {
         {/* Stats Cards */}
         {stats && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <Card>
+            <Card className="py-6">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Users</CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
@@ -275,7 +275,7 @@ export default function AdminPage() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="py-6">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Owners</CardTitle>
                 <Shield className="h-4 w-4 text-muted-foreground" />
@@ -286,7 +286,7 @@ export default function AdminPage() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="py-6">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Verified</CardTitle>
                 <UserCheck className="h-4 w-4 text-muted-foreground" />
@@ -297,7 +297,7 @@ export default function AdminPage() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="py-6">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Unverified</CardTitle>
                 <UserX className="h-4 w-4 text-muted-foreground" />
@@ -313,7 +313,7 @@ export default function AdminPage() {
         {/* Chart Section */}
         {stats && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-            <Card>
+            <Card className="py-6">
               <CardHeader>
                 <CardTitle>User Distribution by Type</CardTitle>
                 <CardDescription>Distribusi pengguna berdasarkan tipe</CardDescription>
@@ -362,7 +362,7 @@ export default function AdminPage() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="py-6">
               <CardHeader>
                 <CardTitle>Verification Status</CardTitle>
                 <CardDescription>Status verifikasi email pengguna</CardDescription>
@@ -414,7 +414,7 @@ export default function AdminPage() {
         )}
 
         {/* Users Table */}
-        <Card>
+        <Card className="py-6">
           <CardHeader>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
