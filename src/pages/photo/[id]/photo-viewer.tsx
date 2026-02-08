@@ -101,7 +101,7 @@ export default function PhotoViewer({ post, imageIndex }: PhotoViewerProps) {
               <AvatarFallback>{post.user?.full_name?.[0] || 'U'}</AvatarFallback>
             </Avatar>
             <div>
-              <Link href={`/profile/${post.user_id}`} className="font-semibold text-sm cursor-pointer block">
+              <Link href={`/profile/${post.user?.username || post.user_id}`} className="font-semibold text-sm cursor-pointer block">
                 <UserNameWithRole
                   displayName={post.user?.username || post.user?.full_name || "Unknown User"}
                   role={(post.user as any)?.user_type ?? (post.user as any)?.role}

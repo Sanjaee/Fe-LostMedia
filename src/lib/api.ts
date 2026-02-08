@@ -375,6 +375,13 @@ class ApiClient {
     });
   }
 
+  async getProfileByUsername(username: string): Promise<ProfileResponse> {
+    return this.request<ProfileResponse>(
+      `/api/v1/profiles/username/${encodeURIComponent(username)}`,
+      { method: "GET" }
+    );
+  }
+
   async getMyProfile(): Promise<ProfileResponse> {
     return this.request<ProfileResponse>("/api/v1/profiles/me", {
       method: "GET",
@@ -1069,8 +1076,8 @@ class ApiClient {
     });
   }
 
-  async leaveGroup(groupID: string): Promise<void> {
-    return this.request<void>(`/api/v1/groups/${groupID}/leave`, {
+  async leaveGroup(groupID: string): Promise<{ deleted?: boolean }> {
+    return this.request<{ deleted?: boolean }>(`/api/v1/groups/${groupID}/leave`, {
       method: "POST",
     });
   }

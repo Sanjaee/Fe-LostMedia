@@ -336,7 +336,7 @@ export const PostList: React.FC<PostListProps> = ({
             {/* Post Header */}
             <div className="flex items-start justify-between mb-3">
               <Link 
-                href={`/profile/${post.user_id}`}
+                href={`/profile/${post.user?.username || post.user_id}`}
                 className="flex items-center gap-3 hover:opacity-80 transition-opacity"
               >
                 <Avatar className="h-10 w-10">

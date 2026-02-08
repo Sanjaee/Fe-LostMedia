@@ -239,7 +239,7 @@ export const PeopleSearchList: React.FC<PeopleSearchListProps> = ({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => router.push(`/profile/${user.id}`)}
+          onClick={() => router.push(`/profile/${user.username || user.id}`)}
           className="flex items-center gap-2 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-300 dark:border-green-700"
         >
           <Check className="h-4 w-4" />
@@ -307,7 +307,7 @@ export const PeopleSearchList: React.FC<PeopleSearchListProps> = ({
           className="flex items-center gap-3 md:gap-4 p-2 md:p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
         >
           <Link 
-            href={`/profile/${user.id}`} 
+            href={`/profile/${user.username || user.id}`} 
             className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
           >
             <Avatar className="h-10 w-10 shrink-0">

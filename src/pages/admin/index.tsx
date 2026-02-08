@@ -78,7 +78,7 @@ export default function AdminPage() {
   const [banning, setBanning] = useState(false);
   const [updatingRole, setUpdatingRole] = useState<string | null>(null); // userId being updated
   const { toast } = useToast();
-  const limit = 50;
+  const limit = 10;
 
   const ROLES = [
     { value: "owner", label: "Owner" },
@@ -159,7 +159,7 @@ export default function AdminPage() {
     }
     setSearching(true);
     try {
-      const res = await api.searchUsers(query.trim(), 50, 0);
+      const res = await api.searchUsers(query.trim(), 10, 0);
       const users = res.users ?? (res as any).data?.users ?? [];
       setSearchResults(Array.isArray(users) ? users : []);
     } catch {
@@ -482,7 +482,7 @@ export default function AdminPage() {
                         <TableRow
                           key={user.id}
                           className="cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors"
-                          onClick={() => router.push(`/profile/${user.id}`)}
+                          onClick={() => router.push(`/profile/${user.username || user.id}`)}
                         >
                           <TableCell>
                             <div className="flex items-center gap-3">

@@ -144,7 +144,7 @@ export function PostCard({
       <CardHeader className="p-4 pb-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href={`/profile/${post.user_id}`} className="hover:opacity-80 transition-opacity shrink-0">
+            <Link href={`/profile/${post.user?.username || post.user_id}`} className="hover:opacity-80 transition-opacity shrink-0">
               <Avatar className="w-10 h-10 border">
                 <AvatarImage src={post.user?.profile_photo || ''} />
                 <AvatarFallback>{post.user?.full_name?.[0] || 'U'}</AvatarFallback>
@@ -152,7 +152,7 @@ export function PostCard({
             </Link>
             <div className="min-w-0">
               <div className="font-semibold text-sm flex items-center gap-1 flex-wrap">
-                <Link href={`/profile/${post.user_id}`} className="hover:underline cursor-pointer">
+                <Link href={`/profile/${post.user?.username || post.user_id}`} className="hover:underline cursor-pointer">
                   <UserNameWithRole
                     displayName={post.user?.username || post.user?.full_name || "Unknown"}
                     role={post.user?.role ?? (post.user as any)?.user_type}

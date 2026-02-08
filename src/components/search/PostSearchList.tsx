@@ -253,7 +253,7 @@ export const PostSearchList: React.FC<PostSearchListProps> = ({
           <Card key={post.id} className="border-none shadow-sm overflow-hidden">
             <CardHeader className="p-4 pb-2">
               <Link 
-                href={`/profile/${post.user_id}`}
+                href={`/profile/${post.user?.username || post.user_id}`}
                 className="flex items-center gap-3 hover:opacity-80 transition-opacity"
               >
                 <Avatar className="w-10 h-10 border">

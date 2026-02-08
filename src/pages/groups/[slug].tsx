@@ -36,6 +36,8 @@ import {
   Check,
   Video,
   Smile,
+  Trash2,
+  Loader2,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -43,6 +45,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type TabType = "diskusi" | "tentang" | "orang" | "media";
 
@@ -63,6 +75,8 @@ const GroupPage: React.FC = () => {
   const [postsLoading, setPostsLoading] = useState(false);
   const [joining, setJoining] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("diskusi");
+  const [deleteGroupDialogOpen, setDeleteGroupDialogOpen] = useState(false);
+  const [deletingGroup, setDeletingGroup] = useState(false);
 
   const loadGroup = useCallback(async () => {
     if (!slug || typeof slug !== "string") return;
@@ -146,17 +160,41 @@ const GroupPage: React.FC = () => {
   const handleLeave = async () => {
     if (!group) return;
     try {
-      await api.leaveGroup(group.id);
-      setIsMember(false);
-      setMemberRole("");
-      toast({ title: "Berhasil keluar dari grup" });
-      loadGroup();
+      const res = (await api.leaveGroup(group.id)) as { deleted?: boolean };
+      if (res?.deleted) {
+        toast({ title: "Grup dihapus", description: "Anda keluar sebagai satu-satunya admin, grup telah dihapus." });
+        router.push("/groups");
+      } else {
+        setIsMember(false);
+        setMemberRole("");
+        toast({ title: "Berhasil keluar dari grup" });
+        loadGroup();
+      }
     } catch (err: any) {
       toast({
         title: "Gagal keluar",
         description: err?.message || "Coba lagi nanti",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleDeleteGroup = async () => {
+    if (!group) return;
+    setDeletingGroup(true);
+    try {
+      await api.deleteGroup(group.id);
+      toast({ title: "Grup dihapus", description: "Grup berhasil dihapus." });
+      router.push("/groups");
+    } catch (err: any) {
+      toast({
+        title: "Gagal menghapus grup",
+        description: err?.message || "Coba lagi nanti",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingGroup(false);
+      setDeleteGroupDialogOpen(false);
     }
   };
 
@@ -311,7 +349,7 @@ const GroupPage: React.FC = () => {
             <div className="flex items-center">
               <div className="flex -space-x-2">
                 {members.slice(0, 10).map((m) => (
-                  <Link key={m.id} href={`/profile/${m.user_id}`}>
+                  <Link key={m.id} href={`/profile/${m.user?.username || m.user_id}`}>
                     <Avatar className="h-8 w-8 border-2 border-white dark:border-zinc-900 cursor-pointer hover:z-10 transition-transform hover:scale-110">
                       <AvatarImage src={m.user?.profile_photo || ""} />
                       <AvatarFallback className="text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
@@ -366,13 +404,22 @@ const GroupPage: React.FC = () => {
                         Keluar Grup
                       </DropdownMenuItem>
                       {memberRole === "admin" && (
-                        <DropdownMenuItem
-                          onClick={() => router.push(`/groups/${slug}/settings`)}
-                          className="cursor-pointer"
-                        >
-                          <Settings className="h-4 w-4 mr-2" />
-                          Pengaturan Grup
-                        </DropdownMenuItem>
+                        <>
+                          <DropdownMenuItem
+                            onClick={() => router.push(`/groups/${slug}/settings`)}
+                            className="cursor-pointer"
+                          >
+                            <Settings className="h-4 w-4 mr-2" />
+                            Pengaturan Grup
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => setDeleteGroupDialogOpen(true)}
+                            className="text-red-600 dark:text-red-400 cursor-pointer"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Hapus Grup
+                          </DropdownMenuItem>
+                        </>
                       )}
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -460,6 +507,38 @@ const GroupPage: React.FC = () => {
           {activeTab === "media" && <MediaTab posts={posts} />}
         </div>
       </div>
+
+      {/* Confirm Delete Group Dialog */}
+      <AlertDialog open={deleteGroupDialogOpen} onOpenChange={setDeleteGroupDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Grup?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin menghapus grup {group?.name}? Tindakan ini tidak dapat dibatalkan. Semua postingan dan anggota akan dihapus.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingGroup}>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDeleteGroup();
+              }}
+              disabled={deletingGroup}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              {deletingGroup ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Menghapus...
+                </>
+              ) : (
+                "Hapus Grup"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
@@ -920,7 +999,7 @@ const TentangTab: React.FC<TentangTabProps> = ({ group, membersTotal }) => {
         <p className="text-sm text-gray-500 dark:text-gray-400">
           Dibuat oleh{" "}
           <Link
-            href={`/profile/${group.created_by}`}
+            href={`/profile/${group.creator?.username || group.created_by}`}
             className="font-semibold text-gray-900 dark:text-white hover:underline"
           >
             {group.creator?.full_name || group.creator?.username || "Unknown"}
@@ -980,7 +1059,7 @@ const OrangTab: React.FC<OrangTabProps> = ({ members, membersTotal }) => {
               key={m.id}
               className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
             >
-              <Link href={`/profile/${m.user_id}`} className="shrink-0">
+              <Link href={`/profile/${m.user?.username || m.user_id}`} className="shrink-0">
                 <Avatar className="h-10 w-10">
                   <AvatarImage src={m.user?.profile_photo || ""} />
                   <AvatarFallback className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
@@ -992,7 +1071,7 @@ const OrangTab: React.FC<OrangTabProps> = ({ members, membersTotal }) => {
               </Link>
               <div className="flex-1 min-w-0">
                 <Link
-                  href={`/profile/${m.user_id}`}
+                  href={`/profile/${m.user?.username || m.user_id}`}
                   className="font-semibold text-sm text-gray-900 dark:text-white hover:underline"
                 >
                   <UserNameWithRole
