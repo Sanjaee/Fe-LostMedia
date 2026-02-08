@@ -255,7 +255,13 @@ body {
   color: #f90;
 }
 
-.line-height-30 .owner_name{
+.line-height-30 .owner_name,
+.line-height-30 .admin_name,
+.line-height-30 .mod_name,
+.line-height-30 .mvp_name,
+.line-height-30 .god_name,
+.line-height-30 .vip_name,
+.line-height-30 .member_name {
   line-height: 30px !important;
   margin-left: 5px !important;
 }

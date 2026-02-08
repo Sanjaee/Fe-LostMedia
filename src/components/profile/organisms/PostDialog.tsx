@@ -20,9 +20,10 @@ import Image from "next/image";
 interface PostDialogProps {
   open: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (newPost?: Post) => void;
   post?: Post | null; // If provided, it's edit mode
   userId: string;
+  groupId?: string; // If provided, post will be created in this group
 }
 
 export const PostDialog: React.FC<PostDialogProps> = ({
@@ -31,6 +32,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
   onSuccess,
   post,
   userId, // eslint-disable-line @typescript-eslint/no-unused-vars
+  groupId,
 }) => {
   const { toast } = useToast();
   const { api } = useApi();
@@ -64,6 +66,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
       setFormData({
         content: "",
         image_urls: [],
+        group_id: groupId,
       });
       setExistingImageUrls([]);
       setImagePreviews([]);
@@ -123,10 +126,12 @@ export const PostDialog: React.FC<PostDialogProps> = ({
           const createData: CreatePostRequest = {
             content: formData.content?.trim() || undefined,
             image_urls: manualUrls.length > 0 ? manualUrls : undefined,
+            group_id: groupId,
           };
-          await api.createPost(createData);
+          const result = await api.createPost(createData);
+          const createdPost = result?.post || result?.data?.post || undefined;
           toast({ title: "Success", description: "Post created successfully" });
-          onSuccess();
+          onSuccess(createdPost);
         }
       }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
@@ -14,6 +14,12 @@ import { UserNameWithRole } from "@/components/ui/UserNameWithRole";
 import type { Group, GroupMember } from "@/types/group";
 import type { Post } from "@/types/post";
 import { PostCard } from "@/components/post/PostCard";
+import { PostDialog } from "@/components/profile/organisms/PostDialog";
+import { CommentDialog } from "@/components/post/CommentDialog";
+import PhotoModal from "@/components/ui/PhotoModal";
+import { Separator } from "@/components/ui/separator";
+import { Card, CardContent } from "@/components/ui/card";
+import { useWebSocketSubscription } from "@/contexts/WebSocketContext";
 import {
   Globe,
   Lock,
@@ -28,6 +34,8 @@ import {
   ChevronDown,
   Search,
   Check,
+  Video,
+  Smile,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -422,7 +430,7 @@ const GroupPage: React.FC = () => {
         </div>
 
         {/* Content Area */}
-        <div className="px-4 md:px-6 py-4">
+        <div className="py-4">
           {activeTab === "diskusi" && (
             <DiskusiTab
               group={group}
@@ -430,6 +438,17 @@ const GroupPage: React.FC = () => {
               postsLoading={postsLoading}
               isMember={isMember}
               session={session}
+              onNewPost={(newPost) => {
+                setPosts((prev) => {
+                  // Prevent duplicate
+                  if (prev.some((p) => p.id === newPost.id)) return prev;
+                  return [newPost, ...prev];
+                });
+              }}
+              onRefreshPosts={loadPosts}
+              onPostDeleted={(postId) => {
+                setPosts((prev) => prev.filter((p) => p.id !== postId));
+              }}
             />
           )}
           {activeTab === "tentang" && (
@@ -453,6 +472,9 @@ interface DiskusiTabProps {
   postsLoading: boolean;
   isMember: boolean;
   session: any;
+  onNewPost: (post: Post) => void;
+  onRefreshPosts: () => void;
+  onPostDeleted: (postId: string) => void;
 }
 
 const DiskusiTab: React.FC<DiskusiTabProps> = ({
@@ -461,196 +483,373 @@ const DiskusiTab: React.FC<DiskusiTabProps> = ({
   postsLoading,
   isMember,
   session,
+  onNewPost,
+  onRefreshPosts,
+  onPostDeleted,
 }) => {
   const { api } = useApi();
+  const { toast } = useToast();
+  const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
   const [viewedPosts, setViewedPosts] = useState<Set<string>>(new Set());
-  const [postLikeCounts, setPostLikeCounts] = useState<Record<string, number>>({});
-  const [postUserLikes, setPostUserLikes] = useState<Record<string, any>>({});
-  const [postCommentCounts, setPostCommentCounts] = useState<Record<string, number>>({});
+  // Override state for user interactions (like/comment); merged on top of base data
+  const [likeOverrides, setLikeOverrides] = useState<Record<string, number>>({});
+  const [userLikeOverrides, setUserLikeOverrides] = useState<Record<string, any>>({});
+  const [commentOverrides, setCommentOverrides] = useState<Record<string, number>>({});
 
-  // Initialize counts from post data
-  useEffect(() => {
-    const likes: Record<string, number> = {};
-    const userLikes: Record<string, any> = {};
-    const comments: Record<string, number> = {};
-    posts.forEach((p) => {
-      likes[p.id] = (p as any).likes_count || 0;
-      userLikes[p.id] = (p as any).user_liked || false;
-      comments[p.id] = (p as any).comments_count || 0;
-    });
-    setPostLikeCounts(likes);
-    setPostUserLikes(userLikes);
-    setPostCommentCounts(comments);
-  }, [posts]);
+  // Comment dialog state
+  const [commentDialogOpen, setCommentDialogOpen] = useState(false);
+  const [selectedPostForComment, setSelectedPostForComment] = useState<Post | null>(null);
 
-  const handleLikeChange = (postId: string, liked: boolean, likeCount: number) => {
-    setPostLikeCounts((prev) => ({ ...prev, [postId]: likeCount }));
-    setPostUserLikes((prev) => ({ ...prev, [postId]: liked }));
-  };
+  // Photo modal state
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
-  const handleOpenCommentDialog = (_post: Post) => {
-    // Could open a comment dialog in the future
-  };
+  // Derive counts from post data + overrides (avoids setState inside useEffect)
+  const postLikeCounts = useMemo(() => {
+    const base: Record<string, number> = {};
+    posts.forEach((p) => { base[p.id] = p.likes_count || 0; });
+    return { ...base, ...likeOverrides };
+  }, [posts, likeOverrides]);
 
-  const handleImageClick = (_post: Post, _imageIndex: number) => {
-    // Could open a photo viewer in the future
-  };
+  const postUserLikes = useMemo(() => {
+    const base: Record<string, any> = {};
+    posts.forEach((p) => { base[p.id] = p.user_liked || false; });
+    return { ...base, ...userLikeOverrides };
+  }, [posts, userLikeOverrides]);
+
+  const postCommentCounts = useMemo(() => {
+    const base: Record<string, number> = {};
+    posts.forEach((p) => { base[p.id] = p.comments_count || 0; });
+    return { ...base, ...commentOverrides };
+  }, [posts, commentOverrides]);
+
+  // WebSocket subscription for image upload completion
+  useWebSocketSubscription((data: any) => {
+    let messageData: any;
+    if (data.type === "notification" && data.payload) {
+      messageData = data.payload;
+    } else {
+      messageData = data;
+    }
+
+    if (messageData.type === "post_upload_pending") {
+      toast({
+        title: "Upload Dimulai",
+        description: "Post sedang diproses, gambar sedang diupload...",
+      });
+    } else if (
+      messageData.type === "post_upload_completed" ||
+      (messageData.type === "notification" &&
+        messageData.payload?.type === "post_upload_completed")
+    ) {
+      const notification =
+        messageData.type === "notification" ? messageData.payload : messageData;
+
+      let postID: string | null = notification.target_id || null;
+      if (!postID && notification.data) {
+        try {
+          const parsed =
+            typeof notification.data === "string"
+              ? JSON.parse(notification.data)
+              : notification.data;
+          postID = parsed?.post_id || null;
+        } catch {
+          // ignore
+        }
+      }
+
+      toast({
+        title: notification.title || "Upload Selesai",
+        description:
+          notification.message ||
+          `Post berhasil diupload dengan ${notification.data?.image_count || 0} gambar`,
+      });
+
+      // Fetch the newly created post and prepend it
+      if (postID) {
+        api
+          .getPost(postID)
+          .then((res: any) => {
+            const newPost = res?.post || res?.data?.post;
+            if (newPost && newPost.group_id === group.id) {
+              onNewPost(newPost);
+            }
+          })
+          .catch(() => {
+            // Fallback: refresh all posts
+            onRefreshPosts();
+          });
+      } else {
+        onRefreshPosts();
+      }
+    }
+  });
+
+  const handleLikeChange = useCallback((postId: string, liked: boolean, likeCount: number) => {
+    setLikeOverrides((prev) => ({ ...prev, [postId]: likeCount }));
+    setUserLikeOverrides((prev) => ({ ...prev, [postId]: liked }));
+  }, []);
+
+  const handleOpenCommentDialog = useCallback((post: Post) => {
+    setSelectedPostForComment(post);
+    setCommentDialogOpen(true);
+  }, []);
+
+  const handleCloseCommentDialog = useCallback(() => {
+    setCommentDialogOpen(false);
+    setSelectedPostForComment(null);
+  }, []);
+
+  const handleImageClick = useCallback((post: Post, imageIndex: number) => {
+    setSelectedPost(post);
+    setSelectedImageIndex(imageIndex);
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
+    setSelectedPost(null);
+    setSelectedImageIndex(0);
+  }, []);
+
+  const handleNavigateImage = useCallback((direction: "prev" | "next") => {
+    if (!selectedPost?.image_urls) return;
+    const total = selectedPost.image_urls.length;
+    let newIdx = selectedImageIndex;
+    if (direction === "prev" && selectedImageIndex > 0) newIdx--;
+    else if (direction === "next" && selectedImageIndex < total - 1) newIdx++;
+    if (newIdx !== selectedImageIndex) setSelectedImageIndex(newIdx);
+  }, [selectedPost, selectedImageIndex]);
+
+  const handlePostSuccess = useCallback(
+    (newPost?: Post) => {
+      if (newPost) {
+        // Instantly prepend the new post — no refresh needed
+        onNewPost(newPost);
+      } else {
+        // Fallback: refetch
+        onRefreshPosts();
+      }
+    },
+    [onNewPost, onRefreshPosts]
+  );
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-      {/* Main Feed (Left) */}
-      <div className="lg:col-span-3 space-y-4">
-        {/* Create Post */}
-        {isMember && session && (
-          <div className="bg-white dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-800 p-4">
-            <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10 shrink-0">
-                <AvatarImage src={(session.user as any)?.image || ""} />
-                <AvatarFallback className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
-                  {(session.user?.name || "U").charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 bg-gray-100 dark:bg-zinc-800 rounded-full px-4 py-2.5 text-sm text-gray-500 dark:text-gray-400 cursor-pointer hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors">
-                Tulis sesuatu...
-              </div>
-            </div>
-            <div className="flex items-center justify-center gap-6 mt-3 pt-3 border-t border-gray-200 dark:border-zinc-800">
-              <button className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
-                <span className="text-lg">😊</span>
-                Perasaan/aktivitas
-              </button>
-              <button className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
-                <span className="text-lg">📍</span>
-                Singgah
-              </button>
-              <button className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
-                <span className="text-lg">📊</span>
-                Polling
-              </button>
-            </div>
-          </div>
-        )}
+    <>
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+        {/* Main Feed (Left) */}
+        <div className="lg:col-span-3 space-y-4">
+          {/* Create Post Widget - like feed-client */}
+          {isMember && session && (
+            <Card className="border-none shadow-sm">
+              <CardContent className="p-4">
+                <div className="flex gap-4 mb-4">
+                  <Avatar className="w-10 h-10 shrink-0">
+                    <AvatarImage src={session.user?.image || ""} />
+                    <AvatarFallback>
+                      {(session.user?.name || "U").charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <button
+                    onClick={() => setIsPostDialogOpen(true)}
+                    className="flex-1 w-full h-10 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center px-4 text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer text-left text-sm"
+                  >
+                    Tulis sesuatu di {group.name}...
+                  </button>
+                </div>
+                <Separator className="mb-4" />
+                <div className="flex justify-between px-4">
+                  <Button
+                    variant="ghost"
+                    className="flex-1 gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                  >
+                    <Video className="w-5 h-5" />
+                    <span className="hidden sm:inline text-sm">Video</span>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="flex-1 gap-2 text-green-500 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
+                    onClick={() => setIsPostDialogOpen(true)}
+                  >
+                    <ImageIcon className="w-5 h-5" />
+                    <span className="hidden sm:inline text-sm">Foto/Video</span>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="flex-1 gap-2 text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20"
+                  >
+                    <Smile className="w-5 h-5" />
+                    <span className="hidden sm:inline text-sm">Perasaan</span>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-        {/* Posts */}
-        {postsLoading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="bg-white dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-800 p-4 space-y-3"
-              >
-                <div className="flex items-center gap-3">
-                  <Skeleton className="h-10 w-10 rounded-full" />
-                  <div className="space-y-1">
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-3 w-20" />
+          {/* Posts */}
+          {postsLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="bg-white dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-800 p-4 space-y-3"
+                >
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <div className="space-y-1">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-3 w-20" />
+                    </div>
                   </div>
+                  <Skeleton className="h-20 w-full" />
                 </div>
-                <Skeleton className="h-20 w-full" />
-              </div>
-            ))}
-          </div>
-        ) : posts.length === 0 ? (
-          <div className="bg-white dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-800 p-8 text-center">
-            <p className="text-gray-500 dark:text-gray-400">
-              Belum ada postingan di grup ini
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {posts.map((post) => (
-              <PostCard
-                key={post.id}
-                post={post}
-                session={session}
-                api={api}
-                viewedPosts={viewedPosts}
-                setViewedPosts={setViewedPosts}
-                postLikeCounts={postLikeCounts}
-                postUserLikes={postUserLikes}
-                postCommentCounts={postCommentCounts}
-                handleLikeChange={handleLikeChange}
-                handleOpenCommentDialog={handleOpenCommentDialog}
-                handleImageClick={handleImageClick}
-                onPostDeleted={() => {}}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Sidebar (Right) */}
-      <div className="lg:col-span-2 space-y-4">
-        {/* About Card */}
-        <div className="bg-white dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-800 p-4">
-          <h3 className="font-bold text-gray-900 dark:text-white mb-3">Tentang</h3>
-          <div className="space-y-3">
-            <div className="flex items-start gap-3">
-              <Globe className="h-5 w-5 text-gray-500 dark:text-gray-400 mt-0.5 shrink-0" />
-              <div>
-                <p className="font-semibold text-sm text-gray-900 dark:text-white">
-                  {group.privacy === "open"
-                    ? "Publik"
-                    : group.privacy === "closed"
-                    ? "Tertutup"
-                    : "Rahasia"}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {group.privacy === "open"
-                    ? "Siapa pun bisa melihat siapa saja anggota grup ini dan apa yang mereka posting."
-                    : group.privacy === "closed"
-                    ? "Hanya anggota yang bisa melihat postingan di grup ini."
-                    : "Hanya anggota yang bisa menemukan grup ini."}
-                </p>
-              </div>
+              ))}
             </div>
-            {group.privacy !== "secret" && (
-              <div className="flex items-start gap-3">
-                <Users className="h-5 w-5 text-gray-500 dark:text-gray-400 mt-0.5 shrink-0" />
-                <div>
-                  <p className="font-semibold text-sm text-gray-900 dark:text-white">
-                    Dapat dilihat
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Semua orang bisa menemukan grup ini.
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
+          ) : posts.length === 0 ? (
+            <div className="bg-white dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-800 p-8 text-center">
+              <p className="text-gray-500 dark:text-gray-400">
+                Belum ada postingan di grup ini
+              </p>
+              {isMember && (
+                <Button
+                  className="mt-3 bg-blue-600 hover:bg-blue-700 text-white"
+                  onClick={() => setIsPostDialogOpen(true)}
+                >
+                  Buat postingan pertama
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {posts.map((post) => (
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  session={session}
+                  api={api}
+                  viewedPosts={viewedPosts}
+                  setViewedPosts={setViewedPosts}
+                  postLikeCounts={postLikeCounts}
+                  postUserLikes={postUserLikes}
+                  postCommentCounts={postCommentCounts}
+                  handleLikeChange={handleLikeChange}
+                  handleOpenCommentDialog={handleOpenCommentDialog}
+                  handleImageClick={handleImageClick}
+                  onPostDeleted={onPostDeleted}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Media Card */}
-        {posts.some((p) => {
-          const imgs = (p as any).image_urls;
-          return imgs && (Array.isArray(imgs) ? imgs.length > 0 : false);
-        }) && (
+        {/* Sidebar (Right) */}
+        <div className="lg:col-span-2 space-y-4">
+          {/* About Card */}
           <div className="bg-white dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-800 p-4">
-            <h3 className="font-bold text-gray-900 dark:text-white mb-3">
-              Media terbaru
-            </h3>
-            <div className="grid grid-cols-3 gap-1 rounded-lg overflow-hidden">
-              {posts
-                .flatMap((p) => {
-                  const imgs = (p as any).image_urls;
-                  if (Array.isArray(imgs)) return imgs;
-                  return [];
-                })
-                .slice(0, 6)
-                .map((url: string, i: number) => (
-                  <div key={i} className="aspect-square bg-gray-200 dark:bg-gray-800">
-                    <img
-                      src={url}
-                      alt=""
-                      className="w-full h-full object-cover"
-                    />
+            <h3 className="font-bold text-gray-900 dark:text-white mb-3">Tentang</h3>
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <Globe className="h-5 w-5 text-gray-500 dark:text-gray-400 mt-0.5 shrink-0" />
+                <div>
+                  <p className="font-semibold text-sm text-gray-900 dark:text-white">
+                    {group.privacy === "open"
+                      ? "Publik"
+                      : group.privacy === "closed"
+                      ? "Tertutup"
+                      : "Rahasia"}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {group.privacy === "open"
+                      ? "Siapa pun bisa melihat siapa saja anggota grup ini dan apa yang mereka posting."
+                      : group.privacy === "closed"
+                      ? "Hanya anggota yang bisa melihat postingan di grup ini."
+                      : "Hanya anggota yang bisa menemukan grup ini."}
+                  </p>
+                </div>
+              </div>
+              {group.privacy !== "secret" && (
+                <div className="flex items-start gap-3">
+                  <Users className="h-5 w-5 text-gray-500 dark:text-gray-400 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="font-semibold text-sm text-gray-900 dark:text-white">
+                      Dapat dilihat
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Semua orang bisa menemukan grup ini.
+                    </p>
                   </div>
-                ))}
+                </div>
+              )}
             </div>
           </div>
-        )}
+
+          {/* Media Card */}
+          {posts.some((p) => {
+            const imgs = p.image_urls;
+            return imgs && Array.isArray(imgs) && imgs.length > 0;
+          }) && (
+            <div className="bg-white dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-800 p-4">
+              <h3 className="font-bold text-gray-900 dark:text-white mb-3">
+                Media terbaru
+              </h3>
+              <div className="grid grid-cols-3 gap-1 rounded-lg overflow-hidden">
+                {posts
+                  .flatMap((p) => {
+                    const imgs = p.image_urls;
+                    if (Array.isArray(imgs)) return imgs;
+                    return [];
+                  })
+                  .slice(0, 6)
+                  .map((url: string, i: number) => (
+                    <div key={i} className="aspect-square bg-gray-200 dark:bg-gray-800">
+                      <img
+                        src={url}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+
+      {/* Post Dialog */}
+      {session?.user && (
+        <PostDialog
+          open={isPostDialogOpen}
+          onClose={() => setIsPostDialogOpen(false)}
+          onSuccess={handlePostSuccess}
+          userId={session.user.id || ""}
+          groupId={group.id}
+        />
+      )}
+
+      {/* Comment Dialog */}
+      <CommentDialog
+        open={commentDialogOpen}
+        onClose={handleCloseCommentDialog}
+        post={selectedPostForComment}
+        onCommentCountChange={(count) => {
+          if (selectedPostForComment) {
+            setCommentOverrides((prev) => ({
+              ...prev,
+              [selectedPostForComment.id]: count,
+            }));
+          }
+        }}
+      />
+
+      {/* Photo Modal */}
+      {selectedPost && (
+        <PhotoModal
+          isOpen={!!selectedPost}
+          onClose={handleCloseModal}
+          post={selectedPost}
+          imageIndex={selectedImageIndex}
+          onNavigateImage={handleNavigateImage}
+        />
+      )}
+    </>
   );
 };
 
