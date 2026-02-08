@@ -10,6 +10,7 @@ import {
   Share2, 
   MoreHorizontal,
   Trash2,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -142,21 +143,33 @@ export function PostCard({
     <Card ref={postRef} className="border-none shadow-sm overflow-hidden py-0">
       <CardHeader className="p-4 pb-2">
         <div className="flex items-center justify-between">
-          <Link 
-            href={`/profile/${post.user_id}`}
-            className="flex items-center gap-3 hover:opacity-80 transition-opacity"
-          >
-            <Avatar className="w-10 h-10 border">
-              <AvatarImage src={post.user?.profile_photo || ''} />
-              <AvatarFallback>{post.user?.full_name?.[0] || 'U'}</AvatarFallback>
-            </Avatar>
-            <div>
-              <div className="font-semibold text-sm cursor-pointer">
-                <UserNameWithRole
-                  displayName={post.user?.username || post.user?.full_name || "Unknown"}
-                  role={post.user?.role ?? (post.user as any)?.user_type}
-                  className="truncate inline-block max-w-full"
-                />
+          <div className="flex items-center gap-3">
+            <Link href={`/profile/${post.user_id}`} className="hover:opacity-80 transition-opacity shrink-0">
+              <Avatar className="w-10 h-10 border">
+                <AvatarImage src={post.user?.profile_photo || ''} />
+                <AvatarFallback>{post.user?.full_name?.[0] || 'U'}</AvatarFallback>
+              </Avatar>
+            </Link>
+            <div className="min-w-0">
+              <div className="font-semibold text-sm flex items-center gap-1 flex-wrap">
+                <Link href={`/profile/${post.user_id}`} className="hover:underline cursor-pointer">
+                  <UserNameWithRole
+                    displayName={post.user?.username || post.user?.full_name || "Unknown"}
+                    role={post.user?.role ?? (post.user as any)?.user_type}
+                    className="truncate inline-block max-w-full"
+                  />
+                </Link>
+                {post.group && post.group.name && (
+                  <>
+                    <ChevronRight className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500 shrink-0" />
+                    <Link
+                      href={`/groups/${post.group.slug || post.group_id}`}
+                      className="text-zinc-700 dark:text-zinc-300 hover:underline font-semibold truncate max-w-[180px]"
+                    >
+                      {post.group.name}
+                    </Link>
+                  </>
+                )}
               </div>
               <div className="text-xs text-zinc-500 flex items-center gap-1">
                 {formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: id })}
@@ -170,7 +183,7 @@ export function PostCard({
                 </svg>
               </div>
             </div>
-          </Link>
+          </div>
           {/* Admin Delete Button - Always show button, but only show menu if admin */}
           {(() => {
             // Use same check as MainNavbar

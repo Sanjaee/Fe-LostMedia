@@ -22,6 +22,7 @@ export interface Post {
   group?: {
     id: string;
     name: string;
+    slug?: string;
   };
   shared_post?: Post;
   tags?: Array<{
