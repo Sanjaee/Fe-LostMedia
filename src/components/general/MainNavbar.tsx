@@ -20,8 +20,8 @@ import {
   Home, 
   Flag, 
   BarChart3, 
-  Megaphone, 
   Video, 
+  Users,
   Grid3x3, 
   MessageCircle, 
   Bell, 
@@ -159,10 +159,10 @@ export default function MainNavbar() {
 
   const navItems = [
     { icon: Home, label: "Home", path: "/" },
+    { icon: Users, label: "Grup", path: "/groups" },
     { icon: Flag, label: "Pages", path: "/pages" },
-    { icon: BarChart3, label: "Insights", path: "/insights" },
-    { icon: Megaphone, label: "Ads", path: "/ads" },
     { icon: Video, label: "Reels", path: "/reels" },
+    { icon: BarChart3, label: "Insights", path: "/insights" },
   ];
 
   return (

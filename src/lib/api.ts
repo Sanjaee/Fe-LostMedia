@@ -50,6 +50,13 @@ import type {
   LikeResponse,
 } from "@/types/like";
 import type { ChatMessage } from "@/types/chat";
+import type {
+  GroupResponse,
+  GroupListResponse,
+  GroupMemberListResponse,
+  CreateGroupRequest,
+  UpdateGroupRequest,
+} from "@/types/group";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.194.248:5000";
 
@@ -725,6 +732,19 @@ class ApiClient {
     );
   }
 
+  async getPostsByGroupID(
+    groupID: string,
+    limit: number = 20,
+    offset: number = 0
+  ): Promise<PostResponse> {
+    return this.request<PostResponse>(
+      `/api/v1/posts/group/${groupID}?limit=${limit}&offset=${offset}`,
+      {
+        method: "GET",
+      }
+    );
+  }
+
   // Admin APIs
   async getAllUsers(limit: number = 50, offset: number = 0): Promise<{
     users: any[];
@@ -926,6 +946,182 @@ class ApiClient {
         method: "GET",
       }
     );
+  }
+
+  // ===== Group endpoints =====
+
+  async createGroup(data: CreateGroupRequest): Promise<{ group: any }> {
+    return this.request(`/api/v1/groups`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async createGroupWithCover(
+    name: string,
+    description?: string,
+    privacy?: string,
+    membershipPolicy?: string,
+    coverFile?: File
+  ): Promise<{ group: any }> {
+    const formData = new FormData();
+    formData.append("name", name);
+    if (description) formData.append("description", description);
+    if (privacy) formData.append("privacy", privacy);
+    if (membershipPolicy) formData.append("membership_policy", membershipPolicy);
+    if (coverFile) formData.append("cover_photo", coverFile);
+
+    const url = `${this.baseURL}/api/v1/groups/upload`;
+
+    if (!this.accessToken && typeof window !== "undefined") {
+      const storedToken = TokenManager.getAccessToken();
+      if (storedToken) {
+        this.accessToken = storedToken;
+      }
+    }
+
+    const config: RequestInit = {
+      method: "POST",
+      headers: {
+        ...(this.accessToken ? { Authorization: `Bearer ${this.accessToken}` } : {}),
+      },
+      body: formData,
+    };
+
+    try {
+      const response = await fetch(url, config);
+      if (response.status === 401) {
+        const refreshed = await this.handleTokenRefresh();
+        if (refreshed) {
+          config.headers = {
+            ...config.headers,
+            Authorization: `Bearer ${this.accessToken}`,
+          };
+          const retryResponse = await fetch(url, config);
+          if (!retryResponse.ok) {
+            const errorData = await retryResponse.json().catch(() => ({}));
+            throw new Error(errorData.error || errorData.message || "Request failed");
+          }
+          return retryResponse.json();
+        }
+        throw new Error("Unauthorized");
+      }
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || errorData.message || "Request failed");
+      }
+      return response.json();
+    } catch (error: any) {
+      if (error instanceof Error) throw error;
+      throw new Error("Network error");
+    }
+  }
+
+  async getGroup(groupID: string): Promise<GroupResponse> {
+    return this.request<GroupResponse>(`/api/v1/groups/${groupID}`, {
+      method: "GET",
+    });
+  }
+
+  async getGroupBySlug(slug: string): Promise<GroupResponse> {
+    return this.request<GroupResponse>(`/api/v1/groups/slug/${slug}`, {
+      method: "GET",
+    });
+  }
+
+  async updateGroup(groupID: string, data: UpdateGroupRequest): Promise<{ group: any }> {
+    return this.request(`/api/v1/groups/${groupID}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteGroup(groupID: string): Promise<void> {
+    return this.request<void>(`/api/v1/groups/${groupID}`, {
+      method: "DELETE",
+    });
+  }
+
+  async listGroups(limit: number = 20, offset: number = 0): Promise<GroupListResponse> {
+    return this.request<GroupListResponse>(
+      `/api/v1/groups?limit=${limit}&offset=${offset}`,
+      { method: "GET" }
+    );
+  }
+
+  async searchGroups(keyword: string, limit: number = 20, offset: number = 0): Promise<GroupListResponse> {
+    return this.request<GroupListResponse>(
+      `/api/v1/groups/search?q=${encodeURIComponent(keyword)}&limit=${limit}&offset=${offset}`,
+      { method: "GET" }
+    );
+  }
+
+  async getMyGroups(limit: number = 20, offset: number = 0): Promise<GroupListResponse> {
+    return this.request<GroupListResponse>(
+      `/api/v1/groups/my?limit=${limit}&offset=${offset}`,
+      { method: "GET" }
+    );
+  }
+
+  async joinGroup(groupID: string): Promise<{ member: any }> {
+    return this.request(`/api/v1/groups/${groupID}/join`, {
+      method: "POST",
+    });
+  }
+
+  async leaveGroup(groupID: string): Promise<void> {
+    return this.request<void>(`/api/v1/groups/${groupID}/leave`, {
+      method: "POST",
+    });
+  }
+
+  async getGroupMembers(groupID: string, limit: number = 20, offset: number = 0): Promise<GroupMemberListResponse> {
+    return this.request<GroupMemberListResponse>(
+      `/api/v1/groups/${groupID}/members?limit=${limit}&offset=${offset}`,
+      { method: "GET" }
+    );
+  }
+
+  async updateGroupMemberRole(groupID: string, userID: string, role: string): Promise<void> {
+    return this.request<void>(`/api/v1/groups/${groupID}/members/${userID}/role`, {
+      method: "PUT",
+      body: JSON.stringify({ role }),
+    });
+  }
+
+  async removeGroupMember(groupID: string, userID: string): Promise<void> {
+    return this.request<void>(`/api/v1/groups/${groupID}/members/${userID}`, {
+      method: "DELETE",
+    });
+  }
+
+  async updateGroupCover(groupID: string, coverFile: File): Promise<{ group: any }> {
+    const formData = new FormData();
+    formData.append("cover_photo", coverFile);
+
+    const url = `${this.baseURL}/api/v1/groups/${groupID}/cover`;
+
+    if (!this.accessToken && typeof window !== "undefined") {
+      const storedToken = TokenManager.getAccessToken();
+      if (storedToken) {
+        this.accessToken = storedToken;
+      }
+    }
+
+    const config: RequestInit = {
+      method: "PUT",
+      headers: {
+        ...(this.accessToken ? { Authorization: `Bearer ${this.accessToken}` } : {}),
+      },
+      body: formData,
+    };
+
+    const response = await fetch(url, config);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || errorData.message || "Failed to upload cover");
+    }
+    return response.json();
   }
 }
 
