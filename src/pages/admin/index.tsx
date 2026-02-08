@@ -24,6 +24,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Loader2, Shield, Users, UserCheck, UserX, Search, X, Ban, ShieldCheck } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow, format } from "date-fns";
 import { id } from "date-fns/locale";
@@ -235,14 +236,6 @@ export default function AdminPage() {
   const displayUsers = searchResults !== null ? searchResults : users;
   const isSearchMode = searchResults !== null;
 
-  if (status === "loading" || loading) {
-    return (
-      <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-zinc-500" />
-      </div>
-    );
-  }
-
   if (error && error.includes("Access denied")) {
     return null; // Will redirect
   }
@@ -451,12 +444,7 @@ export default function AdminPage() {
               </div>
             )}
 
-            {searching ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
-                <span className="ml-2 text-sm text-zinc-500">Mencari...</span>
-              </div>
-            ) : displayUsers.length === 0 && !loading ? (
+            {displayUsers.length === 0 && !loading && !searching ? (
               <div className="text-center py-8 text-zinc-500">
                 <p>{isSearchMode ? "Tidak ada user ditemukan" : "No users found"}</p>
               </div>
@@ -478,7 +466,30 @@ export default function AdminPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {displayUsers.map((user) => (
+                      {loading || searching ? (
+                        Array.from({ length: limit }).map((_, i) => (
+                          <TableRow key={`skeleton-${i}`}>
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                <Skeleton className="h-8 w-8 rounded-full" />
+                                <div className="space-y-1">
+                                  <Skeleton className="h-4 w-28" />
+                                  <Skeleton className="h-3 w-20" />
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                            <TableCell><Skeleton className="h-8 w-28" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-14" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-12" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                            <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                            <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                            <TableCell className="text-right"><Skeleton className="h-8 w-12 ml-auto" /></TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        displayUsers.map((user) => (
                         <TableRow
                           key={user.id}
                           className="cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors"
@@ -594,7 +605,7 @@ export default function AdminPage() {
                             )}
                           </TableCell>
                         </TableRow>
-                      ))}
+                      )))}
                     </TableBody>
                   </Table>
                 </div>
