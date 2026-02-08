@@ -48,6 +48,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
   });
 
   const isEditMode = !!post;
+  const MAX_IMAGES = 10;
 
   useEffect(() => {
     if (post && open) {
@@ -151,6 +152,15 @@ export const PostDialog: React.FC<PostDialogProps> = ({
   };
 
   const handleAddImageURL = () => {
+    const totalImages = imagePreviews.length + (formData.image_urls?.length || 0) + 1;
+    if (totalImages > MAX_IMAGES) {
+      toast({
+        title: "Limit reached",
+        description: `Maximum ${MAX_IMAGES} images per post.`,
+        variant: "destructive",
+      });
+      return;
+    }
     setFormData((prev) => ({
       ...prev,
       image_urls: [...(prev.image_urls || []), ""],
@@ -219,23 +229,28 @@ export const PostDialog: React.FC<PostDialogProps> = ({
       return;
     }
 
-    // Check current number of images in state
-    const currentImageCount = imageFiles.length + imagePreviews.length;
-    
-    // Validate maximum 3 images total
-    if (currentImageCount > 3) {
-      const remainingSlots = 3 - imagePreviews.length;
+    const remainingSlots = MAX_IMAGES - imagePreviews.length;
+    if (remainingSlots <= 0) {
       toast({
         title: "Error",
-        description: `Maximum 3 images allowed. You can add ${remainingSlots} more image(s).`,
+        description: `Maximum ${MAX_IMAGES} images allowed.`,
         variant: "destructive",
       });
       return;
     }
 
+    const filesToAdd = imageFiles.slice(0, remainingSlots);
+    if (filesToAdd.length < imageFiles.length) {
+      toast({
+        title: "Limit reached",
+        description: `Only ${remainingSlots} more image(s) can be added. Maximum ${MAX_IMAGES} images per post.`,
+        variant: "destructive",
+      });
+    }
+
     // Validate file sizes (max 10MB each)
     const maxSize = 10 * 1024 * 1024; // 10MB
-    const invalidFiles = imageFiles.filter((file) => file.size > maxSize);
+    const invalidFiles = filesToAdd.filter((file) => file.size > maxSize);
     if (invalidFiles.length > 0) {
       toast({
         title: "Error",
@@ -246,11 +261,11 @@ export const PostDialog: React.FC<PostDialogProps> = ({
     }
 
     // Store File objects in state
-    setImageFiles((prev) => [...prev, ...imageFiles]);
+    setImageFiles((prev) => [...prev, ...filesToAdd]);
 
     // Create preview URLs for selected files
     const newPreviews: string[] = [];
-    imageFiles.forEach((file) => {
+    filesToAdd.forEach((file) => {
       const previewUrl = URL.createObjectURL(file);
       newPreviews.push(previewUrl);
     });
@@ -259,7 +274,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
 
     toast({
       title: "Success",
-      description: `${imageFiles.length} image(s) added. They will be uploaded when you submit.`,
+      description: `${filesToAdd.length} image(s) added. They will be uploaded when you submit.`,
     });
   };
 
@@ -366,26 +381,26 @@ export const PostDialog: React.FC<PostDialogProps> = ({
                   onChange={handleFileSelect}
                   className="hidden"
                   id="image-upload"
-                  disabled={loading || uploading || imagePreviews.length >= 3}
+                  disabled={loading || uploading || imagePreviews.length >= MAX_IMAGES}
                 />
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={loading || uploading || imagePreviews.length >= 3}
-                  title={imagePreviews.length >= 3 ? "Maximum 3 images allowed" : "Select up to 3 images (max 3MB each)"}
+                  disabled={loading || uploading || imagePreviews.length >= MAX_IMAGES}
+                  title={imagePreviews.length >= MAX_IMAGES ? `Maximum ${MAX_IMAGES} images allowed` : `Select up to ${MAX_IMAGES} images (max 10MB each)`}
                 >
                   <Upload className="h-4 w-4 mr-1" />
-                  Select Images {imagePreviews.length > 0 && `(${imagePreviews.length}/3)`}
+                  Select Images {imagePreviews.length > 0 && `(${imagePreviews.length}/${MAX_IMAGES})`}
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={handleAddImageURL}
-                  disabled={loading || uploading || imagePreviews.length >= 3}
-                  title={imagePreviews.length >= 3 ? "Maximum 3 images allowed" : "Add image URL"}
+                  disabled={loading || uploading || imagePreviews.length >= MAX_IMAGES}
+                  title={imagePreviews.length >= MAX_IMAGES ? `Maximum ${MAX_IMAGES} images allowed` : "Add image URL"}
                 >
                   <Plus className="h-4 w-4 mr-1" />
                   Add URL
@@ -404,7 +419,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
                 imagePreviews.length === 0 && (!formData.image_urls || formData.image_urls.length === 0)
                   ? "border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 hover:border-gray-400 dark:hover:border-gray-600"
                   : "border-transparent"
-              } ${imagePreviews.length >= 3 ? "opacity-50 cursor-not-allowed" : ""}`}
+              } ${imagePreviews.length >= MAX_IMAGES ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               {imagePreviews.length === 0 && (!formData.image_urls || formData.image_urls.length === 0) ? (
                 <div className="flex flex-col items-center justify-center">
@@ -413,7 +428,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
                     Drag and drop images here, or click &quot;Select Images&quot;
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-500">
-                    Maximum 3 images, 3MB per image. Images will be uploaded when you submit.
+                    Maximum {MAX_IMAGES} images, 10MB per image. Images will be uploaded when you submit.
                   </p>
                 </div>
               ) : null}
@@ -422,7 +437,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
             {/* Image count indicator */}
             {imagePreviews.length > 0 && (
               <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
-                {imagePreviews.length}/3 images selected (max 3MB each)
+                {imagePreviews.length}/{MAX_IMAGES} images selected (max 10MB each)
               </p>
             )}
 

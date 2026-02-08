@@ -244,7 +244,7 @@ body {
 .member_name {
   color: white;
   font-weight: 900;
-  line-height: 16px;
+  line-height: 30px;
 }
 .member_badge::before {
   content: "";
