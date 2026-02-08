@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useCallback } from "react";
+import React, { useEffect, useCallback, useState } from "react";
 import { useSession } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +29,39 @@ export const ContactsList: React.FC<ContactsListProps> = ({ friends, loading = f
   const currentUserId = session?.user?.id;
   const currentUserEmail = session?.user?.email;
   const [unreadBySender, setUnreadBySender] = React.useState<Record<string, number>>({});
+  const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!currentUserId) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = (await api.getOnlineUsers()) as any;
+        if (cancelled) return;
+        const users: Array<{ id: string }> = res?.users || [];
+        setOnlineUserIds(new Set(users.map((u) => u.id)));
+      } catch {
+        if (!cancelled) setOnlineUserIds(new Set());
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUserId, api]);
+
+  useWebSocketSubscription((data: any) => {
+    const payload = data?.payload || data;
+    if (payload?.type === "user_presence") {
+      const userId = payload.user_id as string;
+      const online = payload.online as boolean;
+      setOnlineUserIds((prev) => {
+        const next = new Set(prev);
+        if (online) next.add(userId);
+        else next.delete(userId);
+        return next;
+      });
+    }
+  });
 
   const loadUnreadBySenders = useCallback(async () => {
     if (!currentUserId) return;
@@ -212,7 +245,9 @@ export const ContactsList: React.FC<ContactsListProps> = ({ friends, loading = f
                 <AvatarImage src={friend.profile_photo || ''} />
                 <AvatarFallback>{getInitials(friend.full_name)}</AvatarFallback>
               </Avatar>
-              <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white dark:border-zinc-900"></div>
+              <div
+                className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-zinc-900 ${onlineUserIds.has(friend.id) ? "bg-green-500" : "bg-zinc-400 dark:bg-zinc-500"}`}
+              />
             </div>
             <div className="font-medium text-sm truncate flex-1">
               <UserNameWithRole
