@@ -108,7 +108,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
       } else {
         // For create mode, use new async upload endpoint if there are image files
         if (imageFiles.length > 0) {
-          // Use async upload endpoint
+          // Use async upload endpoint — post will appear via WebSocket when upload finishes
           await api.createPostWithImages(
             formData.content?.trim(),
             imageFiles,
@@ -117,9 +117,8 @@ export const PostDialog: React.FC<PostDialogProps> = ({
           toast({
             title: "Diproses",
             description: "Post dibuat. Gambar sedang diproses...",
-            variant: "pending",
           });
-          // Don't call onSuccess here - wait for WebSocket notification to show the post
+          // Don't call onSuccess — wait for WebSocket new_post when upload is done
         } else {
           // No images, use regular create endpoint
           const manualUrls = formData.image_urls?.filter(url => url?.trim() && !url.startsWith("blob:")) || [];

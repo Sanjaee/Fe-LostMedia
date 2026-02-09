@@ -341,16 +341,6 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
     });
   }, [session?.user?.id]);
 
-  // Handle post creation success
-  const handlePostSuccess = async () => {
-    try {
-      // Reset and reload feed with popular sorting (new post will appear based on engagement)
-      await loadFeed("popular", true);
-    } catch (err) {
-      console.error("Failed to refresh posts:", err);
-    }
-  };
-  
   // Load view counts for posts
   const loadViewCounts = useCallback(async (postIds: string[]) => {
     try {
@@ -434,6 +424,25 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
     }
   }, [api, currentOffset, loadViewCounts, postLikeCounts, postCommentCounts]);
 
+  // Handle post creation success (optional post = from upload 202, show immediately)
+  const handlePostSuccess = useCallback(
+    async (newPost?: Post) => {
+      if (newPost?.id) {
+        setPosts((prev) => {
+          if (prev.some((p) => p.id === newPost.id)) return prev;
+          return [newPost, ...prev];
+        });
+        return;
+      }
+      try {
+        await loadFeed("popular", true);
+      } catch (err) {
+        console.error("Failed to refresh posts:", err);
+      }
+    },
+    [loadFeed]
+  );
+
   // Load more posts for infinite scroll
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore) return;
@@ -489,7 +498,7 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
     }
   }, [api, currentOffset, currentSort, loadingMore, hasMore, loadViewCounts, postLikeCounts, postCommentCounts]);
 
-  // Prepend new post to feed when received via WebSocket (real-time for all users)
+  // Prepend a finished post to feed (fetches full data from API)
   const prependNewPost = useCallback(
     async (postId: string) => {
       if (!postId) return;
@@ -499,7 +508,13 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
           res?.data?.post ?? res?.post ?? res?.data ?? res;
         if (!post?.id) return;
         setPosts((prev) => {
-          if (prev.some((p) => p.id === post.id)) return prev;
+          // Don't add if images haven't been processed yet (empty image_urls)
+          const idx = prev.findIndex((p) => p.id === post.id);
+          if (idx >= 0) {
+            const next = [...prev];
+            next[idx] = post;
+            return next;
+          }
           return [post, ...prev];
         });
       } catch {
@@ -510,6 +525,7 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
   );
 
   useWebSocketSubscription((data: any) => {
+    // Unwrap hub wrapper: notification → data.payload, broadcast → data.payload
     let messageData: any;
     if (data.type === "notification" && data.payload) {
       messageData = data.payload;
@@ -519,54 +535,80 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
       messageData = data;
     }
 
-    // Real-time: new post broadcast to all clients — show at top
+    // --- new_post: broadcast when upload finishes → prepend post + toast for creator ---
     if (messageData.type === "new_post" && messageData.post_id) {
-      prependNewPost(messageData.post_id);
+      const postId = messageData.post_id as string;
+      // Fetch and prepend, then show toast if it's the creator's own post
+      (async () => {
+        try {
+          const res = await api.getPost(postId) as any;
+          const post: Post = res?.data?.post ?? res?.post ?? res?.data ?? res;
+          if (!post?.id) return;
+          setPosts((prev) => {
+            const idx = prev.findIndex((p) => p.id === post.id);
+            if (idx >= 0) { const next = [...prev]; next[idx] = post; return next; }
+            return [post, ...prev];
+          });
+          // Show toast for own post
+          const isOwn = session?.user?.id &&
+            (post.user_id === session.user.id || (post.user as any)?.id === session.user.id);
+          if (isOwn) {
+            const imageCount = post.image_urls?.length ?? 0;
+            toast({
+              title: "Upload Selesai",
+              description: imageCount > 0
+                ? `Post berhasil diupload dengan ${imageCount} gambar`
+                : "Post berhasil diupload",
+              action: (
+                <ToastAction
+                  altText="Lihat Post"
+                  onClick={() => router.push(`/?fbid=${post.id}&set=pcb.${post.id}.0`)}
+                >
+                  <Eye className="h-4 w-4 mr-1" />
+                  Lihat Post
+                </ToastAction>
+              ),
+            });
+          }
+        } catch { /* ignore */ }
+      })();
       return;
     }
 
+    // --- post_upload_pending: show "processing" toast ---
     if (messageData.type === "post_upload_pending") {
       toast({
         title: "Upload Dimulai",
         description: messageData.message || "Post sedang diproses, gambar sedang diupload...",
       });
-    } else if (
-      messageData.type === "post_upload_completed" ||
-      (messageData.type === "notification" && messageData.payload?.type === "post_upload_completed")
-    ) {
-      const notification = messageData.type === "notification" ? messageData.payload : messageData;
-      let postID: string | null = notification.target_id || null;
-      if (!postID && notification.data) {
-        try {
-          const parsed = typeof notification.data === "string" ? JSON.parse(notification.data) : notification.data;
-          postID = parsed?.post_id || null;
-        } catch {
-          // ignore
-        }
-      }
-      const action = postID ? (
-        <ToastAction
-          altText="Lihat Post"
-          onClick={() => {
-            router.push(`/?fbid=${postID}&set=pcb.${postID}.0`);
-          }}
-        >
-          <Eye className="h-4 w-4 mr-1" />
-          Lihat Post
-        </ToastAction>
-      ) : undefined;
+      return;
+    }
+
+    // --- post_upload_completed: toast + prepend (sent only to creator) ---
+    if (messageData.type === "post_upload_completed") {
+      const dataObj =
+        messageData.data && typeof messageData.data === "object"
+          ? messageData.data
+          : typeof messageData.data === "string"
+            ? (() => { try { return JSON.parse(messageData.data); } catch { return null; } })()
+            : null;
+      const postID: string | null =
+        (messageData.target_id as string) ||
+        (dataObj?.post_id as string) ||
+        null;
+      const imageCount = typeof dataObj?.image_count === "number" ? dataObj.image_count : 0;
       toast({
-        title: notification.title || "Upload Selesai",
-        description: notification.message || `Post berhasil diupload dengan ${notification.data?.image_count || 0} gambar`,
-        action,
+        title: messageData.title || "Upload Selesai",
+        description: messageData.message || `Post berhasil diupload dengan ${imageCount} gambar`,
+        action: postID ? (
+          <ToastAction altText="Lihat Post" onClick={() => router.push(`/?fbid=${postID}&set=pcb.${postID}.0`)}>
+            <Eye className="h-4 w-4 mr-1" />
+            Lihat Post
+          </ToastAction>
+        ) : undefined,
       });
-      // Prepend post for creator so they see it at top without reload (handlePostSuccess
-      // would loadFeed("popular", true) and new post often isn't in top 50, so it disappeared)
-      if (postID) {
-        prependNewPost(postID);
-      } else {
-        handlePostSuccess();
-      }
+      if (postID) prependNewPost(postID);
+      return;
     }
   });
 

@@ -63,11 +63,17 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
           reconnectAttempts.current = 0;
         };
         ws.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            handlersRef.current.forEach((handler) => handler(data));
-          } catch {
-            // ignore
+          // Backend writePump may batch multiple JSON objects separated by newlines
+          // into a single WebSocket frame. Split and parse each one individually.
+          const rawMessages = (event.data as string).split("\n");
+          for (const raw of rawMessages) {
+            if (!raw.trim()) continue;
+            try {
+              const data = JSON.parse(raw);
+              handlersRef.current.forEach((handler) => handler(data));
+            } catch {
+              // ignore malformed message
+            }
           }
         };
         ws.onerror = () => setIsConnected(false);

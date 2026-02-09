@@ -26,6 +26,7 @@ import {
 import { Loader2, Shield, Users, UserCheck, UserX, Search, X, Ban, ShieldCheck } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { useWebSocketSubscription } from "@/contexts/WebSocketContext";
 import { formatDistanceToNow, format } from "date-fns";
 import { id } from "date-fns/locale";
 
@@ -151,6 +152,22 @@ export default function AdminPage() {
       console.error("Failed to load stats:", err);
     }
   };
+
+  // Real-time: when a new user registers, refresh list and show toast
+  useWebSocketSubscription((data: any) => {
+    const messageData =
+      data.type === "broadcast" && data.payload ? data.payload : data;
+    if (messageData.type === "new_user" && messageData.user_id) {
+      loadUsers();
+      loadStats();
+      const name =
+        messageData.full_name || messageData.email || "User baru";
+      toast({
+        title: "User baru terdaftar",
+        description: `${name} baru saja mendaftar. Daftar user diperbarui.`,
+      });
+    }
+  });
 
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
