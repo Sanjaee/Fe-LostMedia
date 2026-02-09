@@ -4,6 +4,7 @@ export interface Post {
   group_id?: string;
   content?: string;
   image_urls?: string[]; // Array of image URLs
+  video_urls?: string[]; // Array of video URLs
   shared_post_id?: string;
   is_pinned: boolean;
   created_at: string;

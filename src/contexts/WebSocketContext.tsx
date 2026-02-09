@@ -123,7 +123,9 @@ export function useWebSocketContext() {
 export function useWebSocketSubscription(onMessage: (data: any) => void) {
   const ctx = useWebSocketContext();
   const onMessageRef = useRef(onMessage);
-  onMessageRef.current = onMessage;
+  useEffect(() => {
+    onMessageRef.current = onMessage;
+  });
   useEffect(() => {
     if (!ctx) return;
     return ctx.subscribe((data) => onMessageRef.current(data));

@@ -699,6 +699,87 @@ class ApiClient {
     }
   }
 
+  // Create post with video uploads (async)
+  async createPostWithVideos(
+    content: string | undefined,
+    videoFiles: File[],
+    groupId?: string
+  ): Promise<PostResponse> {
+    const formData = new FormData();
+
+    if (content?.trim()) {
+      formData.append("content", content.trim());
+    }
+
+    if (groupId) {
+      formData.append("group_id", groupId);
+    }
+
+    // Append video files
+    videoFiles.forEach((file) => {
+      formData.append("videos", file);
+    });
+
+    const url = `${this.baseURL}/api/v1/posts/upload-video`;
+
+    // Ensure we have the latest token
+    if (!this.accessToken && typeof window !== "undefined") {
+      const storedToken = TokenManager.getAccessToken();
+      if (storedToken) {
+        this.accessToken = storedToken;
+      }
+    }
+
+    const config: RequestInit = {
+      method: "POST",
+      headers: {
+        ...(this.accessToken
+          ? { Authorization: `Bearer ${this.accessToken}` }
+          : {}),
+      },
+      body: formData,
+    };
+
+    try {
+      const response = await fetch(url, config);
+
+      if (response.status === 401) {
+        const refreshed = await this.handleTokenRefresh();
+        if (refreshed) {
+          if (this.accessToken) {
+            config.headers = {
+              ...config.headers,
+              Authorization: `Bearer ${this.accessToken}`,
+            };
+          }
+          const retryResponse = await fetch(url, config);
+          if (!retryResponse.ok) {
+            const errorData = await retryResponse.json().catch(() => ({}));
+            throw new Error(
+              errorData.error || errorData.message || "Request failed"
+            );
+          }
+          return retryResponse.json();
+        }
+        throw new Error("Unauthorized");
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.error || errorData.message || "Request failed"
+        );
+      }
+
+      return response.json();
+    } catch (error: any) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error("Network error");
+    }
+  }
+
   async getPost(postID: string): Promise<PostResponse> {
     return this.request<PostResponse>(`/api/v1/posts/${postID}`, {
       method: "GET",

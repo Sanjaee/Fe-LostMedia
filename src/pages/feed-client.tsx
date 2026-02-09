@@ -554,10 +554,14 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
             (post.user_id === session.user.id || (post.user as any)?.id === session.user.id);
           if (isOwn) {
             const imageCount = post.image_urls?.length ?? 0;
+            const videoCount = post.video_urls?.length ?? 0;
+            const mediaParts: string[] = [];
+            if (imageCount > 0) mediaParts.push(`${imageCount} gambar`);
+            if (videoCount > 0) mediaParts.push(`${videoCount} video`);
             toast({
               title: "Upload Selesai",
-              description: imageCount > 0
-                ? `Post berhasil diupload dengan ${imageCount} gambar`
+              description: mediaParts.length > 0
+                ? `Post berhasil diupload dengan ${mediaParts.join(" dan ")}`
                 : "Post berhasil diupload",
               action: (
                 <ToastAction

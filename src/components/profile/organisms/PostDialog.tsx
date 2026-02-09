@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useApi } from "@/components/contex/ApiProvider";
-import { Loader2, X, Plus, Upload, Image as ImageIcon } from "lucide-react";
+import { Loader2, X, Plus, Upload, Image as ImageIcon, Video } from "lucide-react";
 import type { Post, CreatePostRequest, UpdatePostRequest } from "@/types/post";
 import Image from "next/image";
 
@@ -37,6 +37,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
   const { toast } = useToast();
   const { api } = useApi();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -44,6 +45,8 @@ export const PostDialog: React.FC<PostDialogProps> = ({
   const [imageFiles, setImageFiles] = useState<File[]>([]); // Store File objects
   const [imagePreviews, setImagePreviews] = useState<string[]>([]); // Local preview URLs from File objects
   const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]); // Existing URLs from edit mode
+  const [videoFiles, setVideoFiles] = useState<File[]>([]); // Store video File objects
+  const [videoPreviews, setVideoPreviews] = useState<string[]>([]); // Local preview URLs for videos
   const [formData, setFormData] = useState<CreatePostRequest>({
     content: "",
     image_urls: [],
@@ -51,6 +54,8 @@ export const PostDialog: React.FC<PostDialogProps> = ({
 
   const isEditMode = !!post;
   const MAX_IMAGES = 10;
+  const MAX_VIDEOS = 3;
+  const MAX_VIDEO_SIZE = 20 * 1024 * 1024; // 20MB
 
   useEffect(() => {
     if (post && open) {
@@ -61,7 +66,9 @@ export const PostDialog: React.FC<PostDialogProps> = ({
       });
       setExistingImageUrls(post.image_urls || []);
       setImagePreviews(post.image_urls || []);
-      setImageFiles([]); // Clear file objects in edit mode
+      setImageFiles([]);
+      setVideoFiles([]);
+      setVideoPreviews([]);
     } else if (open) {
       setFormData({
         content: "",
@@ -71,14 +78,20 @@ export const PostDialog: React.FC<PostDialogProps> = ({
       setExistingImageUrls([]);
       setImagePreviews([]);
       setImageFiles([]);
+      setVideoFiles([]);
+      setVideoPreviews([]);
     }
   }, [post, open]);
 
   // Cleanup preview URLs when component unmounts
   useEffect(() => {
     return () => {
-      // Cleanup all blob URLs on unmount
       imagePreviews.forEach((preview) => {
+        if (preview.startsWith("blob:")) {
+          URL.revokeObjectURL(preview);
+        }
+      });
+      videoPreviews.forEach((preview) => {
         if (preview.startsWith("blob:")) {
           URL.revokeObjectURL(preview);
         }
@@ -106,9 +119,22 @@ export const PostDialog: React.FC<PostDialogProps> = ({
         toast({ title: "Success", description: "Post updated successfully" });
         onSuccess();
       } else {
-        // For create mode, use new async upload endpoint if there are image files
-        if (imageFiles.length > 0) {
-          // Use async upload endpoint — post will appear via WebSocket when upload finishes
+        // For create mode, use async upload endpoints if there are media files
+        if (videoFiles.length > 0) {
+          // Use async video upload endpoint — post will appear via WebSocket when upload finishes
+          await api.createPostWithVideos(
+            formData.content?.trim(),
+            videoFiles,
+            formData.group_id
+          );
+          toast({
+            title: "Diproses",
+            description: "Post dibuat. Video sedang diproses...",
+            variant: "pending",
+          });
+          // Don't call onSuccess — wait for WebSocket new_post when upload is done
+        } else if (imageFiles.length > 0) {
+          // Use async image upload endpoint — post will appear via WebSocket when upload finishes
           await api.createPostWithImages(
             formData.content?.trim(),
             imageFiles,
@@ -117,10 +143,11 @@ export const PostDialog: React.FC<PostDialogProps> = ({
           toast({
             title: "Diproses",
             description: "Post dibuat. Gambar sedang diproses...",
+            variant: "pending",
           });
           // Don't call onSuccess — wait for WebSocket new_post when upload is done
         } else {
-          // No images, use regular create endpoint
+          // No media files, use regular create endpoint
           const manualUrls = formData.image_urls?.filter(url => url?.trim() && !url.startsWith("blob:")) || [];
           const createData: CreatePostRequest = {
             content: formData.content?.trim() || undefined,
@@ -320,6 +347,86 @@ export const PostDialog: React.FC<PostDialogProps> = ({
     e.stopPropagation();
   };
 
+  // --- Video handling ---
+  const processVideoFiles = (files: File[]) => {
+    const vFiles = files.filter((file) => file.type.startsWith("video/"));
+
+    if (vFiles.length === 0) {
+      toast({
+        title: "Error",
+        description: "Pilih file video saja (mp4, mov, avi, webm, mkv, 3gp)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const remainingSlots = MAX_VIDEOS - videoPreviews.length;
+    if (remainingSlots <= 0) {
+      toast({
+        title: "Error",
+        description: `Maksimal ${MAX_VIDEOS} video per post.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const filesToAdd = vFiles.slice(0, remainingSlots);
+    if (filesToAdd.length < vFiles.length) {
+      toast({
+        title: "Limit reached",
+        description: `Hanya ${remainingSlots} video lagi yang bisa ditambahkan. Maksimal ${MAX_VIDEOS} video per post.`,
+        variant: "destructive",
+      });
+    }
+
+    // Validate file sizes (max 20MB each)
+    const invalidFiles = filesToAdd.filter((file) => file.size > MAX_VIDEO_SIZE);
+    if (invalidFiles.length > 0) {
+      toast({
+        title: "Error",
+        description: `Beberapa video melebihi batas 20MB. Maksimal ukuran file 20MB per video.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setVideoFiles((prev) => [...prev, ...filesToAdd]);
+
+    const newPreviews: string[] = [];
+    filesToAdd.forEach((file) => {
+      const previewUrl = URL.createObjectURL(file);
+      newPreviews.push(previewUrl);
+    });
+
+    setVideoPreviews((prev) => [...prev, ...newPreviews]);
+
+    toast({
+      title: "Success",
+      description: `${filesToAdd.length} video ditambahkan. Akan diupload saat submit.`,
+    });
+  };
+
+  const handleVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    processVideoFiles(Array.from(files));
+
+    if (videoInputRef.current) {
+      videoInputRef.current.value = "";
+    }
+  };
+
+  const handleRemoveVideo = (index: number) => {
+    setVideoFiles((prev) => prev.filter((_, i) => i !== index));
+
+    const previewToRemove = videoPreviews[index];
+    if (previewToRemove && previewToRemove.startsWith("blob:")) {
+      URL.revokeObjectURL(previewToRemove);
+    }
+    setVideoPreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleRemoveImage = (index: number) => {
     // Check if it's a File object or existing URL
     const isFileObject = index < imageFiles.length;
@@ -344,6 +451,11 @@ export const PostDialog: React.FC<PostDialogProps> = ({
   const handleClose = () => {
     // Cleanup blob URLs before closing
     imagePreviews.forEach((preview) => {
+      if (preview.startsWith("blob:")) {
+        URL.revokeObjectURL(preview);
+      }
+    });
+    videoPreviews.forEach((preview) => {
       if (preview.startsWith("blob:")) {
         URL.revokeObjectURL(preview);
       }
@@ -392,8 +504,14 @@ export const PostDialog: React.FC<PostDialogProps> = ({
                   variant="outline"
                   size="sm"
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={loading || uploading || imagePreviews.length >= MAX_IMAGES}
-                  title={imagePreviews.length >= MAX_IMAGES ? `Maximum ${MAX_IMAGES} images allowed` : `Select up to ${MAX_IMAGES} images (max 10MB each)`}
+                  disabled={loading || uploading || imagePreviews.length >= MAX_IMAGES || videoFiles.length > 0}
+                  title={
+                    videoFiles.length > 0
+                      ? "Tidak bisa upload gambar bersamaan dengan video"
+                      : imagePreviews.length >= MAX_IMAGES
+                      ? `Maximum ${MAX_IMAGES} images allowed`
+                      : `Select up to ${MAX_IMAGES} images (max 10MB each)`
+                  }
                 >
                   <Upload className="h-4 w-4 mr-1" />
                   Select Images {imagePreviews.length > 0 && `(${imagePreviews.length}/${MAX_IMAGES})`}
@@ -403,7 +521,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
                   variant="outline"
                   size="sm"
                   onClick={handleAddImageURL}
-                  disabled={loading || uploading || imagePreviews.length >= MAX_IMAGES}
+                  disabled={loading || uploading || imagePreviews.length >= MAX_IMAGES || videoFiles.length > 0}
                   title={imagePreviews.length >= MAX_IMAGES ? `Maximum ${MAX_IMAGES} images allowed` : "Add image URL"}
                 >
                   <Plus className="h-4 w-4 mr-1" />
@@ -539,6 +657,89 @@ export const PostDialog: React.FC<PostDialogProps> = ({
             )}
 
           </div>
+
+          {/* Video Upload */}
+          {!isEditMode && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Video</Label>
+                <div className="flex gap-2">
+                  <input
+                    ref={videoInputRef}
+                    type="file"
+                    accept="video/mp4,video/quicktime,video/x-msvideo,video/webm,video/x-matroska,video/3gpp"
+                    multiple
+                    onChange={handleVideoSelect}
+                    className="hidden"
+                    id="video-upload"
+                    disabled={loading || uploading || videoPreviews.length >= MAX_VIDEOS || imageFiles.length > 0}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => videoInputRef.current?.click()}
+                    disabled={loading || uploading || videoPreviews.length >= MAX_VIDEOS || imageFiles.length > 0}
+                    title={
+                      imageFiles.length > 0
+                        ? "Tidak bisa upload video bersamaan dengan gambar"
+                        : videoPreviews.length >= MAX_VIDEOS
+                        ? `Maksimal ${MAX_VIDEOS} video`
+                        : `Pilih video (maks ${MAX_VIDEOS}, 20MB per video)`
+                    }
+                  >
+                    <Video className="h-4 w-4 mr-1" />
+                    Pilih Video {videoPreviews.length > 0 && `(${videoPreviews.length}/${MAX_VIDEOS})`}
+                  </Button>
+                </div>
+              </div>
+
+              {imageFiles.length > 0 && videoPreviews.length === 0 && (
+                <p className="text-xs text-amber-600 dark:text-amber-400">
+                  Tidak bisa upload video bersamaan dengan gambar. Hapus gambar terlebih dahulu.
+                </p>
+              )}
+
+              {videoFiles.length > 0 && imageFiles.length === 0 && imagePreviews.length === 0 && (
+                <p className="text-xs text-amber-600 dark:text-amber-400">
+                  Tidak bisa upload gambar bersamaan dengan video. Hapus video terlebih dahulu.
+                </p>
+              )}
+
+              {/* Video Previews */}
+              {videoPreviews.length > 0 && (
+                <div className="space-y-3 mt-2">
+                  {videoPreviews.map((preview, index) => (
+                    <div key={`video-preview-${index}`} className="relative group">
+                      <div className="relative rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                        <video
+                          src={preview}
+                          controls
+                          className="w-full max-h-64 object-contain bg-black"
+                          preload="metadata"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => handleRemoveVideo(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {videoFiles[index]?.name} ({(videoFiles[index]?.size / (1024 * 1024)).toFixed(1)} MB)
+                      </p>
+                    </div>
+                  ))}
+                  <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                    {videoPreviews.length}/{MAX_VIDEOS} video (maks 20MB per video)
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Is Pinned (only for edit) */}
           {isEditMode && (

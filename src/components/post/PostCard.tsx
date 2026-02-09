@@ -282,6 +282,25 @@ export function PostCard({
             </div>
           </div>
         )}
+
+        {/* Post Videos */}
+        {post.video_urls && post.video_urls.length > 0 && (
+          <div className="mt-2">
+            <div className="space-y-2">
+              {post.video_urls.map((videoUrl, idx) => (
+                <div key={`video-${idx}`} className="relative bg-black rounded-lg overflow-hidden">
+                  <video
+                    src={videoUrl}
+                    controls
+                    preload="metadata"
+                    className="w-full max-h-[500px] object-contain"
+                    playsInline
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         
         {/* Stats */}
         {(() => {
