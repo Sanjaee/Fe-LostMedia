@@ -319,7 +319,11 @@ export function PostCard({
               targetType="post"
               targetID={post.id}
               initialLikeCount={post.likes_count !== undefined ? post.likes_count : (postLikeCounts[post.id] || 0)}
-              initialUserLike={post.user_liked ? { user_id: post.user_id, post_id: post.id } : (postUserLikes[post.id] || null)}
+              initialUserLike={
+                postUserLikes[post.id] !== undefined
+                  ? (postUserLikes[post.id] || null)
+                  : (post.user_liked ? { user_id: post.user_id, post_id: post.id } : null)
+              }
               onLikeChange={(liked, count) => handleLikeChange(post.id, liked, count)}
             />
           </div>

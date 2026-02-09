@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useApi } from "@/components/contex/ApiProvider";
 import { useToast } from "@/hooks/use-toast";
@@ -14,6 +14,9 @@ import {
   Loader2,
 } from "lucide-react";
 import type { Like } from "@/types/like";
+
+/** Delay before sending unlike to server (reduce hit if user re-likes quickly) */
+const UNLIKE_DEBOUNCE_MS = 2000;
 
 interface LikeButtonProps {
   targetType: "post" | "comment";
@@ -50,6 +53,7 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
   >(initialUserLike?.reaction || null);
   const [loading, setLoading] = useState(false);
   const [showReactions, setShowReactions] = useState(false);
+  const unlikeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setLiked(!!initialUserLike);
@@ -60,37 +64,77 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
     setLikeCount(initialLikeCount);
   }, [initialLikeCount]);
 
+  // Clear pending unlike on unmount or when target changes
+  useEffect(() => {
+    return () => {
+      if (unlikeTimeoutRef.current) {
+        clearTimeout(unlikeTimeoutRef.current);
+        unlikeTimeoutRef.current = null;
+      }
+    };
+  }, [targetID]);
+
+  const flushPendingUnlike = () => {
+    if (unlikeTimeoutRef.current) {
+      clearTimeout(unlikeTimeoutRef.current);
+      unlikeTimeoutRef.current = null;
+    }
+  };
+
   const handleLike = async (reaction: "like" | "love" | "haha" | "wow" | "sad" | "angry" = "like") => {
     if (loading) return;
 
+    // Same reaction click = unlike. Treat null (from API user_liked) as "like" so 2nd click unlikes
+    const effectiveCurrent = currentReaction ?? (liked ? "like" : null);
+    const isSameReactionClick = liked && effectiveCurrent === reaction;
+
+    if (isSameReactionClick) {
+      // Unlike: optimistic UI immediately, debounce API to reduce server hit
+      flushPendingUnlike();
+      setLiked(false);
+      setCurrentReaction(null);
+      const newCount = Math.max(0, likeCount - 1);
+      setLikeCount(newCount);
+      onLikeChange?.(false, newCount);
+
+      unlikeTimeoutRef.current = setTimeout(async () => {
+        unlikeTimeoutRef.current = null;
+        try {
+          if (targetType === "post") {
+            await api.unlikePost(targetID);
+          } else {
+            await api.unlikeComment(targetID);
+          }
+        } catch (error: any) {
+          toast({
+            title: "Error",
+            description: error.message || "Gagal menghapus like",
+            variant: "destructive",
+          });
+          // Rollback UI on error
+          setLiked(true);
+          setCurrentReaction(reaction);
+          setLikeCount(likeCount);
+          onLikeChange?.(true, likeCount);
+        }
+      }, UNLIKE_DEBOUNCE_MS);
+      return;
+    }
+
+    // Like or change reaction: cancel any pending unlike, then call API
+    flushPendingUnlike();
     setLoading(true);
     try {
-      if (liked && currentReaction === reaction) {
-        // Unlike
-        if (targetType === "post") {
-          await api.unlikePost(targetID);
-        } else {
-          await api.unlikeComment(targetID);
-        }
-        setLiked(false);
-        setCurrentReaction(null);
-        const newCount = Math.max(0, likeCount - 1);
-        setLikeCount(newCount);
-        onLikeChange?.(false, newCount);
+      if (targetType === "post") {
+        await api.likePost(targetID, { reaction });
       } else {
-        // Like or change reaction
-        if (targetType === "post") {
-          await api.likePost(targetID, { reaction });
-        } else {
-          await api.likeComment(targetID, { reaction });
-        }
-        setLiked(true);
-        setCurrentReaction(reaction);
-        const newCount = liked ? likeCount : likeCount + 1;
-        setLikeCount(newCount);
-        onLikeChange?.(true, newCount);
+        await api.likeComment(targetID, { reaction });
       }
-      // Keep reactions visible after selection - only hide on mouse leave
+      setLiked(true);
+      setCurrentReaction(reaction);
+      const newCount = liked ? likeCount : likeCount + 1;
+      setLikeCount(newCount);
+      onLikeChange?.(true, newCount);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -102,12 +146,14 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
     }
   };
 
-  const ReactionIcon = currentReaction
-    ? REACTIONS.find((r) => r.type === currentReaction)?.icon || ThumbsUp
+  // When liked but no reaction type (e.g. from API user_liked), show default "like" (blue)
+  const effectiveReaction = currentReaction || (liked ? "like" : null);
+  const ReactionIcon = effectiveReaction
+    ? REACTIONS.find((r) => r.type === effectiveReaction)?.icon || ThumbsUp
     : ThumbsUp;
 
-  const reactionColor = currentReaction
-    ? REACTIONS.find((r) => r.type === currentReaction)?.color || "text-blue-500"
+  const reactionColor = effectiveReaction
+    ? REACTIONS.find((r) => r.type === effectiveReaction)?.color || "text-blue-500"
     : "text-gray-600 dark:text-gray-400";
 
   if (compact) {

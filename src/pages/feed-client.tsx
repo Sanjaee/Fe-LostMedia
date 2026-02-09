@@ -234,11 +234,15 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
     };
   }, [session?.user?.id, loadFriends]);
 
-  // Update posts when initialPosts changes
+  // Update posts when initialPosts changes; keep real-time prepended posts (e.g. own new post) at top
   useEffect(() => {
-    if (initialPosts && Array.isArray(initialPosts)) {
-      setPosts(initialPosts);
-    }
+    if (!initialPosts || !Array.isArray(initialPosts)) return;
+    setPosts((prev) => {
+      const initialIds = new Set(initialPosts.map((p: Post) => p.id));
+      const onlyInPrev = prev.filter((p) => !initialIds.has(p.id));
+      if (onlyInPrev.length === 0) return initialPosts;
+      return [...onlyInPrev, ...initialPosts];
+    });
   }, [initialPosts]);
 
   // Load like and comment counts for posts (only if not already in post data)
@@ -324,9 +328,18 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
     loadPostEngagements(); // Reload counts after closing
   };
 
+  // Single source of truth: update both like count and current user's like state
+  // so LikeButton shows active (filled) when user has already liked the post.
+  // Store null for explicit "unliked" so client state overrides server post.user_liked after unlike.
   const handleLikeChange = useCallback((postId: string, liked: boolean, likeCount: number) => {
     setPostLikeCounts((prev) => ({ ...prev, [postId]: likeCount }));
-  }, []);
+    setPostUserLikes((prev) => {
+      if (liked && session?.user?.id) {
+        return { ...prev, [postId]: { user_id: session.user.id, post_id: postId } };
+      }
+      return { ...prev, [postId]: null };
+    });
+  }, [session?.user?.id]);
 
   // Handle post creation success
   const handlePostSuccess = async () => {
@@ -476,12 +489,40 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
     }
   }, [api, currentOffset, currentSort, loadingMore, hasMore, loadViewCounts, postLikeCounts, postCommentCounts]);
 
+  // Prepend new post to feed when received via WebSocket (real-time for all users)
+  const prependNewPost = useCallback(
+    async (postId: string) => {
+      if (!postId) return;
+      try {
+        const res = await api.getPost(postId) as any;
+        const post: Post =
+          res?.data?.post ?? res?.post ?? res?.data ?? res;
+        if (!post?.id) return;
+        setPosts((prev) => {
+          if (prev.some((p) => p.id === post.id)) return prev;
+          return [post, ...prev];
+        });
+      } catch {
+        // ignore fetch error
+      }
+    },
+    [api]
+  );
+
   useWebSocketSubscription((data: any) => {
     let messageData: any;
     if (data.type === "notification" && data.payload) {
       messageData = data.payload;
+    } else if (data.type === "broadcast" && data.payload) {
+      messageData = data.payload;
     } else {
       messageData = data;
+    }
+
+    // Real-time: new post broadcast to all clients — show at top
+    if (messageData.type === "new_post" && messageData.post_id) {
+      prependNewPost(messageData.post_id);
+      return;
     }
 
     if (messageData.type === "post_upload_pending") {
@@ -519,7 +560,13 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
         description: notification.message || `Post berhasil diupload dengan ${notification.data?.image_count || 0} gambar`,
         action,
       });
-      handlePostSuccess();
+      // Prepend post for creator so they see it at top without reload (handlePostSuccess
+      // would loadFeed("popular", true) and new post often isn't in top 50, so it disappeared)
+      if (postID) {
+        prependNewPost(postID);
+      } else {
+        handlePostSuccess();
+      }
     }
   });
 
@@ -544,13 +591,16 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
   // Initialize feed with popular sorting directly (no delay)
   useEffect(() => {
     if (session?.user?.id && initialPosts && initialPosts.length > 0) {
-      // Use initial posts (already sorted by popular from server-side)
-      setPosts(initialPosts);
+      setPosts((prev) => {
+        const initialIds = new Set(initialPosts.map((p: Post) => p.id));
+        const onlyInPrev = prev.filter((p) => !initialIds.has(p.id));
+        if (onlyInPrev.length === 0) return initialPosts;
+        return [...onlyInPrev, ...initialPosts];
+      });
       setCurrentOffset(initialPosts.length);
       setHasMore(initialPosts.length >= 50);
       setCurrentSort("popular");
     } else if (session?.user?.id && (!posts || posts.length === 0)) {
-      // If no initial posts, load with popular sorting directly
       loadFeed("popular", true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -571,7 +621,7 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
     >
       {/* Create Post Widget */}
       {session && (
-        <Card className="border-none shadow-sm">
+        <Card className="border-none shadow-sm py-0">
           <CardContent className="p-4">
             <div className="flex gap-4 mb-4">
               <Avatar className="w-10 h-10">
