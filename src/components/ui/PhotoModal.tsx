@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserNameWithRole } from "@/components/ui/UserNameWithRole";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { X, MoreHorizontal, ThumbsUp, MessageCircle, Share2, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { X, MoreHorizontal, ThumbsUp, MessageCircle, Share2, ChevronLeft, ChevronRight, Loader2, Play } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import { useApi } from "@/components/contex/ApiProvider";
@@ -20,11 +20,14 @@ interface PhotoModalProps {
   isOpen: boolean;
   onClose: () => void;
   post: Post | null;
+  /** Index di daftar media gabungan (gambar dulu, lalu video) */
   imageIndex: number;
   onNavigateImage?: (direction: 'prev' | 'next') => void;
+  /** Optional: lompat langsung ke media index (untuk klik thumbnail) */
+  onNavigateToIndex?: (index: number) => void;
 }
 
-export default function PhotoModal({ isOpen, onClose, post, imageIndex, onNavigateImage }: PhotoModalProps) {
+export default function PhotoModal({ isOpen, onClose, post, imageIndex, onNavigateImage, onNavigateToIndex }: PhotoModalProps) {
   const { api } = useApi();
   const [likeCount, setLikeCount] = useState(0);
   const [commentCount, setCommentCount] = useState(0);
@@ -67,12 +70,17 @@ export default function PhotoModal({ isOpen, onClose, post, imageIndex, onNaviga
   };
 
   if (!post) return null;
-  const imageUrl = post.image_urls && post.image_urls[imageIndex] ? post.image_urls[imageIndex] : '';
-  const totalImages = post.image_urls?.length || 0;
-  const hasPrev = imageIndex > 0;
-  const hasNext = imageIndex < totalImages - 1;
 
-  if (!imageUrl) return null;
+  // Gabung image + video jadi satu list (gambar dulu, lalu video) untuk detail
+  const imageItems: { type: 'image'; url: string }[] = (post.image_urls || []).map((url) => ({ type: 'image' as const, url }));
+  const videoItems: { type: 'video'; url: string }[] = (post.video_urls || []).map((url) => ({ type: 'video' as const, url }));
+  const allMedia = [...imageItems, ...videoItems];
+  const totalMedia = allMedia.length;
+  const currentMedia = allMedia[imageIndex];
+  const hasPrev = imageIndex > 0;
+  const hasNext = imageIndex < totalMedia - 1;
+
+  if (!currentMedia) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -116,28 +124,38 @@ export default function PhotoModal({ isOpen, onClose, post, imageIndex, onNaviga
             </Button>
           )}
 
-          {/* Image Counter */}
-          {totalImages > 1 && (
+          {/* Media Counter */}
+          {totalMedia > 1 && (
             <div className="absolute top-4 right-4 z-50 bg-black/50 text-white px-3 py-1 rounded-full text-sm backdrop-blur-sm">
-              {imageIndex + 1} / {totalImages}
+              {imageIndex + 1} / {totalMedia}
             </div>
           )}
 
-          {/* Main Image Container - Auto sizing */}
+          {/* Main Media Container - Image atau Video */}
           <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
-             <img 
-              src={imageUrl} 
-              alt={`Post by ${post.user?.full_name}`} 
-              className="object-contain"
-              style={{ 
-                width: 'auto',
-                height: 'auto',
-                maxWidth: '100%',
-                maxHeight: '100%',
-                display: 'block',
-                objectFit: 'contain'
-              }}
-            />
+            {currentMedia.type === 'video' ? (
+              <video
+                src={currentMedia.url}
+                controls
+                autoPlay
+                playsInline
+                className="object-contain max-w-full max-h-full w-auto h-auto"
+              />
+            ) : (
+              <img
+                src={currentMedia.url}
+                alt={`Post by ${post.user?.full_name}`}
+                className="object-contain"
+                style={{
+                  width: 'auto',
+                  height: 'auto',
+                  maxWidth: '100%',
+                  maxHeight: '100%',
+                  display: 'block',
+                  objectFit: 'contain',
+                }}
+              />
+            )}
           </div>
         </div>
 
@@ -262,25 +280,38 @@ export default function PhotoModal({ isOpen, onClose, post, imageIndex, onNaviga
              />
           </div>
 
-          {/* Thumbnail Navigation (if multiple images) */}
-          {totalImages > 1 && (
+          {/* Thumbnail Navigation (jika ada lebih dari satu media: image + video) */}
+          {totalMedia > 1 && (
             <div className="p-3 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
               <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-                {post.image_urls?.map((url, idx) => (
+                {allMedia.map((item, idx) => (
                   <button
                     key={idx}
-                    onClick={() => onNavigateImage && idx !== imageIndex && (idx < imageIndex ? onNavigateImage('prev') : onNavigateImage('next'))}
-                    className={`shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 ${
-                      idx === imageIndex 
-                        ? 'border-blue-500' 
+                    onClick={() => {
+                      if (idx === imageIndex) return;
+                      if (onNavigateToIndex) onNavigateToIndex(idx);
+                      else if (onNavigateImage) {
+                        if (idx < imageIndex) onNavigateImage('prev');
+                        else onNavigateImage('next');
+                      }
+                    }}
+                    className={`shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 flex items-center justify-center ${
+                      idx === imageIndex
+                        ? 'border-blue-500'
                         : 'border-transparent opacity-60 hover:opacity-100'
-                    } transition-all cursor-pointer`}
+                    } transition-all cursor-pointer bg-zinc-100 dark:bg-zinc-800`}
                   >
-                    <img 
-                      src={url} 
-                      alt={`Thumbnail ${idx + 1}`}
-                      className="w-full h-full object-cover"
-                    />
+                    {item.type === 'video' ? (
+                      <div className="relative w-full h-full flex items-center justify-center">
+                        <Play className="w-6 h-6 text-white drop-shadow" fill="currentColor" />
+                      </div>
+                    ) : (
+                      <img
+                        src={item.url}
+                        alt={`Thumbnail ${idx + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
                   </button>
                 ))}
               </div>

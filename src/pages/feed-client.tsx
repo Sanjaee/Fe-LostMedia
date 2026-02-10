@@ -48,8 +48,8 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
   const { toast } = useToast();
   const scrollRestoredRef = useRef(false);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null);
+  /** Index di daftar media gabungan (gambar + video) untuk PhotoModal detail */
+  const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
   const [posts, setPosts] = useState<Post[]>(initialPosts || []);
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
   const [friends, setFriends] = useState<Friendship[]>([]);
@@ -71,31 +71,26 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
   const fbid = searchParams?.get('fbid');
   const set = searchParams?.get('set');
   
-  // Parse URL params to determine selected post and image index
+  // Parse URL params: selected post + media index (gambar + video digabung)
   useEffect(() => {
     if (fbid && set) {
-      // Parse set parameter to get post ID and image index
-      // Format: set=pcb.POST_ID.IMAGE_INDEX
       const setParts = set.split('.');
       if (setParts.length >= 2) {
         const postId = setParts[1];
-        const imageIndex = setParts[2] ? parseInt(setParts[2]) : 0;
-        
-        // Find the post
-        const post = posts.find(p => p.id === postId);
-        if (post && post.image_urls && post.image_urls.length > 0) {
-          // Only update if different to avoid unnecessary renders
-          if (selectedPost?.id !== post.id || selectedImageIndex !== imageIndex) {
+        const mediaIndex = setParts[2] ? parseInt(setParts[2], 10) : 0;
+        const post = posts.find((p) => p.id === postId);
+        const totalMedia = (post?.image_urls?.length || 0) + (post?.video_urls?.length || 0);
+        if (post && totalMedia > 0 && mediaIndex >= 0 && mediaIndex < totalMedia) {
+          if (selectedPost?.id !== post.id || selectedMediaIndex !== mediaIndex) {
             setSelectedPost(post);
-            setSelectedImageIndex(imageIndex);
+            setSelectedMediaIndex(mediaIndex);
           }
         }
       }
     } else {
-      // Only update if currently has selected post
       if (selectedPost) {
         setSelectedPost(null);
-        setSelectedImageIndex(0);
+        setSelectedMediaIndex(0);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -106,13 +101,18 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
     const handlePopState = () => {
       if (!fbid && !set) {
         setSelectedPost(null);
-        setSelectedImageIndex(0);
+        setSelectedMediaIndex(0);
       }
     };
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, [fbid, set]);
+
+  const updateMediaUrl = useCallback((postId: string, mediaIndex: number) => {
+    const newUrl = `/?fbid=${postId}&set=pcb.${postId}.${mediaIndex}`;
+    router.push(newUrl, { scroll: false });
+  }, [router]);
 
   // Restore scroll position when component mounts
   useEffect(() => {
@@ -128,50 +128,48 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
     }
   }, []);
 
-  // Video klik untuk tonton di modal
+  // Video klik: buka detail di PhotoModal (media index = gambar dulu, lalu video)
   const handleVideoClick = (post: Post, videoIndex: number) => {
-    const url = post.video_urls?.[videoIndex];
-    if (url) setSelectedVideoUrl(url);
-  };
-
-  // Handle image click - update URL without reload
-  const handleImageClick = (post: Post, imageIndex: number) => {
-    // Save scroll position
     const scrollPosition = window.scrollY || document.documentElement.scrollTop;
     sessionStorage.setItem(SCROLL_POSITION_KEY, scrollPosition.toString());
-    
-    // Update URL with query params (like Facebook: /photo/?fbid=...&set=pcb.POST_ID.IMAGE_INDEX)
-    const newUrl = `/?fbid=${post.id}&set=pcb.${post.id}.${imageIndex}`;
-    router.push(newUrl, { scroll: false });
+    const mediaIndex = (post.image_urls?.length || 0) + videoIndex;
+    setSelectedPost(post);
+    setSelectedMediaIndex(mediaIndex);
+    updateMediaUrl(post.id, mediaIndex);
   };
 
-  // Handle modal close - restore URL
+  // Klik gambar: buka detail di PhotoModal (media index = index gambar)
+  const handleImageClick = (post: Post, imageIndex: number) => {
+    const scrollPosition = window.scrollY || document.documentElement.scrollTop;
+    sessionStorage.setItem(SCROLL_POSITION_KEY, scrollPosition.toString());
+    setSelectedPost(post);
+    setSelectedMediaIndex(imageIndex);
+    updateMediaUrl(post.id, imageIndex);
+  };
+
   const handleCloseModal = () => {
-    // Remove query params and restore original URL
     router.push('/', { scroll: false });
     setSelectedPost(null);
-    setSelectedImageIndex(0);
+    setSelectedMediaIndex(0);
   };
 
-  // Handle image navigation in modal
+  // Navigasi prev/next di PhotoModal (daftar media = gambar + video)
   const handleNavigateImage = (direction: 'prev' | 'next') => {
-    if (!selectedPost || !selectedPost.image_urls) return;
-    
-    const totalImages = selectedPost.image_urls.length;
-    let newIndex = selectedImageIndex;
-    
-    if (direction === 'prev' && selectedImageIndex > 0) {
-      newIndex = selectedImageIndex - 1;
-    } else if (direction === 'next' && selectedImageIndex < totalImages - 1) {
-      newIndex = selectedImageIndex + 1;
+    if (!selectedPost) return;
+    const totalMedia = (selectedPost.image_urls?.length || 0) + (selectedPost.video_urls?.length || 0);
+    let newIndex = selectedMediaIndex;
+    if (direction === 'prev' && selectedMediaIndex > 0) newIndex = selectedMediaIndex - 1;
+    else if (direction === 'next' && selectedMediaIndex < totalMedia - 1) newIndex = selectedMediaIndex + 1;
+    if (newIndex !== selectedMediaIndex) {
+      setSelectedMediaIndex(newIndex);
+      updateMediaUrl(selectedPost.id, newIndex);
     }
-    
-    if (newIndex !== selectedImageIndex) {
-      setSelectedImageIndex(newIndex);
-      // Update URL
-      const newUrl = `/?fbid=${selectedPost.id}&set=pcb.${selectedPost.id}.${newIndex}`;
-      router.push(newUrl, { scroll: false });
-    }
+  };
+
+  const handleNavigateToIndex = (index: number) => {
+    if (!selectedPost) return;
+    setSelectedMediaIndex(index);
+    updateMediaUrl(selectedPost.id, index);
   };
 
   // Save scroll position on scroll
@@ -766,31 +764,17 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
         )}
       </div>
 
-      {/* Photo Modal */}
+      {/* PhotoModal: detail gambar + video (satu daftar media), sidebar caption & komentar */}
       {selectedPost && (
         <PhotoModal
           isOpen={!!selectedPost}
           onClose={handleCloseModal}
           post={selectedPost}
-          imageIndex={selectedImageIndex}
+          imageIndex={selectedMediaIndex}
           onNavigateImage={handleNavigateImage}
+          onNavigateToIndex={handleNavigateToIndex}
         />
       )}
-
-      {/* Video Modal: klik thumbnail di post → tonton video */}
-      <Dialog open={!!selectedVideoUrl} onOpenChange={(open) => !open && setSelectedVideoUrl(null)}>
-        <DialogContent className="max-w-4xl w-[95vw] p-0 border-none overflow-hidden bg-black">
-          {selectedVideoUrl && (
-            <video
-              src={selectedVideoUrl}
-              controls
-              autoPlay
-              className="w-full h-auto max-h-[85vh] object-contain"
-              playsInline
-            />
-          )}
-        </DialogContent>
-      </Dialog>
 
       {/* Post Dialog */}
       {session?.user && (
