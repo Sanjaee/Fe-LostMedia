@@ -11,6 +11,7 @@ import {
   MoreHorizontal,
   Trash2,
   ChevronRight,
+  Play,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -52,6 +53,7 @@ interface PostCardProps {
   handleLikeChange: (postId: string, liked: boolean, likeCount: number) => void;
   handleOpenCommentDialog: (post: Post) => void;
   handleImageClick: (post: Post, imageIndex: number) => void;
+  handleVideoClick?: (post: Post, videoIndex: number) => void;
   onPostDeleted?: (postId: string) => void;
 }
 
@@ -67,8 +69,14 @@ export function PostCard({
   handleLikeChange,
   handleOpenCommentDialog,
   handleImageClick,
+  handleVideoClick,
   onPostDeleted,
 }: PostCardProps) {
+  // Gabung gambar + video jadi satu media (gambar dulu, lalu video) untuk layout seperti foto
+  const mediaItems: { type: "image"; url: string; index: number }[] = (post.image_urls || []).map((url, i) => ({ type: "image" as const, url, index: i }));
+  const videoItems: { type: "video"; url: string; index: number }[] = (post.video_urls || []).map((url, i) => ({ type: "video" as const, url, index: i }));
+  const allMedia = [...mediaItems, ...videoItems];
+  const hasMedia = allMedia.length > 0;
   const postRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -245,59 +253,74 @@ export function PostCard({
           )}
         </div>
 
-        {/* Post Images */}
-        {post.image_urls && post.image_urls.length > 0 && (
+        {/* Post Media: gambar + video satu layout (seperti foto), video diklik untuk tonton */}
+        {hasMedia && (
           <div className="mt-2">
-            {/* Simple grid for multiple images */}
-            <div className={`grid gap-1 ${
-              post.image_urls.length === 1 ? 'grid-cols-1' : 
-              post.image_urls.length === 2 ? 'grid-cols-2' : 
-              post.image_urls.length >= 3 ? 'grid-cols-2' : ''
-            }`}>
-              {post.image_urls.slice(0, 4).map((img, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => handleImageClick(post, idx)}
-                  className={`relative bg-zinc-100 cursor-pointer block w-full ${
-                    post.image_urls!.length === 1 ? 'h-auto' : 
-                    post.image_urls!.length === 3 && idx === 0 ? 'row-span-2 h-full' : 
-                    'aspect-square'
-                  }`}
-                >
-                  <img 
-                    src={img} 
-                    alt={`Post image ${idx + 1}`} 
-                    className={`w-full ${
-                      post.image_urls!.length === 1 ? 'h-auto object-contain' : 'h-full object-cover'
+            <div
+              className={`grid gap-1 overflow-hidden ${
+                allMedia.length === 1
+                  ? "grid-cols-1"
+                  : allMedia.length === 2
+                    ? "grid-cols-2"
+                    : allMedia.length >= 3
+                      ? "grid-cols-2 grid-rows-2"
+                      : ""
+              }`}
+            >
+              {allMedia.slice(0, 4).map((item, idx) => {
+                const isFirst = idx === 0;
+                const isThreeLayout = allMedia.length === 3;
+                const spanTwo = isThreeLayout && isFirst;
+                return (
+                  <button
+                    key={`${item.type}-${item.index}`}
+                    type="button"
+                    onClick={() => {
+                      if (item.type === "image") {
+                        handleImageClick(post, item.index);
+                      } else if (handleVideoClick) {
+                        handleVideoClick(post, item.index);
+                      }
+                    }}
+                    className={`relative bg-zinc-100 dark:bg-zinc-900 cursor-pointer block w-full overflow-hidden ${
+                      allMedia.length === 1
+                        ? "h-auto min-h-[200px]"
+                        : spanTwo
+                          ? "row-span-2 aspect-[4/5]"
+                          : "aspect-square"
                     }`}
-                    loading="lazy"
-                  />
-                  {post.image_urls!.length > 4 && idx === 3 && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white text-2xl font-bold">
-                      +{post.image_urls!.length - 4}
-                    </div>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Post Videos */}
-        {post.video_urls && post.video_urls.length > 0 && (
-          <div className="mt-2">
-            <div className="space-y-2">
-              {post.video_urls.map((videoUrl, idx) => (
-                <div key={`video-${idx}`} className="relative bg-black rounded-lg overflow-hidden">
-                  <video
-                    src={videoUrl}
-                    controls
-                    preload="metadata"
-                    className="w-full max-h-[500px] object-contain"
-                    playsInline
-                  />
-                </div>
-              ))}
+                  >
+                    {item.type === "image" ? (
+                      <img
+                        src={item.url}
+                        alt={`Post image ${item.index + 1}`}
+                        className={`w-full h-full object-cover`}
+                        loading="lazy"
+                      />
+                    ) : (
+                      <>
+                        <video
+                          src={item.url}
+                          preload="metadata"
+                          className="w-full h-full object-cover pointer-events-none"
+                          muted
+                          playsInline
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition-colors">
+                          <div className="rounded-full bg-white/90 dark:bg-zinc-800 p-3 shadow-lg">
+                            <Play className="w-8 h-8 text-zinc-900 dark:text-zinc-100 fill-current" />
+                          </div>
+                        </div>
+                      </>
+                    )}
+                    {allMedia.length > 4 && idx === 3 && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white text-2xl font-bold">
+                        +{allMedia.length - 4}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}

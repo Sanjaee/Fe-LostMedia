@@ -46,6 +46,7 @@ export interface Post {
 export interface CreatePostRequest {
   content?: string;
   image_urls?: string[]; // Array of image URLs
+  video_urls?: string[]; // Array of video URLs (manual or from upload)
   shared_post_id?: string;
   group_id?: string;
   is_pinned?: boolean;
@@ -60,6 +61,7 @@ export interface CreatePostRequest {
 export interface UpdatePostRequest {
   content?: string;
   image_urls?: string[]; // Array of image URLs
+  video_urls?: string[]; // Array of video URLs
   is_pinned?: boolean;
 }
 

@@ -54,18 +54,26 @@ export const PostDialog: React.FC<PostDialogProps> = ({
 
   const isEditMode = !!post;
   const MAX_IMAGES = 10;
-  const MAX_VIDEOS = 3;
+  const MAX_VIDEOS = 5;
   const MAX_VIDEO_SIZE = 20 * 1024 * 1024; // 20MB
+
+  /** Deteksi URL video dari ekstensi (untuk manual URL: tampil video vs gambar) */
+  const isVideoUrl = (url: string): boolean => {
+    if (!url || typeof url !== "string") return false;
+    const path = url.split("?")[0].toLowerCase();
+    return /\.(mp4|mov|avi|webm|mkv|3gp)(\?|$)/i.test(path);
+  };
 
   useEffect(() => {
     if (post && open) {
+      const combinedMediaUrls = [...(post.image_urls || []), ...(post.video_urls || [])];
       setFormData({
         content: post.content || "",
-        image_urls: post.image_urls || [],
+        image_urls: combinedMediaUrls.length > 0 ? [...combinedMediaUrls, ""] : [],
         is_pinned: post.is_pinned,
       });
       setExistingImageUrls(post.image_urls || []);
-      setImagePreviews(post.image_urls || []);
+      setImagePreviews(combinedMediaUrls.length > 0 ? combinedMediaUrls : []);
       setImageFiles([]);
       setVideoFiles([]);
       setVideoPreviews([]);
@@ -106,13 +114,15 @@ export const PostDialog: React.FC<PostDialogProps> = ({
 
     try {
       if (isEditMode && post) {
-        // For edit mode, use existing flow with manual URLs
+        // Edit mode: formData.image_urls sudah gabungan image+video dari post, pisah untuk API
         const manualUrls = formData.image_urls?.filter(url => url?.trim() && !url.startsWith("blob:")) || [];
-        const finalImageUrls = [...existingImageUrls, ...manualUrls];
+        const finalImageUrls = manualUrls.filter(url => !isVideoUrl(url));
+        const finalVideoUrls = manualUrls.filter(url => isVideoUrl(url));
 
         const updateData: UpdatePostRequest = {
           content: formData.content?.trim() || undefined,
           image_urls: finalImageUrls.length > 0 ? finalImageUrls : undefined,
+          video_urls: finalVideoUrls.length > 0 ? finalVideoUrls : undefined,
           is_pinned: formData.is_pinned,
         };
         await api.updatePost(post.id, updateData);
@@ -147,11 +157,14 @@ export const PostDialog: React.FC<PostDialogProps> = ({
           });
           // Don't call onSuccess — wait for WebSocket new_post when upload is done
         } else {
-          // No media files, use regular create endpoint
+          // No media files, use regular create endpoint (manual URLs: pisah gambar vs video)
           const manualUrls = formData.image_urls?.filter(url => url?.trim() && !url.startsWith("blob:")) || [];
+          const imageUrls = manualUrls.filter(url => !isVideoUrl(url));
+          const videoUrls = manualUrls.filter(url => isVideoUrl(url));
           const createData: CreatePostRequest = {
             content: formData.content?.trim() || undefined,
-            image_urls: manualUrls.length > 0 ? manualUrls : undefined,
+            image_urls: imageUrls.length > 0 ? imageUrls : undefined,
+            video_urls: videoUrls.length > 0 ? videoUrls : undefined,
             group_id: groupId,
           };
           const result = await api.createPost(createData);
@@ -428,19 +441,29 @@ export const PostDialog: React.FC<PostDialogProps> = ({
   };
 
   const handleRemoveImage = (index: number) => {
-    // Check if it's a File object or existing URL
     const isFileObject = index < imageFiles.length;
-    
+    const urlIndex = index - imageFiles.length;
+    const isExistingUrl = urlIndex >= 0 && urlIndex < existingImageUrls.length;
+    const isManualUrl = urlIndex >= existingImageUrls.length;
+
     if (isFileObject) {
-      // Remove File object
       setImageFiles((prev) => prev.filter((_, i) => i !== index));
-    } else {
-      // Remove existing URL (from edit mode)
-      const urlIndex = index - imageFiles.length;
+    } else if (isExistingUrl) {
       setExistingImageUrls((prev) => prev.filter((_, i) => i !== urlIndex));
+    } else if (isManualUrl) {
+      const manualIndex = urlIndex - existingImageUrls.length;
+      const filledIndices = (formData.image_urls || [])
+        .map((u, i) => (u?.trim() ? i : -1))
+        .filter((i) => i >= 0);
+      const formDataIndex = filledIndices[manualIndex];
+      if (formDataIndex !== undefined) {
+        setFormData((prev) => ({
+          ...prev,
+          image_urls: prev.image_urls?.filter((_, i) => i !== formDataIndex) || [],
+        }));
+      }
     }
 
-    // Remove from previews and cleanup
     const previewToRemove = imagePreviews[index];
     if (previewToRemove && previewToRemove.startsWith("blob:")) {
       URL.revokeObjectURL(previewToRemove);
@@ -583,28 +606,35 @@ export const PostDialog: React.FC<PostDialogProps> = ({
               </div>
             )}
 
-            {/* Image Previews */}
+            {/* Image & Video URL Previews (gambar dan video digabung) */}
             {imagePreviews.length > 0 && (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
                 {imagePreviews.map((preview, index) => {
-                  // Skip empty previews
                   if (!preview || preview.trim() === "") return null;
-                  
+                  const isVideo = isVideoUrl(preview);
                   return (
-                    <div key={`preview-${index}-${preview.substring(0, 20)}`} className="relative group">
-                      <div className="aspect-square relative rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
-                        <Image
-                          src={preview}
-                          alt={`Preview ${index + 1}`}
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 768px) 50vw, 33vw"
-                          onError={(e) => {
-                            // Hide broken images
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = "none";
-                          }}
-                        />
+                    <div key={`preview-${index}-${preview.substring(0, 30)}`} className="relative group">
+                      <div className={`relative rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 ${isVideo ? "aspect-video" : "aspect-square"}`}>
+                        {isVideo ? (
+                          <video
+                            src={preview}
+                            controls
+                            className="w-full h-full object-contain bg-black"
+                            preload="metadata"
+                          />
+                        ) : (
+                          <Image
+                            src={preview}
+                            alt={`Preview ${index + 1}`}
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 768px) 50vw, 33vw"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = "none";
+                            }}
+                          />
+                        )}
                         <Button
                           type="button"
                           variant="destructive"
@@ -621,16 +651,14 @@ export const PostDialog: React.FC<PostDialogProps> = ({
               </div>
             )}
 
-            {/* Manual URL Input (only for empty URLs) */}
+            {/* Manual URL Input: gambar dan video digabung (URL video ditampilkan sebagai video) */}
             {formData.image_urls && formData.image_urls.some(url => !url || url.trim() === "") && (
               <div className="space-y-2 mt-4">
                 <Label className="text-sm text-gray-600 dark:text-gray-400">
-                  Add image URLs manually:
+                  Add image or video URLs manually:
                 </Label>
                 {formData.image_urls.map((url, index) => {
-                  // Only show input for empty URLs
                   if (url && url.trim() !== "") return null;
-                  
                   return (
                     <div key={`url-${index}`} className="flex gap-2">
                       <Input
@@ -639,7 +667,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
                         onChange={(e) =>
                           handleImageURLChange(index, e.target.value)
                         }
-                        placeholder="https://example.com/image.jpg"
+                        placeholder="https://example.com/image.jpg atau video.mp4"
                         className="flex-1"
                       />
                       <Button

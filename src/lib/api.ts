@@ -601,6 +601,14 @@ class ApiClient {
         cleanData.image_urls = validUrls;
       }
     }
+
+    // Video URLs - only send if there are valid URLs
+    if (data.video_urls?.length) {
+      const validVideoUrls = data.video_urls.filter(url => url?.trim());
+      if (validVideoUrls.length > 0) {
+        cleanData.video_urls = validVideoUrls;
+      }
+    }
     
     // Optional fields
     if (data.shared_post_id) cleanData.shared_post_id = data.shared_post_id;

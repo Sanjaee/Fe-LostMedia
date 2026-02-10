@@ -13,6 +13,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import PhotoModal from "@/components/ui/PhotoModal";
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
 import { PostDialog } from "@/components/profile/organisms/PostDialog";
 import { useApi } from "@/components/contex/ApiProvider";
 import { CommentDialog } from "@/components/post/CommentDialog";
@@ -45,6 +49,7 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
   const scrollRestoredRef = useRef(false);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null);
   const [posts, setPosts] = useState<Post[]>(initialPosts || []);
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
   const [friends, setFriends] = useState<Friendship[]>([]);
@@ -122,6 +127,12 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
       });
     }
   }, []);
+
+  // Video klik untuk tonton di modal
+  const handleVideoClick = (post: Post, videoIndex: number) => {
+    const url = post.video_urls?.[videoIndex];
+    if (url) setSelectedVideoUrl(url);
+  };
 
   // Handle image click - update URL without reload
   const handleImageClick = (post: Post, imageIndex: number) => {
@@ -722,6 +733,7 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
                 handleLikeChange={handleLikeChange}
                 handleOpenCommentDialog={handleOpenCommentDialog}
                 handleImageClick={handleImageClick}
+                handleVideoClick={handleVideoClick}
                 onPostDeleted={(postId) => {
                   // Remove deleted post from list
                   setPosts((prev) => prev.filter((p) => p.id !== postId));
@@ -764,6 +776,21 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
           onNavigateImage={handleNavigateImage}
         />
       )}
+
+      {/* Video Modal: klik thumbnail di post → tonton video */}
+      <Dialog open={!!selectedVideoUrl} onOpenChange={(open) => !open && setSelectedVideoUrl(null)}>
+        <DialogContent className="max-w-4xl w-[95vw] p-0 border-none overflow-hidden bg-black">
+          {selectedVideoUrl && (
+            <video
+              src={selectedVideoUrl}
+              controls
+              autoPlay
+              className="w-full h-auto max-h-[85vh] object-contain"
+              playsInline
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Post Dialog */}
       {session?.user && (
