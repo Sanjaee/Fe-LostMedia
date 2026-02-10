@@ -111,7 +111,9 @@ App.getInitialProps = async (appContext: AppContext) => {
   if (typeof window === "undefined" && ctx.req && ctx.res) {
     const { getServerSession } = await import("next-auth");
     const { authOptions } = await import("@/pages/api/auth/[...nextauth]");
-    session = await getServerSession(ctx.req, ctx.res, authOptions);
+    // Next.js adds cookies to req at runtime; cast for getServerSession typing
+    const reqWithCookies = ctx.req as typeof ctx.req & { cookies: Partial<{ [key: string]: string }> };
+    session = await getServerSession(reqWithCookies, ctx.res, authOptions);
   }
   return { pageProps: { ...pageProps, session } };
 };
