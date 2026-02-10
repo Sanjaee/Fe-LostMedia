@@ -172,106 +172,116 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
     async jwt({ token, user, account, trigger }) {
-      // Initial sign in
-      if (account && user) {
-        return {
-          ...token,
-          sub: user.id,
-          accessToken: user.accessToken,
-          refreshToken: user.refreshToken,
-          isVerified: user.isVerified,
-          userType: user.userType,
-          loginType: user.loginType,
-          image: user.image,
-          accessTokenExpires: Date.now() + 15 * 60 * 1000, // 15 minutes
-        };
-      }
-
-      // Handle session update trigger (when update() is called)
-      if (trigger === "update" && token.accessToken) {
-        try {
-          // Fetch updated user data from backend
-          const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
-          const userResponse = await undiciRequest(`${backendUrl}/api/v1/auth/me`, {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token.accessToken}`,
-            },
-          });
-
-          if (userResponse.statusCode >= 200 && userResponse.statusCode < 300) {
-            const userData = (await userResponse.body.json()) as {
-              data?: { user?: Record<string, unknown> };
-              user?: Record<string, unknown>;
-            };
-            const updatedUser = userData.data?.user || userData.user;
-            if (updatedUser) {
-              return {
-                ...token,
-                image: (updatedUser.profile_photo as string) || (updatedUser.profilePic as string) || token.image,
-                // Update name/username if changed
-                name: (updatedUser.username as string) || (updatedUser.full_name as string) || token.name,
-              };
-            }
-          }
-        } catch {
-          // Failed to fetch updated user data
-          // Continue with existing token if fetch fails
+      try {
+        // Initial sign in
+        if (account && user) {
+          return {
+            ...token,
+            sub: user.id,
+            accessToken: user.accessToken,
+            refreshToken: user.refreshToken,
+            isVerified: user.isVerified,
+            userType: user.userType,
+            loginType: user.loginType,
+            image: user.image,
+            accessTokenExpires: Date.now() + 15 * 60 * 1000, // 15 minutes
+          };
         }
-      }
 
-      // Don't retry refresh when already failed (JWT/secret mismatch or invalid tokens)
-      if (token.error === "RefreshAccessTokenError") {
-        return token;
-      }
+        // Handle session update trigger (when update() is called)
+        if (trigger === "update" && token.accessToken) {
+          try {
+            // Fetch updated user data from backend
+            const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
+            const userResponse = await undiciRequest(`${backendUrl}/api/v1/auth/me`, {
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${token.accessToken}`,
+              },
+            });
 
-      // Return previous token if the access token has not expired yet
-      if (token.accessToken && token.accessTokenExpires && Date.now() < (token.accessTokenExpires as number)) {
-        return token;
-      }
+            if (userResponse.statusCode >= 200 && userResponse.statusCode < 300) {
+              const userData = (await userResponse.body.json()) as {
+                data?: { user?: Record<string, unknown> };
+                user?: Record<string, unknown>;
+              };
+              const updatedUser = userData.data?.user || userData.user;
+              if (updatedUser) {
+                return {
+                  ...token,
+                  image: (updatedUser.profile_photo as string) || (updatedUser.profilePic as string) || token.image,
+                  // Update name/username if changed
+                  name: (updatedUser.username as string) || (updatedUser.full_name as string) || token.name,
+                };
+              }
+            }
+          } catch {
+            // Failed to fetch updated user data
+            // Continue with existing token if fetch fails
+          }
+        }
 
-      // Access token has expired or missing, try to update it
-      const refreshed = await refreshAccessToken(token);
-      
-      // Ensure all required JWT fields are present
-      const updatedToken = {
-        ...token,
-        ...refreshed,
-        sub: token.sub || "",
-      } as typeof token;
-      
-      // Ensure accessToken is always present
-      if (!updatedToken.accessToken && token.accessToken) {
-        updatedToken.accessToken = token.accessToken;
+        // Don't retry refresh when already failed (JWT/secret mismatch or invalid tokens)
+        if (token.error === "RefreshAccessTokenError") {
+          return token;
+        }
+
+        // Return previous token if the access token has not expired yet
+        if (token.accessToken && token.accessTokenExpires && Date.now() < (token.accessTokenExpires as number)) {
+          return token;
+        }
+
+        // Access token has expired or missing, try to update it
+        const refreshed = await refreshAccessToken(token);
+        
+        // Ensure all required JWT fields are present
+        const updatedToken = {
+          ...token,
+          ...refreshed,
+          sub: token.sub || "",
+        } as typeof token;
+        
+        // Ensure accessToken is always present
+        if (!updatedToken.accessToken && token.accessToken) {
+          updatedToken.accessToken = token.accessToken;
+        }
+        
+        return updatedToken;
+      } catch (error) {
+        console.error("JWT callback error:", error);
+        // Return token with error so session callback can return null and clear session
+        return { ...token, error: "JWTError" };
       }
-      
-      return updatedToken;
     },
     async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.sub as string;
-        // Prioritize token.image over session.user.image
-        session.user.image = (token.image as string) || session.user.image || undefined;
-        session.user.name = (token.name as string) || session.user.name || "";
-        session.user.role = token.userType as string; // Add role alias
-        session.user.userType = token.userType as string; // Add userType to user object for consistency
-        session.user.user_type = token.userType as string; // Add user_type alias for compatibility
-        session.user.username = (token.name as string) || session.user.name; // Add username alias
+      try {
+        // Clear session when token invalid/corrupt so client doesn't loop
+        if (!token || token.error === "JWTError" || token.error === "RefreshAccessTokenError" || !token.accessToken) {
+          return null as unknown as typeof session;
+        }
+        if (session.user) {
+          session.user.id = token.sub as string;
+          // Prioritize token.image over session.user.image
+          session.user.image = (token.image as string) || session.user.image || undefined;
+          session.user.name = (token.name as string) || session.user.name || "";
+          session.user.role = token.userType as string; // Add role alias
+          session.user.userType = token.userType as string; // Add userType to user object for consistency
+          session.user.user_type = token.userType as string; // Add user_type alias for compatibility
+          session.user.username = (token.name as string) || session.user.name; // Add username alias
+        }
+        
+        // Ensure accessToken is always set from token
+        session.accessToken = (token.accessToken as string) || "";
+        session.refreshToken = (token.refreshToken as string) || "";
+        session.isVerified = (token.isVerified as boolean) || false;
+        session.userType = (token.userType as string) || "member";
+        session.loginType = (token.loginType as string) || "credential";
+        
+        return session;
+      } catch (error) {
+        console.error("Session callback error:", error);
+        return null as unknown as typeof session;
       }
-      
-      // Ensure accessToken is always set from token
-      session.accessToken = (token.accessToken as string) || "";
-      session.refreshToken = (token.refreshToken as string) || "";
-      session.isVerified = (token.isVerified as boolean) || false;
-      session.userType = (token.userType as string) || "member";
-      session.loginType = (token.loginType as string) || "credential";
-      
-      // Log for debugging if token is missing
-      if (!token.accessToken && token.sub) {
-        // Session callback: accessToken missing from token
-      }
-      
-      return session;
     },
     async redirect({ url, baseUrl }) {
       // Clean up URL to remove duplicate query parameters
@@ -306,6 +316,13 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: "/auth/login",
     error: "/auth/login",
+  },
+  events: {
+    signOut({ token }) {
+      if (token?.email && process.env.NODE_ENV === "development") {
+        console.log("User signed out:", token.email);
+      }
+    },
   },
   session: {
     strategy: "jwt",

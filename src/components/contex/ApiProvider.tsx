@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { api, TokenManager } from '@/lib/api';
 
@@ -25,6 +25,7 @@ interface ApiProviderProps {
 export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
   const { data: session, status, update } = useSession();
   const isAuthenticated = status === 'authenticated' && !!session;
+  const updateAttemptedRef = useRef(false);
 
   // Get token from session (NextAuth manages tokens)
   const accessToken = useMemo(() => {
@@ -47,17 +48,21 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
   // Update API client with current access token and sync with localStorage
   useEffect(() => {
     if (accessToken) {
+      updateAttemptedRef.current = false; // reset so next time we can retry if needed
       api.setAccessToken(accessToken);
       // Sync with localStorage for backward compatibility
       if (session?.refreshToken) {
         TokenManager.setTokens(accessToken, session.refreshToken as string);
       }
-    } else if (status === 'authenticated' && !accessToken) {
-      // If authenticated but no token, try to update session
-      // This might trigger token refresh in NextAuth
+    } else if (status === 'authenticated' && !accessToken && !updateAttemptedRef.current) {
+      // Try session update once when JWT/session mismatch — avoid repeated refetch loop
+      updateAttemptedRef.current = true;
       update().catch((err) => {
         console.error("Failed to update session:", err);
       });
+    } else if (status === 'unauthenticated') {
+      updateAttemptedRef.current = false;
+      api.setAccessToken(null);
     } else {
       api.setAccessToken(null);
     }

@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
-import { signIn } from "next-auth/react";
+import { signIn, getSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -57,6 +57,28 @@ export const LoginForm = () => {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const sessionCheckDoneRef = useRef(false);
+
+  // Clear invalid/corrupt session on mount to stop looping
+  useEffect(() => {
+    if (sessionCheckDoneRef.current) return;
+    sessionCheckDoneRef.current = true;
+    const checkSession = async () => {
+      try {
+        const session = await getSession();
+        if (session && !session.user) {
+          await signOut({ redirect: false });
+        }
+      } catch {
+        try {
+          await signOut({ redirect: false });
+        } catch {
+          // ignore
+        }
+      }
+    };
+    checkSession();
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -466,6 +488,26 @@ export const LoginForm = () => {
               Daftar di sini
             </Button>
           </p>
+        </div>
+
+        {/* Emergency: reset session jika masih looping */}
+        <div className="text-center mt-3">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-xs text-muted-foreground hover:text-foreground"
+            onClick={async () => {
+              await signOut({ redirect: false });
+              if (typeof window !== "undefined") {
+                sessionStorage.clear();
+                localStorage.clear();
+                window.location.reload();
+              }
+            }}
+          >
+            Reset Session
+          </Button>
         </div>
       </CardContent>
     </Card>

@@ -81,6 +81,11 @@ class ApiClient {
   // Handle token refresh when 401 occurs
   private async handleTokenRefresh(): Promise<boolean> {
     try {
+      // Jangan refresh kalau sudah di halaman auth (login, register, dll) — hindari loop / "user not found"
+      if (typeof window !== "undefined" && window.location.pathname.startsWith("/auth")) {
+        return false;
+      }
+
       // Try to get refresh token from localStorage
       const refreshToken = TokenManager.getRefreshToken();
       
@@ -157,8 +162,12 @@ class ApiClient {
       const response = await fetch(url, config);
 
       if (!response.ok) {
-        // Handle 401 Unauthorized - token expired, try to refresh
-        if (response.status === 401) {
+        // Handle 401 Unauthorized - token expired, try to refresh (skip jika sudah di /auth)
+        if (
+          response.status === 401 &&
+          typeof window !== "undefined" &&
+          !window.location.pathname.startsWith("/auth")
+        ) {
           const refreshed = await this.handleTokenRefresh();
           if (refreshed) {
             // Retry the request with new token

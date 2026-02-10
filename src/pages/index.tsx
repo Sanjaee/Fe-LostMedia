@@ -1,7 +1,7 @@
 "use client";
 
 import { Geist, Geist_Mono } from "next/font/google";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import FeedClient from "./feed-client";
@@ -31,18 +31,15 @@ export default function Home() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const redirectedToLoginRef = useRef(false);
 
-  // Redirect to login if no session or session expired
+  // Redirect to login once when session expired/invalid — avoid looping
   useEffect(() => {
-    // Wait for session to finish loading
-    if (status === "loading") {
-      return;
-    }
-
-    // If session is unauthenticated, redirect to login
+    if (status === "loading") return;
+    if (redirectedToLoginRef.current) return;
     if (status === "unauthenticated" || !session) {
+      redirectedToLoginRef.current = true;
       router.push("/auth/login");
-      return;
     }
   }, [session, status, router]);
 
