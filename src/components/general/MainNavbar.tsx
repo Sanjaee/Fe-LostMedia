@@ -244,7 +244,7 @@ export default function MainNavbar() {
 
   return (
     <nav className="sticky top-0 z-50 w-full bg-gray-800 dark:bg-gray-900 border-b border-gray-700">
-      <div className="max-w-[1444px] mx-auto flex items-center h-14 px-4 relative">
+      <div className="max-w-[1444px] mx-auto flex items-center min-h-14 py-2 px-4 relative">
 
         {/* Left: Logo + Search */}
         <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -259,14 +259,14 @@ export default function MainNavbar() {
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                 <Search className="h-4 w-4 text-gray-400" />
               </div>
-              <button
-                type="button"
+              <input
+                type="text"
+                value={searchQuery}
                 onClick={() => setSearchDialogOpen(true)}
-                className="w-full pl-10 pr-4 py-2 bg-gray-700 dark:bg-gray-800 text-left text-white placeholder-gray-400 rounded-full focus:outline-none focus:ring-2 focus:ring-gray-500 focus:bg-gray-600 dark:focus:bg-gray-700"
-                aria-label="Buka pencarian"
-              >
-                {searchQuery.trim() ? searchQuery : "Cari di Lost Media"}
-              </button>
+                readOnly
+                placeholder="Cari di Lost Media"
+                className="w-full min-h-[2.5rem] pl-10 pr-4 py-2 bg-gray-700 dark:bg-gray-800 text-left text-white placeholder-gray-400 rounded-full overflow-hidden focus:outline-none focus:ring-2 focus:ring-gray-500 focus:bg-gray-600 dark:focus:bg-gray-700"
+              />
             </div>
           </form>
         </div>

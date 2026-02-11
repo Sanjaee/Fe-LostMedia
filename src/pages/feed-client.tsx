@@ -685,7 +685,7 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
               </Avatar>
               <button
                 onClick={() => setIsPostDialogOpen(true)}
-                className="flex-1 w-full h-10 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center px-4 text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer text-left"
+                className="flex-1 w-full h-10 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center px-4 text-sm md:text-base text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer text-left"
               >
                 Apa yang Anda pikirkan, {session.user?.name?.split(' ')[0]}?
               </button>
