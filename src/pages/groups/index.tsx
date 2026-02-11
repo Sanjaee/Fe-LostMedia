@@ -9,6 +9,7 @@ import { useApi } from "@/components/contex/ApiProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AppLayout } from "@/components/layout/AppLayout";
 import type { Group } from "@/types/group";
 import {
   Globe,
@@ -187,12 +188,11 @@ const GroupsListPage: React.FC = () => {
   const displayGroups = searchQuery.trim() ? searchResults : null;
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 pt-4 pb-10">
+    <AppLayout showCreatePost={false}>
       <Head>
         <title>Grup - Lost Media</title>
       </Head>
-
-      <div className="container mx-auto max-w-3xl px-4">
+      <div className="bg-white dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-800 p-4 md:p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -295,7 +295,7 @@ const GroupsListPage: React.FC = () => {
           </>
         )}
       </div>
-    </div>
+    </AppLayout>
   );
 };
 
