@@ -428,8 +428,15 @@ class ApiClient {
   }
 
   // Online users
-  async getOnlineUsers(): Promise<{ users: Array<{ id: string; full_name: string; username?: string; profile_photo?: string; user_type?: string }>; count: number }> {
-    return this.request(`/api/v1/users/online`, { method: "GET" });
+  async getOnlineUsers(
+    limit?: number,
+    offset?: number
+  ): Promise<{ users: Array<{ id: string; full_name: string; username?: string; profile_photo?: string; user_type?: string }>; count: number; limit?: number; offset?: number }> {
+    const params = new URLSearchParams();
+    if (typeof limit === "number") params.set("limit", String(limit));
+    if (typeof offset === "number") params.set("offset", String(offset));
+    const query = params.toString();
+    return this.request(`/api/v1/users/online${query ? `?${query}` : ""}`, { method: "GET" });
   }
 
   // Notification endpoints

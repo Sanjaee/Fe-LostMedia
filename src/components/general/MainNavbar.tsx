@@ -453,7 +453,10 @@ export default function MainNavbar() {
                     </span>
                   </button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-80 bg-gray-800 dark:bg-gray-900 border-gray-700">
+                <SheetContent
+                  side="right"
+                  className="w-80 bg-gray-800 dark:bg-gray-900 border-gray-700 h-[100dvh] flex flex-col"
+                >
                   <SheetHeader>
                     <SheetTitle className="text-white flex items-center gap-3">
                       <Avatar className="h-12 w-12">
@@ -478,7 +481,7 @@ export default function MainNavbar() {
                       </div>
                     </SheetTitle>
                   </SheetHeader>
-                  <div className="mt-6 space-y-2">
+                  <div className="mt-6 space-y-2 overflow-y-auto pr-1 -mr-1 flex-1 min-h-0">
                     {/* Navigation Items */}
                     {navItems.map((item) => {
                       const Icon = item.icon;
