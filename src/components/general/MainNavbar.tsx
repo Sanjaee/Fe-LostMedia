@@ -399,8 +399,21 @@ export default function MainNavbar() {
           )}
         </div>
 
-        {/* Mobile: Message + Notifications + Profile */}
+        {/* Mobile: Online + Message + Notifications + Profile */}
         <div className="md:hidden flex items-center gap-2 ml-2">
+          {/* Online Users - Mobile */}
+          <button
+            onClick={() => router.push("/online-users")}
+            className={cn(
+              "flex items-center justify-center w-10 h-10 rounded-full transition-colors",
+              router.pathname === "/online-users"
+                ? "bg-gray-600 dark:bg-gray-700"
+                : "bg-gray-700 dark:bg-gray-800 hover:bg-gray-600 dark:hover:bg-gray-700"
+            )}
+            title="Online Users"
+          >
+            <Users className="h-5 w-5 text-gray-300" />
+          </button>
           {/* Message - Mobile: navigate to /message */}
           <button
             onClick={() => router.push("/message")}
