@@ -243,6 +243,7 @@ export default function AdminPage() {
       await api.updateUserRole(user.id, newRole);
       toast({ title: "Role diubah", description: `${user.full_name} sekarang berperan sebagai ${newRole}.` });
       loadUsers();
+      loadStats();
     } catch (err: any) {
       toast({ title: "Gagal ubah role", description: err?.message || "Error", variant: "destructive" });
     } finally {

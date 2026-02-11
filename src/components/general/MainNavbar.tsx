@@ -466,13 +466,8 @@ export default function MainNavbar() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button
-              onClick={() => router.push("/auth/login")}
-              variant="default"
-              size="sm"
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              Sign In
+            <Button asChild variant="default" size="sm" className="bg-blue-600 hover:bg-blue-700">
+              <Link href="/auth/login">Sign In</Link>
             </Button>
           )}
         </div>
@@ -721,13 +716,8 @@ export default function MainNavbar() {
               </Sheet>
             </>
           ) : (
-            <Button
-              onClick={() => router.push("/auth/login")}
-              variant="default"
-              size="sm"
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              Sign In
+            <Button asChild variant="default" size="sm" className="bg-blue-600 hover:bg-blue-700">
+              <Link href="/auth/login">Sign In</Link>
             </Button>
           )}
         </div>
