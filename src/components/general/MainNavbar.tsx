@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/router";
 import Image from "next/image";
@@ -37,6 +37,8 @@ import { ContactsList } from "./ContactsList";
 import { useApi } from "@/components/contex/ApiProvider";
 import { useChat } from "@/contexts/ChatContext";
 import type { Friendship } from "@/types/friendship";
+import type { Post } from "@/types/post";
+import type { User as UserType } from "@/types/user";
 import { useWebSocketSubscription } from "@/contexts/WebSocketContext";
 import Link from "next/link";
 import {
@@ -46,6 +48,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function MainNavbar() {
   const { data: session, status } = useSession();
@@ -53,6 +61,11 @@ export default function MainNavbar() {
   const { api } = useApi();
   const { openChat } = useChat();
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchDialogOpen, setSearchDialogOpen] = useState(false);
+  const [postResults, setPostResults] = useState<Post[]>([]);
+  const [peopleResults, setPeopleResults] = useState<UserType[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const searchRequestIdRef = useRef(0);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [profileSidebarOpen, setProfileSidebarOpen] = useState(false);
@@ -121,6 +134,69 @@ export default function MainNavbar() {
     return () => window.removeEventListener("friendship-changed", handleFriendshipChanged);
   }, [status, loadFriends]);
 
+  useEffect(() => {
+    if (!searchDialogOpen) return;
+
+    const keyword = searchQuery.trim();
+    if (!keyword) {
+      setPostResults([]);
+      setPeopleResults([]);
+      setSearchLoading(false);
+      return;
+    }
+
+    const requestId = ++searchRequestIdRef.current;
+    setSearchLoading(true);
+
+    const timer = setTimeout(async () => {
+      try {
+        let posts: Post[] = [];
+        try {
+          const postsRes = await api.searchPosts(keyword, 5, 0);
+          posts = (postsRes as any).posts || (postsRes as any).data?.posts || [];
+        } catch {
+          try {
+            const fallbackRes = await api.getFeed(50, 0, "newest");
+            const fallbackPosts: Post[] = (fallbackRes as any).posts || (fallbackRes as any).data?.posts || [];
+            const lowered = keyword.toLowerCase();
+            posts = fallbackPosts.filter((post) =>
+              (post.content || "").toLowerCase().includes(lowered)
+            ).slice(0, 5);
+          } catch {
+            posts = [];
+          }
+        }
+
+        const peopleRes = await api.searchUsers(keyword, 10, 0);
+
+        if (searchRequestIdRef.current !== requestId) return;
+
+        const users = (peopleRes as any).users || (peopleRes as any).data?.users || [];
+        const lowered = keyword.toLowerCase();
+        const currentUserId = session?.user?.id;
+        const filteredUsers = users.filter((user: UserType) => {
+          if (currentUserId && user.id === currentUserId) return false;
+          const name = (user.full_name || "").toLowerCase();
+          const username = (user.username || "").toLowerCase();
+          return name.includes(lowered) || username.includes(lowered);
+        });
+
+        setPostResults(posts);
+        setPeopleResults(filteredUsers.slice(0, 5));
+      } catch {
+        if (searchRequestIdRef.current !== requestId) return;
+        setPostResults([]);
+        setPeopleResults([]);
+      } finally {
+        if (searchRequestIdRef.current === requestId) {
+          setSearchLoading(false);
+        }
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchDialogOpen, searchQuery, api, session?.user?.id]);
+
   const handleChatClick = (user: { id: string; full_name: string; username?: string; profile_photo?: string }) => {
     openChat(user);
     setMessengerOpen(false);
@@ -146,6 +222,7 @@ export default function MainNavbar() {
     e.preventDefault();
     if (searchQuery.trim()) {
       router.push(`/search/?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchDialogOpen(false);
     }
   };
 
@@ -182,13 +259,14 @@ export default function MainNavbar() {
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                 <Search className="h-4 w-4 text-gray-400" />
               </div>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari di Lost Media"
-                className="w-full pl-10 pr-4 py-2 bg-gray-700 dark:bg-gray-800 text-white placeholder-gray-400 rounded-full focus:outline-none focus:ring-2 focus:ring-gray-500 focus:bg-gray-600 dark:focus:bg-gray-700"
-              />
+              <button
+                type="button"
+                onClick={() => setSearchDialogOpen(true)}
+                className="w-full pl-10 pr-4 py-2 bg-gray-700 dark:bg-gray-800 text-left text-white placeholder-gray-400 rounded-full focus:outline-none focus:ring-2 focus:ring-gray-500 focus:bg-gray-600 dark:focus:bg-gray-700"
+                aria-label="Buka pencarian"
+              >
+                {searchQuery.trim() ? searchQuery : "Cari di Lost Media"}
+              </button>
             </div>
           </form>
         </div>
@@ -658,6 +736,155 @@ export default function MainNavbar() {
         open={notificationOpen}
         onOpenChange={setNotificationOpen}
       />
+      <Dialog
+        open={searchDialogOpen}
+        onOpenChange={(open) => {
+          setSearchDialogOpen(open);
+          if (!open) {
+            setSearchQuery("");
+            setPostResults([]);
+            setPeopleResults([]);
+            setSearchLoading(false);
+          }
+        }}
+      >
+        <DialogContent className="max-w-2xl w-[95vw] bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
+          <DialogHeader>
+            <DialogTitle className="text-zinc-900 dark:text-white">
+              Cari
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSearch} className="space-y-4">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <Search className="h-4 w-4 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Cari post atau orang..."
+                autoFocus
+                className="w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
+              />
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    Post
+                  </h3>
+                </div>
+                {searchLoading ? (
+                  <div className="text-sm text-gray-500">Memuat...</div>
+                ) : postResults.length === 0 ? (
+                  <div className="text-sm text-gray-500">Tidak ada post</div>
+                ) : (
+                  <div className="space-y-2">
+                    {postResults.map((post) => (
+                      <button
+                        key={post.id}
+                        type="button"
+                        onClick={() => {
+                          router.push(`/post/${post.id}`);
+                          setSearchDialogOpen(false);
+                        }}
+                        className="w-full text-left p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center gap-3"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm text-gray-900 dark:text-white line-clamp-2">
+                            {post.content || "Post tanpa teks"}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {post.user?.full_name || post.user?.username || "User"}
+                          </div>
+                        </div>
+                        {(post.image_urls?.[0] || post.video_urls?.[0]) && (
+                          <div className="h-12 w-12 rounded-md overflow-hidden bg-gray-200 dark:bg-gray-800 shrink-0">
+                            {post.image_urls?.[0] ? (
+                              <img
+                                src={post.image_urls[0]}
+                                alt="Post thumbnail"
+                                className="h-full w-full object-cover"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <video
+                                src={post.video_urls?.[0]}
+                                className="h-full w-full object-cover"
+                                muted
+                                playsInline
+                              />
+                            )}
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    Orang
+                  </h3>
+                </div>
+                {searchLoading ? (
+                  <div className="text-sm text-gray-500">Memuat...</div>
+                ) : peopleResults.length === 0 ? (
+                  <div className="text-sm text-gray-500">Tidak ada orang</div>
+                ) : (
+                  <div className="space-y-2">
+                    {peopleResults.map((user) => (
+                      <button
+                        key={user.id}
+                        type="button"
+                        onClick={() => {
+                          router.push(`/profile/${user.username || user.id}`);
+                          setSearchDialogOpen(false);
+                        }}
+                        className="w-full text-left p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center gap-3"
+                      >
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={user.profile_photo || ""} />
+                          <AvatarFallback className="text-xs bg-zinc-200 dark:bg-zinc-700">
+                            {user.full_name?.charAt(0).toUpperCase() || "?"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0">
+                          <UserNameWithRole
+                            displayName={user.full_name || user.username || "—"}
+                            role={user.user_type}
+                            className="text-sm font-medium truncate"
+                          />
+                          {user.username && (
+                            <div className="text-xs text-gray-500">@{user.username}</div>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setSearchDialogOpen(false)}
+              >
+                Tutup
+              </Button>
+              <Button type="submit" disabled={!searchQuery.trim()}>
+                Lihat semua hasil
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </nav>
   );
 }

@@ -17,7 +17,7 @@ const SearchPage: React.FC = () => {
   const { data: session } = useSession();
   const { api } = useApi();
   const { openChat } = useChat();
-  const [activeTab, setActiveTab] = useState<"people" | "posts">("people");
+  const [activeTab, setActiveTab] = useState<"people" | "posts">("posts");
   const query = (router.query.q as string) || "";
   const [friends, setFriends] = React.useState<Friendship[]>([]);
   const [loadingFriends, setLoadingFriends] = React.useState(false);
@@ -114,21 +114,6 @@ const SearchPage: React.FC = () => {
         <div className="flex gap-2 mb-6 md:border-b md:border-gray-200 dark:md:border-gray-700">
           <Button
             variant="ghost"
-            onClick={() => setActiveTab("people")}
-            className={`flex items-center gap-2 transition-colors md:rounded-none md:border-b-2 ${
-              activeTab === "people"
-                ? "rounded-full bg-gray-200 dark:bg-gray-700 md:bg-transparent md:border-blue-500 text-blue-600 dark:text-blue-400"
-                : "rounded-full md:border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
-            }`}
-          >
-            <Users className="h-4 w-4 shrink-0" />
-            <span className="truncate">People</span>
-            {peopleCount !== null && peopleCount > 0 && (
-              <span className="shrink-0">({peopleCount})</span>
-            )}
-          </Button>
-          <Button
-            variant="ghost"
             onClick={() => setActiveTab("posts")}
             className={`flex items-center gap-2 transition-colors md:rounded-none md:border-b-2 ${
               activeTab === "posts"
@@ -140,6 +125,21 @@ const SearchPage: React.FC = () => {
             <span className="truncate">Posts</span>
             {postsCount !== null && postsCount > 0 && (
               <span className="shrink-0">({postsCount})</span>
+            )}
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => setActiveTab("people")}
+            className={`flex items-center gap-2 transition-colors md:rounded-none md:border-b-2 ${
+              activeTab === "people"
+                ? "rounded-full bg-gray-200 dark:bg-gray-700 md:bg-transparent md:border-blue-500 text-blue-600 dark:text-blue-400"
+                : "rounded-full md:border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+            }`}
+          >
+            <Users className="h-4 w-4 shrink-0" />
+            <span className="truncate">People</span>
+            {peopleCount !== null && peopleCount > 0 && (
+              <span className="shrink-0">({peopleCount})</span>
             )}
           </Button>
             </div>
