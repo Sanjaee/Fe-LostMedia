@@ -8,6 +8,7 @@ import { useWebSocketSubscription } from "@/contexts/WebSocketContext";
 import { useSession } from "next-auth/react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserNameWithRole } from "@/components/ui/UserNameWithRole";
+import { Button } from "@/components/ui/button";
 
 interface OnlineUser {
   id: string;
@@ -22,6 +23,8 @@ export const OnlineUsers: React.FC = () => {
   const { data: session } = useSession();
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(5);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const loadOnlineUsers = useCallback(async () => {
     try {
@@ -33,7 +36,7 @@ export const OnlineUsers: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [api, session?.user?.id]);
+  }, [api]);
 
   // Load on mount
   useEffect(() => {
@@ -41,6 +44,10 @@ export const OnlineUsers: React.FC = () => {
       loadOnlineUsers();
     }
   }, [session?.user?.id, loadOnlineUsers]);
+
+  useEffect(() => {
+    setVisibleCount((prev) => Math.max(5, Math.min(prev, onlineUsers.length)));
+  }, [onlineUsers.length]);
 
   // Listen to WebSocket presence events for real-time updates
   useWebSocketSubscription((data: any) => {
@@ -80,9 +87,18 @@ export const OnlineUsers: React.FC = () => {
     );
   }
 
+  const visibleUsers = onlineUsers.slice(0, visibleCount);
+
+  const handleLoadMore = async () => {
+    setLoadingMore(true);
+    await loadOnlineUsers();
+    setVisibleCount((prev) => prev + 5);
+    setLoadingMore(false);
+  };
+
   return (
     <div className="space-y-0.5">
-      {onlineUsers.map((user) => (
+      {visibleUsers.map((user) => (
         <Link
           key={user.id}
           href={`/profile/${user.username || user.id}`}
@@ -105,6 +121,20 @@ export const OnlineUsers: React.FC = () => {
           />
         </Link>
       ))}
+      {onlineUsers.length > visibleCount && (
+        <div className="px-2 pt-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="w-full text-xs"
+            onClick={handleLoadMore}
+            disabled={loadingMore}
+          >
+            {loadingMore ? "Memuat..." : "Muat lebih banyak"}
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
