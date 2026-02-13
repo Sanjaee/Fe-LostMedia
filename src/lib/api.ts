@@ -192,6 +192,9 @@ class ApiClient {
           (typeof errorData.error === "string" ? errorData.error : null) ||
           `HTTP ${response.status}: ${response.statusText}`;
 
+        // Preserve next_resend_at from cooldown errors for OTP resend
+        const errPayload = typeof errorData.error === "object" ? errorData.error : errorData.data;
+
         // Handle data wrapper if present
         if (errorData.data && typeof errorData.data === "object") {
           errorMessage =
@@ -225,16 +228,17 @@ class ApiClient {
 
         // Create error with response data preserved
         const error = new Error(errorMessage) as Error & {
-          response?: {
-            status: number;
-            data: unknown;
-          };
+          response?: { status: number; data: unknown };
+          next_resend_at?: number;
+          can_resend?: boolean;
         };
 
         error.response = {
           status: response.status,
           data: errorData,
         };
+        if (errPayload?.next_resend_at != null) error.next_resend_at = errPayload.next_resend_at;
+        if (errPayload?.can_resend != null) error.can_resend = errPayload.can_resend;
 
         throw error;
       }
@@ -280,6 +284,13 @@ class ApiClient {
       method: "POST",
       body: JSON.stringify(data),
     });
+  }
+
+  async getOTPResendStatus(email: string): Promise<ResendOTPResponse> {
+    return this.request<ResendOTPResponse>(
+      `/api/v1/auth/otp-resend-status?email=${encodeURIComponent(email)}`,
+      { method: "GET" }
+    );
   }
 
   async googleOAuth(data: GoogleOAuthRequest): Promise<AuthResponse> {

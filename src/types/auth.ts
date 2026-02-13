@@ -64,11 +64,14 @@ export interface OTPVerifyResponse {
 }
 
 export interface ResendOTPResponse {
-  message: string;
+  message?: string;
+  next_resend_at?: number; // Unix timestamp - when user can resend again
+  can_resend?: boolean;
 }
 
 export interface ResetPasswordRequest {
   email: string;
+  is_resend?: boolean; // true when called from "Kirim Ulang" on verify-otp-reset
 }
 
 export interface VerifyResetPasswordRequest {
@@ -78,7 +81,9 @@ export interface VerifyResetPasswordRequest {
 }
 
 export interface ResetPasswordResponse {
-  message: string;
+  message?: string;
+  next_resend_at?: number; // Unix timestamp
+  can_resend?: boolean;
 }
 
 export interface VerifyResetPasswordResponse {

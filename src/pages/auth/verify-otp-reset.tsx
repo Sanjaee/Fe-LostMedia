@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,18 +37,57 @@ export default function VerifyOtpReset() {
     }
   }, [router]);
 
-  // Countdown timer
+  const syncCountdownFromBE = useCallback(async () => {
+    if (!email) return;
+    try {
+      const res = await api.getOTPResendStatus(email) as { next_resend_at?: number; can_resend?: boolean };
+      if (res.can_resend) {
+        setTimeLeft(0);
+        setCanResend(true);
+      } else if (res.next_resend_at) {
+        const remaining = Math.max(0, Math.floor(res.next_resend_at - Date.now() / 1000));
+        setTimeLeft(remaining);
+        setCanResend(remaining <= 0);
+      }
+    } catch {
+      setCanResend(true);
+    }
+  }, [email]);
+
+  useEffect(() => {
+    if (email) syncCountdownFromBE();
+  }, [email, syncCountdownFromBE]);
+
   useEffect(() => {
     if (timeLeft > 0) {
-      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+      const timer = setTimeout(() => {
+        setTimeLeft((prev) => {
+          const next = prev - 1;
+          if (next <= 0) setCanResend(true);
+          return next;
+        });
+      }, 1000);
       return () => clearTimeout(timer);
-    } else {
-      setCanResend(true);
     }
   }, [timeLeft]);
 
-  const formatTime = (seconds: number) => {
-    return `${seconds}s`;
+  const formatTime = (totalSeconds: number) => {
+    if (totalSeconds >= 86400) {
+      const d = Math.floor(totalSeconds / 86400);
+      const h = Math.floor((totalSeconds % 86400) / 3600);
+      return `${d} hari ${h} jam`;
+    }
+    if (totalSeconds >= 3600) {
+      const h = Math.floor(totalSeconds / 3600);
+      const m = Math.floor((totalSeconds % 3600) / 60);
+      return `${h} jam ${m} menit`;
+    }
+    if (totalSeconds >= 60) {
+      const m = Math.floor(totalSeconds / 60);
+      const s = totalSeconds % 60;
+      return `${m} menit ${s} detik`;
+    }
+    return `${totalSeconds} detik`;
   };
 
   const handleOtpChange = (index: number, value: string) => {
@@ -191,28 +230,29 @@ export default function VerifyOtpReset() {
 
     setResendLoading(true);
 
-    // Start countdown after clicking resend
-    setTimeLeft(30);
-    setCanResend(false);
-
     try {
-      const response = await api.requestResetPassword({ email });
-
+      const res = await api.requestResetPassword({ email, is_resend: true }) as { next_resend_at?: number };
       toast({
         title: "✅ Kode Reset Terkirim!",
-        description: response.message,
+        description: "Kode OTP baru telah dikirim ke email Anda.",
       });
-      // Timer already set above, no need to reset here
-      setOtp(["", "", "", "", "", ""]); // Clear current OTP
-      setLastVerificationTime(0); // Reset verification time
-    } catch (error) {
-      console.error("Resend reset password error:", error);
+      setOtp(["", "", "", "", "", ""]);
+      setLastVerificationTime(0);
+      if (res?.next_resend_at) {
+        const remaining = Math.max(0, Math.floor(res.next_resend_at - Date.now() / 1000));
+        setTimeLeft(remaining);
+        setCanResend(false);
+      }
+    } catch (error: unknown) {
+      const err = error as Error & { next_resend_at?: number };
+      if (err?.next_resend_at) {
+        const remaining = Math.max(0, Math.floor(err.next_resend_at - Date.now() / 1000));
+        setTimeLeft(remaining);
+        setCanResend(false);
+      }
       toast({
         title: "❌ Gagal Mengirim",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Gagal mengirim ulang kode reset. Silakan coba lagi atau hubungi support.",
+        description: err instanceof Error ? err.message : "Gagal mengirim ulang kode reset.",
         variant: "destructive",
       });
     } finally {

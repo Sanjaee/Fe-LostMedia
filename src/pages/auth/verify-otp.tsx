@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/router";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
@@ -20,24 +20,46 @@ export default function VerifyOtp() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(0); // No countdown initially
-  const [canResend, setCanResend] = useState(true); // Can resend immediately
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [canResend, setCanResend] = useState(true);
   const [isVerifying, setIsVerifying] = useState(false);
   const [lastVerificationTime, setLastVerificationTime] = useState(0);
   const [userEmail, setUserEmail] = useState("");
   const [callbackUrl, setCallbackUrl] = useState<string>("/");
 
-  // Countdown timer
-  useEffect(() => {
-    if (timeLeft > 0) {
-      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-      return () => clearTimeout(timer);
-    } else {
+  const syncCountdownFromBE = useCallback(async () => {
+    if (!userEmail) return;
+    try {
+      const res = await api.getOTPResendStatus(userEmail) as { next_resend_at?: number; can_resend?: boolean };
+      if (res.can_resend) {
+        setTimeLeft(0);
+        setCanResend(true);
+      } else if (res.next_resend_at) {
+        const remaining = Math.max(0, Math.floor(res.next_resend_at - Date.now() / 1000));
+        setTimeLeft(remaining);
+        setCanResend(remaining <= 0);
+      }
+    } catch {
       setCanResend(true);
     }
-  }, [timeLeft]);
+  }, [userEmail]);
 
-  // No initial countdown - user can resend immediately
+  useEffect(() => {
+    if (userEmail) syncCountdownFromBE();
+  }, [userEmail, syncCountdownFromBE]);
+
+  useEffect(() => {
+    if (timeLeft > 0) {
+      const timer = setTimeout(() => {
+        setTimeLeft((prev) => {
+          const next = prev - 1;
+          if (next <= 0) setCanResend(true);
+          return next;
+        });
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [timeLeft]);
 
   // Get email and callbackUrl from query params or session storage
   useEffect(() => {
@@ -117,8 +139,23 @@ export default function VerifyOtp() {
     }
   };
 
-  const formatTime = (seconds: number) => {
-    return `${seconds}s`;
+  const formatTime = (totalSeconds: number) => {
+    if (totalSeconds >= 86400) {
+      const d = Math.floor(totalSeconds / 86400);
+      const h = Math.floor((totalSeconds % 86400) / 3600);
+      return `${d} hari ${h} jam`;
+    }
+    if (totalSeconds >= 3600) {
+      const h = Math.floor(totalSeconds / 3600);
+      const m = Math.floor((totalSeconds % 3600) / 60);
+      return `${h} jam ${m} menit`;
+    }
+    if (totalSeconds >= 60) {
+      const m = Math.floor(totalSeconds / 60);
+      const s = totalSeconds % 60;
+      return `${m} menit ${s} detik`;
+    }
+    return `${totalSeconds} detik`;
   };
 
   const handleOtpChange = (index: number, value: string) => {
@@ -316,30 +353,29 @@ export default function VerifyOtp() {
 
     setResendLoading(true);
 
-    // Start countdown after clicking resend
-    setTimeLeft(30);
-    setCanResend(false);
-
     try {
-      // Try to resend OTP by calling register endpoint again (or create resend endpoint)
-      // For now, we'll use a workaround - user needs to register/login again
+      const res = await api.resendOTP({ email: userEmail }) as { next_resend_at?: number };
       toast({
         title: "✅ OTP Terkirim!",
         description: `Kode OTP baru sedang dikirim ke ${userEmail}. Silakan periksa email Anda.`,
       });
-      
-      // Note: In production, create a dedicated resend OTP endpoint
-      // For now, we'll just show the message
-      setOtp(["", "", "", "", "", ""]); // Clear current OTP
-      setLastVerificationTime(0); // Reset verification time
-    } catch (error) {
-      console.error("Resend OTP error:", error);
+      setOtp(["", "", "", "", "", ""]);
+      setLastVerificationTime(0);
+      if (res?.next_resend_at) {
+        const remaining = Math.max(0, Math.floor(res.next_resend_at - Date.now() / 1000));
+        setTimeLeft(remaining);
+        setCanResend(false);
+      }
+    } catch (error: unknown) {
+      const err = error as Error & { next_resend_at?: number };
+      if (err?.next_resend_at) {
+        const remaining = Math.max(0, Math.floor(err.next_resend_at - Date.now() / 1000));
+        setTimeLeft(remaining);
+        setCanResend(false);
+      }
       toast({
         title: "❌ Gagal Mengirim",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Gagal mengirim ulang OTP. Silakan coba lagi atau hubungi support.",
+        description: err instanceof Error ? err.message : "Gagal mengirim ulang OTP.",
         variant: "destructive",
       });
     } finally {

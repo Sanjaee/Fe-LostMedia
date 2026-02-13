@@ -46,6 +46,7 @@ import { parseTextWithLinks } from "@/utils/textUtils";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import type { Post } from "@/types/post";
+import { Skeleton } from "../ui/skeleton";
 
 interface PostCardProps {
   post: Post;
