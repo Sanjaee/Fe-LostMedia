@@ -25,7 +25,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useApi } from "@/components/contex/ApiProvider";
 import { useToast } from "@/hooks/use-toast";
-import { Settings, User, Shield, Trash2, Loader2 } from "lucide-react";
+import { Settings, User, Shield, Trash2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -98,7 +99,7 @@ export default function SettingsPage() {
   if (status === "loading") {
     return (
       <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
+        <Skeleton className="h-8 w-8 rounded" />
       </div>
     );
   }
@@ -226,7 +227,7 @@ export default function SettingsPage() {
             >
               {deleting ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Skeleton className="mr-2 h-4 w-4 shrink-0" />
                   Menghapus...
                 </>
               ) : (

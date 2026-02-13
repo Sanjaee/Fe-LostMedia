@@ -11,7 +11,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Lock, Eye, EyeOff } from "lucide-react";
+import { Lock, Eye, EyeOff } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 
 export default function VerifyResetPassword() {
@@ -288,7 +289,7 @@ export default function VerifyResetPassword() {
                     }
                   >
                     {(loading || isVerifying) && (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Skeleton className="mr-2 h-4 w-4 shrink-0" />
                     )}
                     {loading || isVerifying
                       ? "Mereset Password..."

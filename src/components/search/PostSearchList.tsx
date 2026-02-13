@@ -7,7 +7,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserNameWithRole } from "@/components/ui/UserNameWithRole";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, ThumbsUp, MessageCircle, Eye } from "lucide-react";
+import { ThumbsUp, MessageCircle, Eye } from "lucide-react";
+import { PostSkeletonList } from "@/components/post/PostSkeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
 import { id } from "date-fns/locale";
 import type { Post } from "@/types/post";
@@ -218,11 +220,7 @@ export const PostSearchList: React.FC<PostSearchListProps> = ({
 
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-      </div>
-    );
+    return <PostSkeletonList count={3} />;
   }
 
   if (!keyword?.trim()) {
@@ -364,7 +362,7 @@ export const PostSearchList: React.FC<PostSearchListProps> = ({
           >
             {loadingMore ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Skeleton className="h-4 w-4 mr-2 shrink-0" />
                 Memuat...
               </>
             ) : (

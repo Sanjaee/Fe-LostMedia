@@ -8,7 +8,9 @@ import { useApi } from "@/components/contex/ApiProvider";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { id } from "date-fns/locale";
-import { Loader2, Reply, MoreHorizontal, Trash2, Edit, MessageCircle } from "lucide-react";
+import { Reply, MoreHorizontal, Trash2, Edit, MessageCircle } from "lucide-react";
+import { CommentSkeletonList } from "./CommentSkeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { Comment } from "@/types/comment";
 import { CommentInput } from "./CommentInput";
 import { LikeButton } from "./LikeButton";
@@ -148,21 +150,20 @@ export const CommentList: React.FC<CommentListProps> = ({
   };
 
   const renderComment = (comment: Comment, level = 0) => {
-    // Check if comment belongs to current user - check both ID and email as fallback
+    // Check if comment belongs to current user - check user_id, user.id, and email as fallback
     const currentUserId = session?.user?.id;
     const currentUserEmail = session?.user?.email;
-    const commentUserId = comment.user_id;
+    const commentUserId = comment.user_id || (comment.user as any)?.id;
     const commentUserEmail = (comment.user as any)?.email;
     
     let isOwnComment = false;
     if (currentUserId && commentUserId) {
       // Primary check: compare user IDs (convert to string for comparison)
       isOwnComment = String(commentUserId) === String(currentUserId);
-      
-      // Fallback: if IDs don't match, check by email (for Google OAuth cases where ID might be different)
-      if (!isOwnComment && currentUserEmail && commentUserEmail) {
-        isOwnComment = String(currentUserEmail).toLowerCase() === String(commentUserEmail).toLowerCase();
-      }
+    }
+    if (!isOwnComment && currentUserEmail && commentUserEmail) {
+      // Fallback: check by email (for Google OAuth cases where ID might be different)
+      isOwnComment = String(currentUserEmail).toLowerCase() === String(commentUserEmail).toLowerCase();
     }
     
     const isEditing = editingId === comment.id;
@@ -279,7 +280,7 @@ export const CommentList: React.FC<CommentListProps> = ({
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-gray-900 dark:text-white whitespace-pre-wrap break-words">
+                <p className="text-sm text-gray-900 dark:text-white whitespace-pre-wrap break-words mt-4">
                   {comment.content}
                 </p>
               )}
@@ -332,11 +333,7 @@ export const CommentList: React.FC<CommentListProps> = ({
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-      </div>
-    );
+    return <CommentSkeletonList count={3} includeReplies />;
   }
 
   if (comments.length === 0) {
@@ -384,7 +381,7 @@ export const CommentList: React.FC<CommentListProps> = ({
             >
               {deleting ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Skeleton className="h-4 w-4 mr-2 shrink-0" />
                   Menghapus...
                 </>
               ) : (

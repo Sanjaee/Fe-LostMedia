@@ -11,8 +11,8 @@ import {
   Meh,
   Frown,
   AlertCircle,
-  Loader2,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { Like } from "@/types/like";
 
 /** Delay before sending unlike to server (reduce hit if user re-likes quickly) */
@@ -171,7 +171,7 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
           className={`h-8 px-2 ${liked ? reactionColor : "text-zinc-600 dark:text-zinc-400"}`}
         >
           {loading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Skeleton className="h-4 w-4 shrink-0" />
           ) : (
             <ReactionIcon className="h-4 w-4" />
           )}
@@ -219,7 +219,7 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
         className={`h-9 px-3 ${liked ? reactionColor : "text-gray-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"}`}
       >
         {loading ? (
-          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          <Skeleton className="h-4 w-4 mr-2 shrink-0" />
         ) : (
           <ReactionIcon className={`h-4 w-4 mr-2 ${liked ? reactionColor : ""}`} />
         )}

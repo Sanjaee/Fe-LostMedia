@@ -7,9 +7,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserNameWithRole } from "@/components/ui/UserNameWithRole";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { X, MoreHorizontal, ThumbsUp, MessageCircle, Share2, ChevronLeft, ChevronRight, Loader2, Play } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { id as idLocale } from "date-fns/locale";
+import { X, MoreHorizontal, ThumbsUp, MessageCircle, Share2, ChevronLeft, ChevronRight, Play } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { format } from "date-fns";
 import { useApi } from "@/components/contex/ApiProvider";
 import type { Post } from "@/types/post";
 import { parseTextWithLinks } from "@/utils/textUtils";
@@ -160,7 +160,7 @@ export default function PhotoModal({ isOpen, onClose, post, imageIndex, onNaviga
         </div>
 
         {/* Right Side: Sidebar (Post Details) */}
-        <div className="w-full md:w-[360px] lg:w-[400px] bg-white dark:bg-zinc-950 flex flex-col h-[50vh] md:h-full border-l border-zinc-800">
+        <div className="w-full md:w-[460px] lg:w-[500px] bg-white dark:bg-zinc-950 flex flex-col h-[50vh] md:h-full border-l border-zinc-800">
           {/* Header */}
           <div className="p-4 flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800">
             <div className="flex items-center gap-3">
@@ -177,7 +177,7 @@ export default function PhotoModal({ isOpen, onClose, post, imageIndex, onNaviga
                   />
                 </Link>
                 <div className="text-xs text-zinc-500 flex items-center gap-1">
-                  {formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: idLocale })}
+                  {format(new Date(post.created_at), "d-M-yyyy HH:mm")}
                 </div>
               </div>
             </div>
@@ -222,8 +222,8 @@ export default function PhotoModal({ isOpen, onClose, post, imageIndex, onNaviga
              <div className="flex items-center justify-between text-zinc-500 text-xs mb-4">
                 {loadingStats ? (
                   <div className="flex items-center gap-2">
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                    <span>Memuat...</span>
+                    <Skeleton className="w-3 h-3 shrink-0" />
+                    <Skeleton className="h-3 w-16" />
                   </div>
                 ) : (
                   <>

@@ -23,7 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, Shield, Users, UserCheck, UserX, Search, X, Ban, ShieldCheck } from "lucide-react";
+import { Shield, Users, UserCheck, UserX, Search, X, Ban, ShieldCheck } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useWebSocketSubscription } from "@/contexts/WebSocketContext";
@@ -544,7 +544,7 @@ export default function AdminPage() {
                             >
                               <SelectTrigger className="w-28 h-8 text-xs">
                                 {updatingRole === user.id && (
-                                  <Loader2 className="h-3.5 w-3.5 animate-spin mr-1 shrink-0" />
+                                  <Skeleton className="h-3.5 w-3.5 mr-1 shrink-0" />
                                 )}
                                 <SelectValue placeholder="Role" />
                               </SelectTrigger>
@@ -722,7 +722,7 @@ export default function AdminPage() {
             >
               {banning ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  <Skeleton className="h-4 w-4 mr-2 shrink-0" />
                   Memproses...
                 </>
               ) : (

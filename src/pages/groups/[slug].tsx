@@ -37,7 +37,6 @@ import {
   Video,
   Smile,
   Trash2,
-  Loader2,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -529,7 +528,7 @@ const GroupPage: React.FC = () => {
             >
               {deletingGroup ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Skeleton className="h-4 w-4 mr-2 shrink-0" />
                   Menghapus...
                 </>
               ) : (

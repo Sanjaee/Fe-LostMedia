@@ -9,7 +9,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserNameWithRole } from "@/components/ui/UserNameWithRole";
-import { Loader2, UserPlus, Check } from "lucide-react";
+import { UserPlus, Check } from "lucide-react";
+import { PeopleSkeletonList } from "./PeopleSkeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { User } from "@/types/user";
 
 interface PeopleSearchListProps {
@@ -251,7 +253,7 @@ export const PeopleSearchList: React.FC<PeopleSearchListProps> = ({
     if (status === "pending") {
       return (
         <Button variant="outline" size="sm" disabled>
-          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          <Skeleton className="h-4 w-4 mr-2 shrink-0" />
           Menunggu
         </Button>
       );
@@ -264,7 +266,7 @@ export const PeopleSearchList: React.FC<PeopleSearchListProps> = ({
         disabled={isProcessing || status === "pending"}
       >
         {isProcessing ? (
-          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          <Skeleton className="h-4 w-4 mr-2 shrink-0" />
         ) : (
           <>
             <UserPlus className="h-4 w-4 mr-2" />
@@ -276,11 +278,7 @@ export const PeopleSearchList: React.FC<PeopleSearchListProps> = ({
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-      </div>
-    );
+    return <PeopleSkeletonList count={5} />;
   }
 
   if (!keyword?.trim()) {
@@ -351,7 +349,7 @@ export const PeopleSearchList: React.FC<PeopleSearchListProps> = ({
           >
             {loadingMore ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Skeleton className="h-4 w-4 mr-2 shrink-0" />
                 Memuat...
               </>
             ) : (

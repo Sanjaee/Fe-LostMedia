@@ -10,7 +10,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { Mail, Loader2, CheckCircle2 } from "lucide-react";
+import { Mail, CheckCircle2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 
 export default function VerifyEmail() {
@@ -189,7 +190,7 @@ export default function VerifyEmail() {
           <CardHeader className="text-center">
             <div className="mx-auto w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mb-4">
               {loading ? (
-                <Loader2 className="w-6 h-6 text-blue-600 dark:text-blue-400 animate-spin" />
+                <Skeleton className="w-6 h-6 rounded-full" />
               ) : (
                 <Mail className="w-6 h-6 text-blue-600 dark:text-blue-400" />
               )}

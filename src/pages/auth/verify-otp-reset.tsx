@@ -11,7 +11,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { Mail, Loader2 } from "lucide-react";
+import { Mail } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 
 export default function VerifyOtpReset() {
@@ -278,7 +279,7 @@ export default function VerifyOtpReset() {
                   </div>
                   <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 text-center flex items-center justify-center gap-2">
                     {isVerifying && (
-                      <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
+                      <Skeleton className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
                     )}
                     <span className="text-center">
                       {isVerifying
@@ -307,7 +308,7 @@ export default function VerifyOtpReset() {
                     }
                   >
                     {(loading || isVerifying) && (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Skeleton className="mr-2 h-4 w-4 shrink-0" />
                     )}
                     {loading || isVerifying
                       ? "Memverifikasi..."

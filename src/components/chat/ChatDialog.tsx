@@ -14,7 +14,9 @@ import { UserNameWithRole } from "@/components/ui/UserNameWithRole";
 import { Input } from "@/components/ui/input";
 import { useApi } from "@/components/contex/ApiProvider";
 import { useWebSocketSubscription } from "@/contexts/WebSocketContext";
-import { Send, Loader2 } from "lucide-react";
+import { Send } from "lucide-react";
+import { MessageSkeletonList } from "./MessageSkeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
 import { id } from "date-fns/locale";
 import type { ChatMessage } from "@/types/chat";
@@ -140,9 +142,7 @@ export function ChatDialog({ open, onClose, user }: ChatDialogProps) {
           className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0"
         >
           {loading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
-            </div>
+            <MessageSkeletonList count={5} />
           ) : messages.length === 0 ? (
             <div className="text-center py-8 text-zinc-500 text-sm">
               Belum ada pesan. Mulai obrolan!
@@ -195,7 +195,7 @@ export function ChatDialog({ open, onClose, user }: ChatDialogProps) {
             disabled={!inputValue.trim() || sending}
           >
             {sending ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
+              <Skeleton className="h-5 w-5 shrink-0" />
             ) : (
               <Send className="h-5 w-5" />
             )}

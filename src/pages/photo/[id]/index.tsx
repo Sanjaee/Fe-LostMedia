@@ -5,7 +5,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import PhotoViewer from "./photo-viewer";
 import { useApi } from "@/components/contex/ApiProvider";
 import type { Post } from "@/types/post";
-import { Loader2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Prevent static generation for this dynamic route
 export const dynamic = 'force-dynamic';
@@ -51,7 +51,7 @@ export default function PhotoPage() {
   if (loading) {
     return (
       <div className="flex h-screen w-full bg-black items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-white" />
+        <Skeleton className="w-8 h-8 rounded bg-white/20" />
       </div>
     );
   }

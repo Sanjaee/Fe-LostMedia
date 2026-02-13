@@ -12,7 +12,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { Mail, Loader2, Lock, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 
 export default function ResetPassword() {
@@ -238,7 +239,7 @@ export default function ResetPassword() {
                     <div className="flex flex-col gap-3">
                       <Button type="submit" className="w-full" disabled={loading}>
                         {loading && (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          <Skeleton className="mr-2 h-4 w-4 shrink-0" />
                         )}
                         {loading ? "Mengirim..." : "Kirim Kode OTP"}
                       </Button>
@@ -307,7 +308,7 @@ export default function ResetPassword() {
                     <div className="flex flex-col gap-3">
                       <Button type="submit" className="w-full" disabled={loading || !newPassword || !confirmPassword}>
                         {loading && (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          <Skeleton className="mr-2 h-4 w-4 shrink-0" />
                         )}
                         {loading ? "Mereset Password..." : "Reset Password"}
                       </Button>

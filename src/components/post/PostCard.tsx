@@ -33,12 +33,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Copy, Check } from "lucide-react";
 import { UserNameWithRole } from "@/components/ui/UserNameWithRole";
 import { LikeButton } from "@/components/post/LikeButton";
 import { parseTextWithLinks } from "@/utils/textUtils";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
 import type { Post } from "@/types/post";
 
 interface PostCardProps {
@@ -81,6 +87,21 @@ export function PostCard({
   const { toast } = useToast();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/post/${post.id}` : `/post/${post.id}`;
+
+  const handleCopyShareLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      toast({ title: "Tersalin", description: "Link post disalin ke clipboard" });
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast({ title: "Gagal", description: "Tidak bisa menyalin link", variant: "destructive" });
+    }
+  };
 
   const handleDeleteClick = () => {
     setDeleteDialogOpen(true);
@@ -376,19 +397,61 @@ export function PostCard({
           >
             <MessageCircle className="w-5 h-5" />
             <span>Komentari</span>
-            {(() => {
-              const commentCount = post.comments_count !== undefined ? post.comments_count : (postCommentCounts[post.id] || 0);
-              return commentCount > 0 ? (
-                <span className="ml-1">({commentCount})</span>
-              ) : null;
-            })()}
           </Button>
-          <Button variant="ghost" className="flex-1 gap-2 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+          <Button
+            variant="ghost"
+            className="flex-1 gap-2 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            onClick={() => setShareDialogOpen(true)}
+          >
             <Share2 className="w-5 h-5" />
             <span>Bagikan</span>
           </Button>
         </div>
       </CardContent>
+
+      {/* Share / Copy link Dialog */}
+      <Dialog
+        open={shareDialogOpen}
+        onOpenChange={(open) => {
+          setShareDialogOpen(open);
+          if (!open) setCopied(false);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Bagikan post</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            Salin link di bawah untuk membagikan post ini.
+          </p>
+          <div className="flex items-center gap-2 rounded-lg border bg-zinc-50 dark:bg-zinc-900 p-3">
+            <input
+              type="text"
+              readOnly
+              value={shareUrl}
+              className="flex-1 min-w-0 bg-transparent text-sm text-zinc-900 dark:text-zinc-100 outline-none"
+            />
+            <Button
+              size="sm"
+              variant={copied ? "secondary" : "default"}
+              onClick={handleCopyShareLink}
+              className="shrink-0"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-4 h-4 mr-1" />
+                  Tersalin
+                </>
+              ) : (
+                <>
+                  <Copy className="w-4 h-4 mr-1" />
+                  Salin
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
@@ -410,7 +473,7 @@ export function PostCard({
             >
               {deleting ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Skeleton className="h-4 w-4 mr-2 shrink-0" />
                   Menghapus...
                 </>
               ) : (

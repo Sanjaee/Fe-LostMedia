@@ -13,7 +13,9 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 // import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Bell, UserPlus, Check, X, Loader2, User as UserIcon, Trash2, MessageCircle, Shield } from "lucide-react";
+import { Bell, UserPlus, Check, X, User as UserIcon, Trash2, MessageCircle, Shield } from "lucide-react";
+import { NotificationSkeletonList } from "./NotificationSkeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/router";
 import type { Notification } from "@/types/notification";
 import { formatDistanceToNow } from "date-fns";
@@ -395,11 +397,7 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
         delete next[notificationId];
         return next;
       });
-      
-      toast({
-        title: "Berhasil",
-        description: "Notifikasi dihapus",
-      });
+
     } catch (error: any) {
       toast({
         title: "Error",
@@ -492,7 +490,7 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
             className="h-8"
           >
             {isProcessing ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Skeleton className="h-4 w-4 shrink-0" />
             ) : (
               <>
                 <Check className="h-4 w-4 mr-1" />
@@ -511,7 +509,7 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
             className="h-8"
           >
             {isProcessing ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Skeleton className="h-4 w-4 shrink-0" />
             ) : (
               <>
                 <X className="h-4 w-4 mr-1" />
@@ -659,9 +657,7 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
         </DialogHeader>
         <div className="h-[500px] overflow-y-auto px-6">
           {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-            </div>
+            <NotificationSkeletonList count={5} />
           ) : notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <Bell className="h-12 w-12 text-gray-400 mb-4" />

@@ -7,8 +7,7 @@ import { UserNameWithRole } from "@/components/ui/UserNameWithRole";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { MoreHorizontal, ThumbsUp, MessageCircle, Share2, Send, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { id as idLocale } from "date-fns/locale";
+import { format } from "date-fns";
 import type { Post } from "@/types/post";
 import { parseTextWithLinks } from "@/utils/textUtils";
 
@@ -92,7 +91,7 @@ export default function PhotoViewer({ post, imageIndex }: PhotoViewerProps) {
       </div>
 
       {/* Right Side: Sidebar (Post Details) */}
-      <div className="w-full md:w-[360px] lg:w-[400px] bg-white dark:bg-zinc-950 flex flex-col h-[50vh] md:h-full border-l border-zinc-800">
+      <div className="w-full md:w-[460px] lg:w-[500px] bg-white dark:bg-zinc-950 flex flex-col h-[50vh] md:h-full border-l border-zinc-800">
         {/* Header */}
         <div className="p-4 flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800">
           <div className="flex items-center gap-3">
@@ -109,7 +108,7 @@ export default function PhotoViewer({ post, imageIndex }: PhotoViewerProps) {
                 />
               </Link>
               <div className="text-xs text-zinc-500 flex items-center gap-1">
-                {formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: idLocale })}
+                {format(new Date(post.created_at), "d-M-yyyy HH:mm")}
               </div>
             </div>
           </div>

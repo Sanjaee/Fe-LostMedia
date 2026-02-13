@@ -24,7 +24,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, MoreHorizontal, Edit, Trash2, Pin, Image, MessageCircle, Share2, Eye } from "lucide-react";
+import { MoreHorizontal, Edit, Trash2, Pin, Image, MessageCircle, Share2, Eye } from "lucide-react";
+import { PostSkeletonList } from "@/components/post/PostSkeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
 import { id } from "date-fns/locale";
 import type { Post } from "@/types/post";
@@ -307,11 +309,7 @@ export const PostList: React.FC<PostListProps> = ({
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-      </div>
-    );
+    return <PostSkeletonList count={3} />;
   }
 
   if (posts.length === 0) {
@@ -659,7 +657,7 @@ export const PostList: React.FC<PostListProps> = ({
             >
               {deletingId ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Skeleton className="h-4 w-4 mr-2 shrink-0" />
                   Menghapus...
                 </>
               ) : (

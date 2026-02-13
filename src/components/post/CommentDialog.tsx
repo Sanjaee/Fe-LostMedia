@@ -12,7 +12,7 @@ import { X } from "lucide-react";
 import { CommentList } from "./CommentList";
 import { CommentInput } from "./CommentInput";
 import { useApi } from "@/components/contex/ApiProvider";
-import { Loader2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { Post } from "@/types/post";
 
 interface CommentDialogProps {
@@ -63,7 +63,7 @@ export const CommentDialog: React.FC<CommentDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col" showCloseButton={false}>
         <DialogHeader className="flex-shrink-0">
           <div className="flex items-center justify-between">
             <DialogTitle>Komentar</DialogTitle>
@@ -78,8 +78,8 @@ export const CommentDialog: React.FC<CommentDialogProps> = ({
           </div>
           {loadingCount ? (
             <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span>Memuat...</span>
+              <Skeleton className="h-4 w-4 shrink-0" />
+              <Skeleton className="h-4 w-16" />
             </div>
           ) : (
             <p className="text-sm text-gray-500 dark:text-gray-400">

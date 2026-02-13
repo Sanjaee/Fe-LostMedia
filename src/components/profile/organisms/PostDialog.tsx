@@ -13,7 +13,8 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useApi } from "@/components/contex/ApiProvider";
-import { Loader2, X, Plus, Upload, Image as ImageIcon, Video } from "lucide-react";
+import { X, Plus, Upload, Image as ImageIcon, Video } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { Post, CreatePostRequest, UpdatePostRequest } from "@/types/post";
 import Image from "next/image";
 
@@ -793,7 +794,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
             <Button type="submit" disabled={loading}>
               {loading ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Skeleton className="h-4 w-4 mr-2 shrink-0" />
                   {isEditMode ? "Updating..." : "Creating..."}
                 </>
               ) : (

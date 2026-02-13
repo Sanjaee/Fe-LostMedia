@@ -6,7 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useApi } from "@/components/contex/ApiProvider";
 import { useToast } from "@/hooks/use-toast";
-import { Send, Loader2, Smile, Image as ImageIcon } from "lucide-react";
+import { Send, Smile, Image as ImageIcon } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "next-auth/react";
 
 interface CommentInputProps {
@@ -101,7 +102,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
             className="h-8 w-8 p-0"
           >
             {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Skeleton className="h-4 w-4 shrink-0" />
             ) : (
               <Send className="h-4 w-4" />
             )}
@@ -155,7 +156,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
             >
               {loading ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Skeleton className="h-4 w-4 mr-2 shrink-0" />
                   Mengirim...
                 </>
               ) : (
