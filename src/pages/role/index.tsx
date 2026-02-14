@@ -17,6 +17,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -84,6 +91,20 @@ const PAYMENT_METHODS = [
 
 const BANKS = ["bca", "bni", "bri", "permata", "mandiri"];
 
+const CARD_MONTHS = Array.from({ length: 12 }, (_, i) => {
+  const mm = String(i + 1).padStart(2, "0");
+  const names = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+  return { value: mm, label: `${mm} - ${names[i]}` };
+});
+
+const CARD_YEARS = (() => {
+  const current = new Date().getFullYear();
+  return Array.from({ length: 16 }, (_, i) => {
+    const y = current + i;
+    return { value: String(y), label: String(y) };
+  });
+})();
+
 export default function RolePage() {
   const router = useRouter();
   const { data: session, status } = useSession();
@@ -101,6 +122,13 @@ export default function RolePage() {
   const [cardExpYear, setCardExpYear] = useState("");
   const [cardCvv, setCardCvv] = useState("");
   const [saveCard, setSaveCard] = useState(false);
+  const [show3DSModal, setShow3DSModal] = useState(false);
+  const [url3DS, setUrl3DS] = useState("");
+
+  const close3DSModal = () => {
+    setShow3DSModal(false);
+    setUrl3DS("");
+  };
 
   const loadRolePrices = useCallback(async () => {
     try {
@@ -192,10 +220,37 @@ export default function RolePage() {
                   card_token_id: response.token_id,
                   save_card: saveCard,
                 });
-                if (payment.redirect_url) {
-                  window.open(payment.redirect_url, "_blank");
+                if (payment.redirect_url && window.MidtransNew3ds) {
+                  window.MidtransNew3ds.authenticate(payment.redirect_url, {
+                    performAuthentication: (url: string) => {
+                      setUrl3DS(url);
+                      setShow3DSModal(true);
+                    },
+                    onSuccess: () => {
+                      close3DSModal();
+                      setLoadingPayment(false);
+                      router.push(`/role/${payment.order_id}`);
+                    },
+                    onFailure: () => {
+                      close3DSModal();
+                      setLoadingPayment(false);
+                      toast({
+                        title: "Verifikasi 3DS Gagal",
+                        description: "Pembayaran ditolak atau dibatalkan.",
+                        variant: "destructive",
+                      });
+                    },
+                    onPending: () => {
+                      close3DSModal();
+                      setLoadingPayment(false);
+                      router.push(`/role/${payment.order_id}`);
+                    },
+                  });
+                } else {
+                  setLoadingPayment(false);
+                  if (payment.redirect_url) window.open(payment.redirect_url, "_blank");
+                  router.push(`/role/${payment.order_id}`);
                 }
-                router.push(`/role/${payment.order_id}`);
               } catch (err: unknown) {
                 const msg = err instanceof Error ? err.message : "Gagal membuat pembayaran";
                 toast({ title: "Error", description: msg, variant: "destructive" });
@@ -355,21 +410,35 @@ export default function RolePage() {
                           />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
-                          <div>
+                          <div className="space-y-2">
                             <Label>Bulan (MM)</Label>
-                            <Input
-                              placeholder="02"
-                              value={cardExpMonth}
-                              onChange={(e) => setCardExpMonth(e.target.value.replace(/\D/g, "").slice(0, 2))}
-                            />
+                            <Select value={cardExpMonth || undefined} onValueChange={setCardExpMonth}>
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Bulan" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {CARD_MONTHS.map((m) => (
+                                  <SelectItem key={m.value} value={m.value}>
+                                    {m.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           </div>
-                          <div>
+                          <div className="space-y-2">
                             <Label>Tahun (YYYY)</Label>
-                            <Input
-                              placeholder="2025"
-                              value={cardExpYear}
-                              onChange={(e) => setCardExpYear(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                            />
+                            <Select value={cardExpYear || undefined} onValueChange={setCardExpYear}>
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Tahun" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {CARD_YEARS.map((y) => (
+                                  <SelectItem key={y.value} value={y.value}>
+                                    {y.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           </div>
                         </div>
                         <div>
@@ -438,6 +507,55 @@ export default function RolePage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Dialog 3D Secure OTP - Verifikasi Issuing Bank */}
+      {show3DSModal && url3DS && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div
+            className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl flex flex-col w-full max-w-[480px] sm:max-w-[520px] overflow-hidden border border-zinc-200 dark:border-zinc-800"
+            style={{ height: "90vh", maxHeight: "640px" }}
+          >
+            <div className="flex items-center justify-between px-5 py-3.5 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">Verifikasi 3D Secure</h2>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">Issuing Bank</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={close3DSModal}
+                className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors"
+                aria-label="Tutup"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-100 dark:border-amber-800/50 shrink-0">
+              <svg className="w-4 h-4 text-amber-600 dark:text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-sm text-amber-800 dark:text-amber-200">
+                Sandbox: masukkan <strong className="font-mono bg-amber-100 dark:bg-amber-900/50 px-1 rounded">112233</strong> di kolom Password pada halaman bank di bawah.
+              </p>
+            </div>
+            <div className="flex-1 min-h-0 relative bg-zinc-50 dark:bg-zinc-950">
+              <iframe
+                title="Issuing Bank - 3D Secure"
+                src={url3DS}
+                className="absolute inset-0 w-full h-full border-0 bg-white dark:bg-zinc-900 rounded-b-2xl"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

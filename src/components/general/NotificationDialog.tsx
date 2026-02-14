@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 // import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Bell, UserPlus, Check, X, User as UserIcon, Trash2, MessageCircle, Shield } from "lucide-react";
+import { Bell, UserPlus, Check, X, User as UserIcon, Trash2, MessageCircle, Shield, Crown } from "lucide-react";
 import { NotificationSkeletonList } from "./NotificationSkeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/router";
@@ -422,6 +422,8 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
         return <Check className="h-5 w-5 text-green-500" />;
       case "role_updated":
         return <Shield className="h-5 w-5 text-amber-500" />;
+      case "role_purchased":
+        return <Crown className="h-5 w-5 text-amber-500" />;
       default:
         return <Bell className="h-5 w-5 text-gray-500" />;
     }
@@ -601,6 +603,27 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
       }
     }
     
+    // Show action button for role_purchased notifications
+    if (notification.type === "role_purchased") {
+      return (
+        <div className="flex gap-2 mt-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push("/role");
+              onOpenChange(false);
+            }}
+            className="h-8"
+          >
+            <Crown className="h-4 w-4 mr-1" />
+            Lihat Role
+          </Button>
+        </div>
+      );
+    }
+
     // Show action button for post_upload_completed notifications
     if (notification.type === "post_upload_completed") {
       // Get post_id from data or target_id
