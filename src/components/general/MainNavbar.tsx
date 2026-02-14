@@ -18,10 +18,8 @@ import { Button } from "@/components/ui/button";
 import { 
   Search, 
   Home, 
-  Flag, 
-  BarChart3, 
-  Video, 
   Users,
+  Crown,
   Grid3x3, 
   MessageCircle, 
   Bell, 
@@ -237,9 +235,7 @@ export default function MainNavbar() {
   const navItems = [
     { icon: Home, label: "Home", path: "/" },
     { icon: Users, label: "Grup", path: "/groups" },
-    { icon: Flag, label: "Pages", path: "/pages" },
-    { icon: Video, label: "Reels", path: "/reels" },
-    { icon: BarChart3, label: "Insights", path: "/insights" },
+    { icon: Crown, label: "Role", path: "/role" },
   ];
 
   return (

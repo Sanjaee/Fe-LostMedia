@@ -5,7 +5,6 @@ import { useRouter } from "next/router";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useApi } from "@/components/contex/ApiProvider";
-import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getRoleBadge } from "@/utils/roleStyles";
@@ -260,22 +259,20 @@ export default function RoleIdPage() {
 
   if (!id || typeof id !== "string") {
     return (
-      <AppLayout>
-        <div className="min-h-screen py-8 px-4">
-          <p className="text-muted-foreground text-center">ID tidak valid</p>
-        </div>
-      </AppLayout>
+      <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 flex items-center justify-center px-4">
+        <p className="text-muted-foreground text-center">ID tidak valid</p>
+      </div>
     );
   }
 
   if (loading) {
     return (
-      <AppLayout>
-        <div className="min-h-screen py-8 px-4 max-w-md mx-auto">
+      <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 py-8 px-4 flex justify-center">
+        <div className="w-full max-w-md">
           <Skeleton className="h-48 w-full rounded-xl mb-4" />
           <Skeleton className="h-64 w-full rounded-xl" />
         </div>
-      </AppLayout>
+      </div>
     );
   }
 
@@ -283,9 +280,8 @@ export default function RoleIdPage() {
   if (isPaymentOrderId && payment) {
     const logo = getPaymentMethodLogo(payment.payment_method, payment.bank_type);
     return (
-      <AppLayout>
-        <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950">
-          <div className="max-w-md mx-auto px-4 pb-8">
+      <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 py-8 px-4">
+        <div className="w-full max-w-md mx-auto min-h-[calc(100vh-4rem)] flex flex-col">
             <div className="py-4 flex items-center gap-4">
               <Button variant="ghost" size="icon" onClick={() => router.push("/role")}>
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -428,43 +424,37 @@ export default function RoleIdPage() {
                 </Button>
               </div>
             )}
-          </div>
         </div>
-      </AppLayout>
+      </div>
     );
   }
 
   if (isPaymentOrderId && error) {
     return (
-      <AppLayout>
-        <div className="min-h-screen py-8 px-4 max-w-md mx-auto text-center">
-          <p className="text-destructive mb-4">{error}</p>
-          <Button asChild variant="outline">
-            <Link href="/role">Kembali ke Role</Link>
-          </Button>
-        </div>
-      </AppLayout>
+      <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 flex flex-col items-center justify-center px-4">
+        <p className="text-destructive mb-4 text-center">{error}</p>
+        <Button asChild variant="outline">
+          <Link href="/role">Kembali ke Role</Link>
+        </Button>
+      </div>
     );
   }
 
   // Role price detail page
   if (!rolePrice) {
     return (
-      <AppLayout>
-        <div className="min-h-screen py-8 px-4 max-w-2xl mx-auto text-center">
-          <p className="text-destructive mb-4">{error || "Role tidak ditemukan"}</p>
-          <Button asChild variant="outline">
-            <Link href="/role">Kembali ke Daftar Role</Link>
-          </Button>
-        </div>
-      </AppLayout>
+      <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 flex flex-col items-center justify-center px-4">
+        <p className="text-destructive mb-4 text-center">{error || "Role tidak ditemukan"}</p>
+        <Button asChild variant="outline">
+          <Link href="/role">Kembali ke Daftar Role</Link>
+        </Button>
+      </div>
     );
   }
 
   return (
-    <AppLayout>
-      <div className="min-h-screen py-8 px-4">
-        <div className="max-w-2xl mx-auto">
+    <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 py-8 px-4">
+      <div className="w-full max-w-md sm:max-w-lg mx-auto">
           <div className="rounded-xl border bg-card p-6 shadow-sm">
             <div className="flex items-center gap-2 mb-4">
               <span className={getRoleBadge(rolePrice.role)} />
@@ -477,7 +467,6 @@ export default function RoleIdPage() {
             </Button>
           </div>
         </div>
-      </div>
-    </AppLayout>
+    </div>
   );
 }
