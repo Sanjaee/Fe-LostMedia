@@ -5,8 +5,10 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useApi } from "@/components/contex/ApiProvider";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, UserCheck, UserX } from "lucide-react";
+import Link from "next/link";
+import { Users, UserCheck, UserX, DollarSign } from "lucide-react";
 import { Shield } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useWebSocketSubscription } from "@/contexts/WebSocketContext";
 import { AllUsersTable } from "@/components/admin/AllUsersTable";
@@ -86,13 +88,21 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 pt-4 pb-8">
       <div className="container mx-auto max-w-7xl px-4">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 mb-2">
-            Admin Dashboard
-          </h1>
-          <p className="text-zinc-600 dark:text-zinc-400">
-            Kelola pengguna dan lihat statistik platform
-          </p>
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 mb-2">
+              Admin Dashboard
+            </h1>
+            <p className="text-zinc-600 dark:text-zinc-400">
+              Kelola pengguna dan lihat statistik platform
+            </p>
+          </div>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/admin/role-prices">
+              <DollarSign className="h-4 w-4 mr-2" />
+              Kelola Role Prices
+            </Link>
+          </Button>
         </div>
 
         {stats && (

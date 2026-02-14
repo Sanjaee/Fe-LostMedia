@@ -267,3 +267,17 @@ body {
   line-height: 30px !important;
   margin-left: 5px !important;
 }
+
+/* Role upgrade card styling */
+.role-card {
+  box-shadow: 0 1px 3px oklch(0 0 0 / 0.1);
+}
+.role-card:hover {
+  box-shadow: 0 4px 12px oklch(0.488 0.243 264.376 / 0.2);
+}
+.dark .role-card {
+  box-shadow: 0 1px 3px oklch(0 0 0 / 0.3);
+}
+.dark .role-card:hover {
+  box-shadow: 0 4px 12px oklch(0.488 0.243 264.376 / 0.25);
+}

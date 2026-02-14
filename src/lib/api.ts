@@ -57,6 +57,8 @@ import type {
   CreateGroupRequest,
   UpdateGroupRequest,
 } from "@/types/group";
+import type { RolePrice } from "@/types/role";
+import type { Payment } from "@/types/payment";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.194.248:5000";
 
@@ -441,6 +443,86 @@ class ApiClient {
   // Online users
   async getOnlineUsers(): Promise<{ users: Array<{ id: string; full_name: string; username?: string; profile_photo?: string; user_type?: string }>; count: number }> {
     return this.request(`/api/v1/users/online`, { method: "GET" });
+  }
+
+  // Role prices (public)
+  async getRolePrices(includeInactive = false): Promise<{ role_prices: RolePrice[] }> {
+    return this.request(
+      `/api/v1/role-prices?include_inactive=${includeInactive}`,
+      { method: "GET" }
+    );
+  }
+
+  async getRolePriceByRole(role: string): Promise<{ role_price: RolePrice }> {
+    return this.request(`/api/v1/role-prices/role/${encodeURIComponent(role)}`, {
+      method: "GET",
+    });
+  }
+
+  async getRolePrice(id: string): Promise<{ role_price: RolePrice }> {
+    return this.request(`/api/v1/role-prices/${id}`, { method: "GET" });
+  }
+
+  // Admin: Role prices CRUD
+  async createRolePrice(data: {
+    role: string;
+    name: string;
+    description?: string;
+    price: number;
+    is_active?: boolean;
+    sort_order?: number;
+  }): Promise<{ role_price: RolePrice }> {
+    return this.request("/api/v1/admin/role-prices", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateRolePrice(
+    id: string,
+    data: {
+      role?: string;
+      name?: string;
+      description?: string;
+      price?: number;
+      is_active?: boolean;
+      sort_order?: number;
+    }
+  ): Promise<{ role_price: RolePrice }> {
+    return this.request(`/api/v1/admin/role-prices/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteRolePrice(id: string): Promise<void> {
+    return this.request(`/api/v1/admin/role-prices/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  // Payment for role upgrade
+  async createPaymentForRole(data: {
+    target_role: string;
+    payment_method: "bank_transfer" | "gopay" | "credit_card" | "qris";
+    bank?: string;
+    card_token_id?: string;
+    save_card?: boolean;
+  }): Promise<{ payment: Payment }> {
+    return this.request("/api/v1/payments/role", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getPaymentByOrderId(orderId: string): Promise<{ payment: Payment }> {
+    return this.request(`/api/v1/payments/order/${orderId}`, { method: "GET" });
+  }
+
+  async checkPaymentStatus(orderId: string): Promise<{ payment: Payment }> {
+    return this.request(`/api/v1/payments/${orderId}/status`, {
+      method: "POST",
+    });
   }
 
   // Notification endpoints
