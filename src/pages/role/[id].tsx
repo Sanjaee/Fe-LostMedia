@@ -43,7 +43,7 @@ export default function RoleIdPage() {
   const router = useRouter();
   const { id } = router.query;
   const { api } = useApi();
-  const { data: session } = useSession();
+  const { data: session, update: updateSession } = useSession();
   const [rolePrice, setRolePrice] = useState<RolePrice | null>(null);
   const [payment, setPayment] = useState<Payment | null>(null);
   const [loading, setLoading] = useState(true);
@@ -54,6 +54,7 @@ export default function RoleIdPage() {
   const [countdown, setCountdown] = useState("");
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const sessionRefreshedForPaymentRef = useRef(false);
 
   const isPaymentOrderId = typeof id === "string" && id.startsWith("PAY_");
 
@@ -208,6 +209,18 @@ export default function RoleIdPage() {
     const i = setInterval(tick, 1000);
     return () => clearInterval(i);
   }, [payment?.expiry_time, payment?.status]);
+
+  // Refresh session once when payment succeeds (single hit, no loop)
+  useEffect(() => {
+    if (
+      payment?.status === "success" &&
+      updateSession &&
+      !sessionRefreshedForPaymentRef.current
+    ) {
+      sessionRefreshedForPaymentRef.current = true;
+      updateSession().catch(() => {});
+    }
+  }, [payment?.status, updateSession]);
 
   const copyToClipboard = async (text: string, type: string) => {
     try {

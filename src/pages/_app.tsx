@@ -5,6 +5,7 @@ import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/toaster";
 import { ApiProvider } from "@/components/contex/ApiProvider";
+import { SessionRefreshListener, RoleUpdateWebSocketListener } from "@/components/auth/SessionRefreshListener";
 import { WebSocketProvider } from "@/contexts/WebSocketContext";
 import { ChatProvider } from "@/contexts/ChatContext";
 import MainNavbar from "@/components/general/MainNavbar";
@@ -69,6 +70,7 @@ function AuthAwareLayout({
   }
   return (
     <WebSocketProvider>
+      <RoleUpdateWebSocketListener />
       <ChatProvider>
         <AppContent Component={Component} pageProps={pageProps} />
         <Toaster />
@@ -90,6 +92,7 @@ function App({
           refetchOnWindowFocus={false}
           refetchWhenOffline={false}
         >
+          <SessionRefreshListener />
           <ApiProvider>
             <AuthAwareLayout Component={Component} pageProps={pageProps} />
           </ApiProvider>

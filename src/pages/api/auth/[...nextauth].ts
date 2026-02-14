@@ -188,11 +188,11 @@ export const authOptions: NextAuthOptions = {
           };
         }
 
-        // Handle session update trigger (when update() is called)
+        // Handle session update trigger (when update() is called) - e.g. after payment success or role update
         if (trigger === "update" && token.accessToken) {
           try {
-            // Fetch updated user data from backend
-            const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
+            // Fetch updated user data from backend (includes user_type/role)
+            const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
             const userResponse = await undiciRequest(`${backendUrl}/api/v1/auth/me`, {
               method: "GET",
               headers: {
@@ -201,23 +201,25 @@ export const authOptions: NextAuthOptions = {
             });
 
             if (userResponse.statusCode >= 200 && userResponse.statusCode < 300) {
-              const userData = (await userResponse.body.json()) as {
+              const body = (await userResponse.body.json()) as {
                 data?: { user?: Record<string, unknown> };
                 user?: Record<string, unknown>;
               };
-              const updatedUser = userData.data?.user || userData.user;
+              const updatedUser = body.data?.user || body.user;
               if (updatedUser) {
                 return {
                   ...token,
                   image: (updatedUser.profile_photo as string) || (updatedUser.profilePic as string) || token.image,
-                  // Update name/username if changed
                   name: (updatedUser.username as string) || (updatedUser.full_name as string) || token.name,
+                  // Refresh role when updated (e.g. after payment success or admin role change)
+                  userType: (updatedUser.user_type as string) || (updatedUser.userType as string) || token.userType || "member",
+                  isVerified: (updatedUser.is_verified as boolean) ?? token.isVerified,
+                  loginType: (updatedUser.login_type as string) || (updatedUser.loginType as string) || token.loginType,
                 };
               }
             }
           } catch {
-            // Failed to fetch updated user data
-            // Continue with existing token if fetch fails
+            // Failed to fetch updated user data - continue with existing token
           }
         }
 
