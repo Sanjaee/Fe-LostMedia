@@ -78,11 +78,11 @@ export const ProfileInfo: React.FC<ProfileInfoProps> = ({
           </div>
         </div>
 
-        {/* Contact Info */}
+        {/* Bio */}
         <InfoItem
           icon={<MessageCircle className="h-5 w-5" />}
-          label="Info kontak"
-          value={profile.user?.email}
+          label="Bio"
+          value={profile.bio}
           onEdit={onEditClick}
           isOwnProfile={isOwnProfile}
         />
@@ -162,14 +162,6 @@ export const ProfileInfo: React.FC<ProfileInfoProps> = ({
             onEdit={onEditClick}
             isOwnProfile={isOwnProfile}
           />
-        )}
-
-        {/* Bio */}
-        {profile.bio && (
-          <div className="py-3 border-b border-gray-200 dark:border-gray-700 last:border-0">
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Bio</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">{profile.bio}</p>
-          </div>
         )}
 
         {/* Intro */}
