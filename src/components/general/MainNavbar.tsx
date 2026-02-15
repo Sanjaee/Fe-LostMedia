@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useSession, signOut } from "next-auth/react";
+import { useTheme } from "next-themes";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import {
@@ -27,7 +28,10 @@ import {
   LogOut,
   User,
   Settings,
-  Shield
+  Shield,
+  Moon,
+  Sun,
+  AlertCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationDialog } from "./NotificationDialog";
@@ -39,6 +43,7 @@ import type { Post } from "@/types/post";
 import type { User as UserType } from "@/types/user";
 import { useWebSocketSubscription } from "@/contexts/WebSocketContext";
 import Link from "next/link";
+import { DarkModeToggle } from "@/components/molecules/DarkModeToggle";
 import {
   Sheet,
   SheetContent,
@@ -55,7 +60,9 @@ import {
 
 export default function MainNavbar() {
   const { data: session, status } = useSession();
+  const { setTheme, resolvedTheme } = useTheme();
   const router = useRouter();
+  const isDark = resolvedTheme === "dark";
   const { api } = useApi();
   const { openChat } = useChat();
   const [searchQuery, setSearchQuery] = useState("");
@@ -236,6 +243,7 @@ export default function MainNavbar() {
     { icon: Home, label: "Home", path: "/" },
     { icon: Users, label: "Grup", path: "/groups" },
     { icon: Crown, label: "Role", path: "/role" },
+    { icon: AlertCircle, label: "Report", path: "/report" },
   ];
 
   return (
@@ -427,6 +435,29 @@ export default function MainNavbar() {
                   <Settings className="mr-2 h-4 w-4" />
                   Settings
                 </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => router.push("/report")}
+                  className="cursor-pointer text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  <AlertCircle className="mr-2 h-4 w-4" />
+                  Report
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setTheme(isDark ? "light" : "dark")}
+                  className="cursor-pointer text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  {isDark ? (
+                    <>
+                      <Sun className="mr-2 h-4 w-4" />
+                      Tema terang
+                    </>
+                  ) : (
+                    <>
+                      <Moon className="mr-2 h-4 w-4" />
+                      Tema gelap
+                    </>
+                  )}
+                </DropdownMenuItem>
                 {/* Admin menu - only show if user is admin */}
                 {(() => {
                   const userType = session.userType || 
@@ -563,6 +594,10 @@ export default function MainNavbar() {
                       </div>
                     </SheetTitle>
                   </SheetHeader>
+                  <div className="flex items-center justify-between px-2 py-2 border-b border-gray-700">
+                    <span className="text-sm text-gray-400">Tema</span>
+                    <DarkModeToggle variant="switch" />
+                  </div>
                   <div className="mt-6 space-y-2 overflow-y-auto pr-1 -mr-1 flex-1 min-h-0">
                     {/* Navigation Items */}
                     {navItems.map((item) => {

@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useWebSocketSubscription } from "@/contexts/WebSocketContext";
 import { AllUsersTable } from "@/components/admin/AllUsersTable";
+import { AllReportsTable } from "@/components/admin/AllReportsTable";
 
 interface UserStats {
   total: number;
@@ -260,6 +261,10 @@ export default function AdminPage() {
           onStatsRefresh={loadStats}
           refreshTrigger={tableRefreshTrigger}
         />
+
+        <div className="mt-6">
+          <AllReportsTable refreshTrigger={tableRefreshTrigger} />
+        </div>
       </div>
     </div>
   );

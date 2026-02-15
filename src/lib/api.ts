@@ -377,6 +377,13 @@ class ApiClient {
     );
   }
 
+  async updateMe(data: { full_name: string }): Promise<void> {
+    return this.request<void>("/api/v1/auth/me", {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  }
+
   // Profile endpoints
   async createProfile(data: CreateProfileRequest): Promise<ProfileResponse> {
     return this.request<ProfileResponse>("/api/v1/profiles", {
@@ -443,6 +450,15 @@ class ApiClient {
   // Online users
   async getOnlineUsers(): Promise<{ users: Array<{ id: string; full_name: string; username?: string; profile_photo?: string; user_type?: string }>; count: number }> {
     return this.request(`/api/v1/users/online`, { method: "GET" });
+  }
+
+  async getUsersWithUpgradedRoles(): Promise<{
+    users: Array<{ id: string; full_name: string; user_type: string; profile_photo?: string }>;
+  }> {
+    return this.request<{ users: Array<{ id: string; full_name: string; user_type: string; profile_photo?: string }> }>(
+      "/api/v1/users/upgraded",
+      { method: "GET" }
+    );
   }
 
   // Role prices (public)
@@ -991,6 +1007,31 @@ class ApiClient {
       method: "PUT",
       body: JSON.stringify({ role }),
     });
+  }
+
+  async createReport(description: string): Promise<{ report: { id: string; user_id: string; description: string; created_at: string } }> {
+    return this.request<{ report: { id: string; user_id: string; description: string; created_at: string } }>(
+      "/api/v1/reports",
+      { method: "POST", body: JSON.stringify({ description }) }
+    );
+  }
+
+  async getReports(limit = 20, offset = 0): Promise<{
+    reports: Array<{
+      id: string;
+      user_id: string;
+      description: string;
+      created_at: string;
+      user?: { id: string; full_name: string; email?: string };
+    }>;
+    total: number;
+    limit: number;
+    offset: number;
+  }> {
+    return this.request(
+      `/api/v1/admin/reports?limit=${limit}&offset=${offset}`,
+      { method: "GET" }
+    );
   }
 
   async updatePost(

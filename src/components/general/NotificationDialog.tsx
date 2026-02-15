@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 // import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Bell, UserPlus, Check, X, User as UserIcon, Trash2, MessageCircle, Shield, Crown } from "lucide-react";
+import { Bell, UserPlus, Check, X, User as UserIcon, Trash2, MessageCircle, Shield, Crown, AlertCircle } from "lucide-react";
 import { NotificationSkeletonList } from "./NotificationSkeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/router";
@@ -424,6 +424,8 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
         return <Shield className="h-5 w-5 text-amber-500" />;
       case "role_purchased":
         return <Crown className="h-5 w-5 text-amber-500" />;
+      case "new_report":
+        return <AlertCircle className="h-5 w-5 text-amber-500" />;
       default:
         return <Bell className="h-5 w-5 text-gray-500" />;
     }
@@ -619,6 +621,27 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
           >
             <Crown className="h-4 w-4 mr-1" />
             Lihat Role
+          </Button>
+        </div>
+      );
+    }
+
+    // Show action button for new_report notifications (owner only)
+    if (notification.type === "new_report") {
+      return (
+        <div className="flex gap-2 mt-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push("/admin");
+              onOpenChange(false);
+            }}
+            className="h-8"
+          >
+            <AlertCircle className="h-4 w-4 mr-1" />
+            Lihat Report
           </Button>
         </div>
       );

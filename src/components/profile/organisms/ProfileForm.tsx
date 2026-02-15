@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +27,9 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
 }) => {
   const { api } = useApi();
   const { toast } = useToast();
+  const { data: session, update: updateSession } = useSession();
   const [loading, setLoading] = useState(false);
+  const [name, setName] = useState("");
   const [formData, setFormData] = useState<CreateProfileRequest | UpdateProfileRequest>({
     bio: "",
     cover_photo: "",
@@ -41,6 +44,12 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
     intro: "",
     is_profile_public: true,
   });
+
+  useEffect(() => {
+    if (session?.user?.name !== undefined) {
+      setName(session.user.name || "");
+    }
+  }, [session?.user?.name, isOpen]);
 
   useEffect(() => {
     if (profile) {
@@ -66,19 +75,22 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
     setLoading(true);
 
     try {
+      const nameTrimmed = name.trim();
+      if (profile && nameTrimmed && nameTrimmed !== (session?.user?.name || "")) {
+        await api.updateMe({ full_name: nameTrimmed });
+        await updateSession();
+      }
       if (profile) {
-        // Update existing profile
         await api.updateProfile(profile.id, formData);
         toast({
-          title: "Success",
-          description: "Profile updated successfully",
+          title: "Berhasil",
+          description: "Profil berhasil diperbarui",
         });
       } else {
-        // Create new profile
         await api.createProfile(formData);
         toast({
-          title: "Success",
-          description: "Profile created successfully",
+          title: "Berhasil",
+          description: "Profil berhasil dibuat",
         });
       }
       onSuccess();
@@ -88,7 +100,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Failed to save profile",
+        description: error.message || "Gagal menyimpan profil",
         variant: "destructive",
       });
     } finally {
@@ -102,6 +114,17 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
 
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Nama - dari session */}
+          <div>
+            <Label htmlFor="name">Nama</Label>
+            <Input
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Nama Anda"
+            />
+          </div>
+
           {/* Bio */}
           <div>
             <Label htmlFor="bio">Bio</Label>

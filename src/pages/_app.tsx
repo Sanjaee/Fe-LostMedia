@@ -85,7 +85,7 @@ function App({
 }: AppProps) {
   return (
     <div className={cn(geistSans.variable, geistMono.variable)}>
-      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+      <ThemeProvider attribute="class" defaultTheme="dark" >
         <SessionProvider
           session={session}
           refetchInterval={0}

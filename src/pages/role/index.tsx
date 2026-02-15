@@ -34,8 +34,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getRoleBadge, getRoleNameClass } from "@/utils/roleStyles";
+import { getRoleBadge, getRoleNameClass, getRoleDisplayName } from "@/utils/roleStyles";
 import type { RolePrice } from "@/types/role";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+const UPGRADED_ROLE_ORDER = ["admin", "mod", "god", "mvp", "vip"] as const;
+
+type UpgradedUser = { id: string; full_name: string; user_type: string; profile_photo?: string };
 
 declare global {
   interface Window {
@@ -124,6 +129,8 @@ export default function RolePage() {
   const [saveCard, setSaveCard] = useState(false);
   const [show3DSModal, setShow3DSModal] = useState(false);
   const [url3DS, setUrl3DS] = useState("");
+  const [upgradedUsers, setUpgradedUsers] = useState<UpgradedUser[]>([]);
+  const [loadingUpgraded, setLoadingUpgraded] = useState(true);
 
   const close3DSModal = () => {
     setShow3DSModal(false);
@@ -148,6 +155,35 @@ export default function RolePage() {
   useEffect(() => {
     loadRolePrices();
   }, [loadRolePrices]);
+
+  const loadUpgradedUsers = useCallback(async () => {
+    try {
+      setLoadingUpgraded(true);
+      const res = await api.getUsersWithUpgradedRoles();
+      const list = res?.users ?? [];
+      setUpgradedUsers(list);
+    } catch {
+      setUpgradedUsers([]);
+    } finally {
+      setLoadingUpgraded(false);
+    }
+  }, [api]);
+
+  useEffect(() => {
+    loadUpgradedUsers();
+  }, [loadUpgradedUsers]);
+
+  const upgradedUsersSorted = React.useMemo(() => {
+    const order = UPGRADED_ROLE_ORDER as unknown as string[];
+    return [...upgradedUsers].sort((a, b) => {
+      const ra = (a.user_type || "").toLowerCase();
+      const rb = (b.user_type || "").toLowerCase();
+      const ia = order.indexOf(ra);
+      const ib = order.indexOf(rb);
+      if (ia !== ib) return ia - ib;
+      return (a.full_name || "").localeCompare(b.full_name || "");
+    });
+  }, [upgradedUsers]);
 
   // Pre-select role from ?select=id query
   useEffect(() => {
@@ -487,6 +523,55 @@ export default function RolePage() {
               {" "}untuk upgrade role.
             </p>
           )}
+
+          {/* Daftar user yang memiliki role upgrade (tanpa member) - pakai roleStyles, tampil kesamping wrap ke bawah */}
+          <Card className="mt-8">
+            <CardHeader>
+              <CardTitle className="text-xl">Top User</CardTitle>
+              <CardDescription>
+                Daftar user yang memiliki role upgrade (tanpa member)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loadingUpgraded ? (
+                <div className="flex flex-wrap gap-2">
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                    <Skeleton key={i} className="h-12 w-48 rounded-lg" />
+                  ))}
+                </div>
+              ) : upgradedUsersSorted.length === 0 ? (
+                <p className="text-muted-foreground text-center py-6">
+                  Belum ada user dengan role upgrade.
+                </p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {upgradedUsersSorted.map((u) => {
+                    const role = (u.user_type || "").toLowerCase();
+                    return (
+                      <Link
+                        key={u.id}
+                        href={`/profile/${u.id}`}
+                        className="flex items-center gap-2 shrink-0 p-2.5 pr-3 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors"
+                      >
+                        <Avatar className="h-8 w-8 shrink-0">
+                          <AvatarImage src={u.profile_photo} alt={u.full_name} />
+                          <AvatarFallback className="bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 text-xs">
+                            {(u.full_name || "U").slice(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className={getRoleBadge(role)} />
+                          <h1 className={` font-bold truncate ${getRoleNameClass(role)}`}>
+                            {u.full_name}
+                          </h1>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
       {/* Konfirmasi */}
