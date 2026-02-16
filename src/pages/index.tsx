@@ -88,8 +88,8 @@ export default function Home() {
         setLoading(true);
       }
       setError(null);
-      // Get feed - newest first for initial load, popular after refresh
-      const response = await api.getFeed(50, 0, sort);
+      // Get feed - request more posts so feed shows all data (sama seperti search)
+      const response = await api.getFeed(100, 0, sort);
       
       // Handle different response structures
       // Backend returns: { success: true, message: "...", data: { posts: [...] } }

@@ -36,6 +36,8 @@ interface FeedClientProps {
 }
 
 const SCROLL_POSITION_KEY = "feed_scroll_position";
+/** Jumlah post per request agar feed menampilkan lebih banyak data (sama seperti search) */
+const FEED_PAGE_SIZE = 100;
 
 // Prevent static generation for this page
 export const dynamic = 'force-dynamic';
@@ -380,7 +382,7 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
   const loadFeed = useCallback(async (sort: "newest" | "popular" = "popular", reset: boolean = true) => {
     try {
       const offset = reset ? 0 : currentOffset;
-      const response = await api.getFeed(50, offset, sort);
+      const response = await api.getFeed(FEED_PAGE_SIZE, offset, sort);
       
       // Handle different response structures
       let feedPosts: Post[] = [];
@@ -418,12 +420,12 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
       if (reset) {
         setPosts(feedPosts);
         setCurrentOffset(feedPosts.length);
-        setHasMore(feedPosts.length >= 50);
+        setHasMore(feedPosts.length >= FEED_PAGE_SIZE);
       } else {
         // Append for infinite scroll
         setPosts(prev => [...prev, ...feedPosts]);
         setCurrentOffset(prev => prev + feedPosts.length);
-        setHasMore(feedPosts.length >= 50);
+        setHasMore(feedPosts.length >= FEED_PAGE_SIZE);
       }
       
       setCurrentSort(sort);
@@ -458,7 +460,7 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
     
     setLoadingMore(true);
     try {
-      const response = await api.getFeed(50, currentOffset, currentSort);
+      const response = await api.getFeed(FEED_PAGE_SIZE, currentOffset, currentSort);
       
       let feedPosts: Post[] = [];
       if (response.data?.posts && Array.isArray(response.data.posts)) {
@@ -495,7 +497,7 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
       if (feedPosts.length > 0) {
         setPosts(prev => [...prev, ...feedPosts]);
         setCurrentOffset(prev => prev + feedPosts.length);
-        setHasMore(feedPosts.length >= 50);
+        setHasMore(feedPosts.length >= FEED_PAGE_SIZE);
       } else {
         setHasMore(false);
       }
@@ -653,7 +655,7 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
         return [...onlyInPrev, ...initialPosts];
       });
       setCurrentOffset(initialPosts.length);
-      setHasMore(initialPosts.length >= 50);
+      setHasMore(initialPosts.length >= FEED_PAGE_SIZE);
       setCurrentSort("popular");
     } else if (session?.user?.id && (!posts || posts.length === 0)) {
       loadFeed("popular", true);
