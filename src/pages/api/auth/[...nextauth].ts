@@ -189,7 +189,8 @@ export const authOptions: NextAuthOptions = {
         }
 
         // Handle session update trigger (when update() is called) - e.g. after avatar upload, name change, or role update
-        const isUpdateTrigger = trigger === "update" || (typeof trigger === "object" && trigger?.trigger === "update");
+        const triggerVal = trigger as string | { trigger?: string } | undefined;
+        const isUpdateTrigger = triggerVal === "update" || (typeof triggerVal === "object" && triggerVal?.trigger === "update");
         if (isUpdateTrigger && token.accessToken) {
           try {
             // Fetch updated user data from backend (includes user_type/role)
