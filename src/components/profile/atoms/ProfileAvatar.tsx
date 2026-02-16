@@ -1,12 +1,16 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Camera, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
+import { useSession } from "next-auth/react";
+import { useApi } from "@/components/contex/ApiProvider";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProfileAvatarProps {
   src?: string;
@@ -17,6 +21,8 @@ interface ProfileAvatarProps {
   onClick?: () => void;
   className?: string;
   enableDialog?: boolean;
+  /** Jika true, tampilkan tombol upload di dialog dan refresh session setelah upload (tanpa login ulang) */
+  enableUpload?: boolean;
 }
 
 const sizeClasses = {
@@ -25,6 +31,8 @@ const sizeClasses = {
   lg: "h-32 w-32",
   xl: "h-40 w-40",
 };
+
+const ACCEPTED_IMAGE = "image/jpeg,image/png,image/webp";
 
 export const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
   src,
@@ -35,8 +43,14 @@ export const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
   onClick,
   className,
   enableDialog = true,
+  enableUpload = false,
 }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { update: updateSession } = useSession();
+  const { api } = useApi();
+  const { toast } = useToast();
 
   const getInitials = (name: string) => {
     return name
@@ -53,6 +67,30 @@ export const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
     }
     if (enableDialog) {
       setIsDialogOpen(true);
+    }
+  };
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !file.type.startsWith("image/")) {
+      toast({ title: "Pilih file gambar (JPEG, PNG, WebP)", variant: "destructive" });
+      return;
+    }
+    setUploading(true);
+    try {
+      await api.uploadAvatar(file);
+      await updateSession({ trigger: "update" });
+      toast({ title: "Foto profil berhasil diubah" });
+      setIsDialogOpen(false);
+    } catch (err: any) {
+      toast({ title: "Gagal mengupload", description: err?.message || "Coba lagi", variant: "destructive" });
+    } finally {
+      setUploading(false);
+      e.target.value = "";
     }
   };
 
@@ -94,9 +132,16 @@ export const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
   return (
     <>
       {avatarContent}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept={ACCEPTED_IMAGE}
+        className="hidden"
+        onChange={handleFileChange}
+      />
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-2xl p-0 bg-transparent border-none shadow-none">
-          <div className="flex items-center justify-center p-6">
+          <div className="flex flex-col items-center justify-center p-6 gap-4">
             {src ? (
               <div className="relative w-full h-[80vh] max-h-[80vh]">
                 <Image
@@ -113,6 +158,18 @@ export const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
                   {getInitials(name)}
                 </AvatarFallback>
               </Avatar>
+            )}
+            {enableUpload && (
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleUploadClick}
+                disabled={uploading}
+                className="gap-2"
+              >
+                <Upload className="h-4 w-4" />
+                {uploading ? "Mengupload..." : "Ubah foto profil"}
+              </Button>
             )}
           </div>
         </DialogContent>

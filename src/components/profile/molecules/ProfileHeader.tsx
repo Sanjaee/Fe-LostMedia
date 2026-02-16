@@ -65,6 +65,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               name={userName}
               size="xl"
               showEditIcon={isOwnProfile}
+              enableUpload={isOwnProfile}
               onClick={onAvatarEditClick}
             />
             <div className="pt-4 md:pt-0 md:pb-4">

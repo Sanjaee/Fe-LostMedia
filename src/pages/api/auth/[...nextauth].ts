@@ -188,8 +188,9 @@ export const authOptions: NextAuthOptions = {
           };
         }
 
-        // Handle session update trigger (when update() is called) - e.g. after payment success or role update
-        if (trigger === "update" && token.accessToken) {
+        // Handle session update trigger (when update() is called) - e.g. after avatar upload, name change, or role update
+        const isUpdateTrigger = trigger === "update" || (typeof trigger === "object" && trigger?.trigger === "update");
+        if (isUpdateTrigger && token.accessToken) {
           try {
             // Fetch updated user data from backend (includes user_type/role)
             const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";

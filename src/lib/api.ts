@@ -384,6 +384,31 @@ class ApiClient {
     });
   }
 
+  /** Upload profile photo (avatar). Image is compressed on backend via Cloudinary. Call updateSession() after to refresh session without re-login. */
+  async uploadAvatar(imageFile: File): Promise<{ user?: { profile_photo?: string }; profile_photo?: string }> {
+    const formData = new FormData();
+    formData.append("image", imageFile);
+
+    const url = `${this.baseURL}/api/v1/auth/me/avatar`;
+    if (!this.accessToken && typeof window !== "undefined") {
+      const storedToken = TokenManager.getAccessToken();
+      if (storedToken) this.accessToken = storedToken;
+    }
+    const config: RequestInit = {
+      method: "POST",
+      headers: {
+        ...(this.accessToken ? { Authorization: `Bearer ${this.accessToken}` } : {}),
+      },
+      body: formData,
+    };
+    const response = await fetch(url, config);
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || err.message || "Upload gagal");
+    }
+    return response.json();
+  }
+
   // Profile endpoints
   async createProfile(data: CreateProfileRequest): Promise<ProfileResponse> {
     return this.request<ProfileResponse>("/api/v1/profiles", {
