@@ -31,7 +31,8 @@ import {
   Shield,
   Moon,
   Sun,
-  AlertCircle
+  AlertCircle,
+  Clapperboard
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationDialog } from "./NotificationDialog";
@@ -242,6 +243,7 @@ export default function MainNavbar() {
   const navItems = [
     { icon: Home, label: "Home", path: "/" },
     { icon: Users, label: "Grup", path: "/groups" },
+    { icon: Clapperboard, label: "Reels", path: "/reels" },
     { icon: Crown, label: "Role", path: "/role" },
     { icon: AlertCircle, label: "Report", path: "/report" },
   ];
@@ -499,8 +501,34 @@ export default function MainNavbar() {
           )}
         </div>
 
-        {/* Mobile: Online + Message + Notifications + Profile */}
+        {/* Mobile: Reels + Grup + Message + Notifications + Profile */}
         <div className="md:hidden flex items-center gap-2 ml-2">
+          {/* Reels - Mobile */}
+          <button
+            onClick={() => router.push("/reels")}
+            className={cn(
+              "flex items-center justify-center w-10 h-10 rounded-full transition-colors",
+              router.pathname === "/reels"
+                ? "bg-gray-600 dark:bg-gray-700"
+                : "bg-gray-700 dark:bg-gray-800 hover:bg-gray-600 dark:hover:bg-gray-700"
+            )}
+            title="Reels"
+          >
+            <Clapperboard className="h-5 w-5 text-gray-300" />
+          </button>
+          {/* Grup - Mobile */}
+          <button
+            onClick={() => router.push("/groups")}
+            className={cn(
+              "flex items-center justify-center w-10 h-10 rounded-full transition-colors",
+              router.pathname === "/groups" || router.pathname.startsWith("/groups/")
+                ? "bg-gray-600 dark:bg-gray-700"
+                : "bg-gray-700 dark:bg-gray-800 hover:bg-gray-600 dark:hover:bg-gray-700"
+            )}
+            title="Grup"
+          >
+            <Users className="h-5 w-5 text-gray-300" />
+          </button>
           {/* Online Users - Mobile */}
           <button
             onClick={() => router.push("/online-users")}

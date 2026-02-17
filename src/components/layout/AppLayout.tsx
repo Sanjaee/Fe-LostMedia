@@ -30,6 +30,10 @@ interface AppLayoutProps {
   onCreatePostClick?: () => void;
   onChatClick?: (user: ChatUser) => void;
   chatUnreadRefreshTrigger?: number; // bump when chat dialog closes to refresh per-contact unread counts
+  /** Sembunyikan sidebar kanan (Disponsori, Kontak) - untuk halaman reels */
+  hideRightSidebar?: boolean;
+  /** Fullscreen tanpa grid - untuk halaman reels agar video tidak tertutup */
+  fullScreen?: boolean;
 }
 
 export const AppLayout: React.FC<AppLayoutProps> = ({
@@ -40,6 +44,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   onCreatePostClick,
   onChatClick,
   chatUnreadRefreshTrigger = 0,
+  hideRightSidebar = false,
+  fullScreen = false,
 }) => {
   const { data: session } = useSession();
   const [contactsModalOpen, setContactsModalOpen] = useState(false);
@@ -48,6 +54,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
     onChatClick?.(user);
     setContactsModalOpen(false);
   };
+
+  if (fullScreen) {
+    return <div className="min-h-screen">{children}</div>;
+  }
 
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 pt-4">
@@ -103,7 +113,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
             {children}
           </div>
 
-          {/* Right Sidebar - Contacts/Sponsored */}
+          {/* Right Sidebar - Contacts/Sponsored (sembunyikan untuk reels) */}
+          {!hideRightSidebar && (
           <div className="hidden lg:block lg:col-span-1 space-y-4">
             <div className="sticky top-20">
               <div className="mb-4">
@@ -145,6 +156,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
               </div>
             </div>
           </div>
+          )}
 
         </div>
       </div>

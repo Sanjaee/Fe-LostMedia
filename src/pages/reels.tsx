@@ -4,16 +4,113 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
-import { Volume2, VolumeX, MessageCircle, Bookmark, Share2, ChevronUp, ChevronDown } from "lucide-react";
+import { Volume2, VolumeX, MessageCircle, Bookmark, Share2, ChevronUp, ChevronDown, Heart, Play, Pause } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useApi } from "@/components/contex/ApiProvider";
-import { CommentDialog } from "@/components/post/CommentDialog";
-import { LikeButton } from "@/components/post/LikeButton";
+import { ReelsCommentSidebar } from "@/components/post/ReelsCommentSidebar";
 import { AppLayout } from "@/components/layout/AppLayout";
 import type { Post } from "@/types/post";
 
 const REELS_PAGE_SIZE = 50;
+
+const DUMMY_REELS: Post[] = [
+  {
+    id: "dummy-1",
+    user_id: "user-1",
+    content: "Beautiful sunset at the beach 🌅 #nature #sunset",
+    video_urls: ["https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"],
+    image_urls: [],
+    likes_count: 1234,
+    comments_count: 56,
+    user_liked: false,
+    is_pinned: false,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    user: {
+      id: "user-1",
+      username: "naturelover",
+      full_name: "Nature Lover",
+      profile_photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=nature",
+    },
+  },
+  {
+    id: "dummy-2",
+    user_id: "user-2",
+    content: "Morning coffee vibes ☕️ #coffee #morning",
+    video_urls: ["https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4"],
+    image_urls: [],
+    likes_count: 892,
+    comments_count: 34,
+    user_liked: true,
+    is_pinned: false,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    user: {
+      id: "user-2",
+      username: "coffeelover",
+      full_name: "Coffee Lover",
+      profile_photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=coffee",
+    },
+  },
+  {
+    id: "dummy-3",
+    user_id: "user-3",
+    content: "City lights at night 🌃 #city #nightlife",
+    video_urls: ["https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4"],
+    image_urls: [],
+    likes_count: 2567,
+    comments_count: 89,
+    user_liked: false,
+    is_pinned: false,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    user: {
+      id: "user-3",
+      username: "cityexplorer",
+      full_name: "City Explorer",
+      profile_photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=city",
+    },
+  },
+  {
+    id: "dummy-4",
+    user_id: "user-4",
+    content: "Mountain hiking adventure 🏔️ #hiking #adventure",
+    video_urls: ["https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4"],
+    image_urls: [],
+    likes_count: 1876,
+    comments_count: 45,
+    user_liked: false,
+    is_pinned: false,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    user: {
+      id: "user-4",
+      username: "hikingfan",
+      full_name: "Hiking Fan",
+      profile_photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=hiking",
+    },
+  },
+  {
+    id: "dummy-5",
+    user_id: "user-5",
+    content: "Cooking time! 🍕 #food #cooking",
+    video_urls: ["https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4"],
+    image_urls: [],
+    likes_count: 3421,
+    comments_count: 112,
+    user_liked: true,
+    is_pinned: false,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    user: {
+      id: "user-5",
+      username: "homechef",
+      full_name: "Home Chef",
+      profile_photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=chef",
+    },  
+  },
+];
 
 export default function ReelsPage() {
   const { data: session, status } = useSession();
@@ -24,10 +121,9 @@ export default function ReelsPage() {
   const [loading, setLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
   const [muted, setMuted] = useState(true);
-  const [commentOpen, setCommentOpen] = useState(false);
-  const [selectedPostForComment, setSelectedPostForComment] = useState<Post | null>(null);
+  const [paused, setPaused] = useState(false);
+  const [commentsPanelOpen, setCommentsPanelOpen] = useState(false);
   const [postCommentCounts, setPostCommentCounts] = useState<Record<string, number>>({});
-  const [postLikeCounts, setPostLikeCounts] = useState<Record<string, number>>({});
   const videoRefs = useRef<Record<number, HTMLVideoElement | null>>({});
 
   // Redirect if not authenticated
@@ -50,10 +146,16 @@ export default function ReelsPage() {
         if (res.data?.posts && Array.isArray(res.data.posts)) list = res.data.posts;
         else if (res.posts && Array.isArray(res.posts)) list = res.posts;
         const videoPosts = list.filter((p) => p.video_urls && p.video_urls.length > 0);
-        if (!cancelled) setPosts(videoPosts);
+        if (!cancelled) {
+          if (videoPosts.length > 0) {
+            setPosts(videoPosts);
+          } else {
+            setPosts(DUMMY_REELS);
+          }
+        }
       } catch (e) {
         console.error("Reels load error:", e);
-        if (!cancelled) setPosts([]);
+        if (!cancelled) setPosts(DUMMY_REELS);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -62,7 +164,7 @@ export default function ReelsPage() {
     return () => { cancelled = true; };
   }, [session?.user?.id, api]);
 
-  // Observe which reel is in view to play/pause and update activeIndex
+  // Observe which reel is in view to update activeIndex (play/pause handled by paused state)
   useEffect(() => {
     const el = containerRef.current;
     if (!el || posts.length === 0) return;
@@ -71,13 +173,7 @@ export default function ReelsPage() {
         for (const entry of entries) {
           if (!entry.isIntersecting) continue;
           const idx = Number((entry.target as HTMLElement).dataset.reelIndex);
-          if (Number.isInteger(idx)) {
-            setActiveIndex(idx);
-            const video = videoRefs.current[idx];
-            if (video) {
-              video.play().catch(() => {});
-            }
-          }
+          if (Number.isInteger(idx)) setActiveIndex(idx);
         }
       },
       { root: el, rootMargin: "0px", threshold: 0.6 }
@@ -87,16 +183,22 @@ export default function ReelsPage() {
     return () => observer.disconnect();
   }, [posts.length]);
 
-  // Pause videos that are not active
+  // Pause videos that are not active; play active video unless manually paused
+  useEffect(() => {
+    setPaused(false); // reset when switching reel
+  }, [activeIndex]);
+
   useEffect(() => {
     Object.entries(videoRefs.current).forEach(([i, video]) => {
       if (!video) return;
       const idx = Number(i);
-      if (idx !== activeIndex) {
+      if (idx === activeIndex && !paused) {
+        video.play().catch(() => {});
+      } else {
         video.pause();
       }
     });
-  }, [activeIndex]);
+  }, [activeIndex, paused]);
 
   const handleScrollTo = useCallback((direction: "up" | "down") => {
     const el = containerRef.current;
@@ -107,9 +209,14 @@ export default function ReelsPage() {
     slide?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [activeIndex, posts.length]);
 
-  const handleCommentClick = (post: Post) => {
-    setSelectedPostForComment(post);
-    setCommentOpen(true);
+  const handleCommentClick = () => {
+    setCommentsPanelOpen((prev) => !prev);
+  };
+
+  const handleVideoClick = (index: number) => {
+    if (index === activeIndex) {
+      setPaused((prev) => !prev);
+    }
   };
 
   const handleCommentCountChange = (postId: string, count: number) => {
@@ -124,15 +231,20 @@ export default function ReelsPage() {
     );
   }
 
+  const activePost = posts[activeIndex] ?? null;
+
   return (
-    <AppLayout showCreatePost={false}>
-      <div className="fixed inset-0 z-0 flex flex-col bg-black">
-        {/* Full viewport scroll container: satu post = satu layar, scroll ganti post */}
-        <div
-          ref={containerRef}
-          className="h-full w-full overflow-y-auto overflow-x-hidden snap-y snap-mandatory scroll-smooth"
-          style={{ height: "100dvh" }}
-        >
+    <AppLayout showCreatePost={false} fullScreen>
+      <div className="fixed inset-0 z-10 flex h-[100dvh] w-full flex-row items-stretch bg-black">
+        {/* Spacer kiri - untuk senter video */}
+        <div className="hidden flex-1 md:block" />
+        {/* Reels container: video di tengah */}
+        <div className="relative flex min-w-0 flex-1 flex-col md:flex-initial md:w-[420px] lg:w-[480px]">
+          <div
+            ref={containerRef}
+            className="scrollbar-hide h-full w-full overflow-y-auto overflow-x-hidden snap-y snap-mandatory scroll-smooth"
+            style={{ height: "100dvh", maxHeight: "100dvh" }}
+          >
           {loading ? (
             <div className="flex h-full w-full items-center justify-center text-zinc-500">
               Memuat reels...
@@ -154,8 +266,11 @@ export default function ReelsPage() {
                   className="relative h-full w-full shrink-0 snap-start snap-always"
                   style={{ minHeight: "100dvh" }}
                 >
-                  {/* Video full layar */}
-                  <div className="absolute inset-0 flex items-center justify-center bg-black">
+                  {/* Video full layar - klik untuk pause/play */}
+                  <div
+                    className="absolute inset-0 flex cursor-pointer items-center justify-center bg-black"
+                    onClick={() => handleVideoClick(index)}
+                  >
                     {videoUrl ? (
                       <video
                         ref={(r) => { videoRefs.current[index] = r; }}
@@ -165,23 +280,40 @@ export default function ReelsPage() {
                         muted={muted}
                         playsInline
                         preload="metadata"
-                        onClick={() => setMuted((m) => !m)}
+                        onClick={(e) => { e.stopPropagation(); handleVideoClick(index); }}
                       />
                     ) : null}
+                    {/* Icon play/pause di tengah saat hover atau saat pause */}
+                    {index === activeIndex && (
+                      <div
+                        className={`absolute inset-0 flex items-center justify-center bg-black/30 transition-opacity ${
+                          paused ? "opacity-100" : "opacity-0 hover:opacity-100"
+                        }`}
+                        onClick={(e) => { e.stopPropagation(); handleVideoClick(index); }}
+                      >
+                        <div className="rounded-full bg-black/50 p-4">
+                          {paused ? (
+                            <Play className="h-12 w-12 fill-white text-white" />
+                          ) : (
+                            <Pause className="h-12 w-12 fill-white text-white" />
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Mute toggle kiri atas */}
+                  {/* Control mute/unmute - kiri atas (seperti contoh) */}
                   <button
                     type="button"
-                    className="absolute left-3 top-4 z-10 rounded-full bg-black/40 p-2 text-white hover:bg-black/60"
-                    onClick={() => setMuted((m) => !m)}
-                    aria-label={muted ? "Unmute" : "Mute"}
+                    className="absolute left-3 top-18 z-20 rounded-full bg-black/40 p-2 text-white hover:bg-black/60"
+                    onClick={(e) => { e.stopPropagation(); setMuted((m) => !m); }}
+                    aria-label={muted ? "Hidupkan suara" : "Matikan suara"}
                   >
                     {muted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
                   </button>
 
                   {/* Caption & user bawah kiri */}
-                  <div className="absolute bottom-20 left-3 right-16 z-10 text-left text-white drop-shadow-lg">
+                  <div className="absolute bottom-10 left-3 right-16 z-10 text-left text-white drop-shadow-lg">
                     <Link
                       href={`/profile/${post.user?.username || post.user_id}`}
                       className="mb-1 flex items-center gap-2 font-semibold"
@@ -209,25 +341,20 @@ export default function ReelsPage() {
                       <span className="text-xs text-white">Ikuti</span>
                     </Link>
 
-                    {/* Like */}
+                    {/* Like - statik */}
                     <div className="flex flex-col items-center">
-                      <LikeButton
-                        targetType="post"
-                        targetID={post.id}
-                        initialLikeCount={postLikeCounts[post.id] ?? post.likes_count ?? 0}
-                        initialUserLike={post.user_liked ? ({} as any) : null}
-                        onLikeChange={(_, count) => setPostLikeCounts((prev) => ({ ...prev, [post.id]: count }))}
-                        compact
-                      />
-                      <span className="text-xs text-white">{postLikeCounts[post.id] ?? post.likes_count ?? 0}</span>
+                      <div className="rounded-full p-2 text-white">
+                        <Heart className="h-8 w-8" />
+                      </div>
+                      <span className="text-xs text-white">{post.likes_count ?? 0}</span>
                     </div>
 
-                    {/* Comment */}
+                    {/* Comment - toggle panel komentar */}
                     <div className="flex flex-col items-center">
                       <button
                         type="button"
                         className="rounded-full p-2 text-white hover:bg-white/10"
-                        onClick={() => handleCommentClick(post)}
+                        onClick={handleCommentClick}
                       >
                         <MessageCircle className="h-8 w-8" />
                       </button>
@@ -248,37 +375,78 @@ export default function ReelsPage() {
               );
             })
           )}
+          </div>
+
+          {/* Tombol scroll atas/bawah - di luar video, sebelah kanan */}
+          {!loading && posts.length > 1 && (
+            <div className="absolute -right-12 top-1/2 z-20 flex flex-col gap-1 -translate-y-1/2 pointer-events-none">
+              <button
+                type="button"
+                className="pointer-events-auto rounded-full bg-black/50 p-1.5 text-white hover:bg-black/70"
+                onClick={() => handleScrollTo("up")}
+                aria-label="Post sebelumnya"
+              >
+                <ChevronUp className="h-6 w-6" />
+              </button>
+              <button
+                type="button"
+                className="pointer-events-auto rounded-full bg-black/50 p-1.5 text-white hover:bg-black/70"
+                onClick={() => handleScrollTo("down")}
+                aria-label="Post berikutnya"
+              >
+                <ChevronDown className="h-6 w-6" />
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Tombol scroll atas/bawah */}
-        {!loading && posts.length > 1 && (
-          <div className="absolute right-1 top-1/2 z-20 flex flex-col gap-1 -translate-y-1/2 pointer-events-none">
-            <button
-              type="button"
-              className="pointer-events-auto rounded-full bg-black/50 p-1.5 text-white hover:bg-black/70"
-              onClick={() => handleScrollTo("up")}
-              aria-label="Post sebelumnya"
-            >
-              <ChevronUp className="h-6 w-6" />
-            </button>
-            <button
-              type="button"
-              className="pointer-events-auto rounded-full bg-black/50 p-1.5 text-white hover:bg-black/70"
-              onClick={() => handleScrollTo("down")}
-              aria-label="Post berikutnya"
-            >
-              <ChevronDown className="h-6 w-6" />
-            </button>
-          </div>
-        )}
+        {/* Spacer kanan - untuk senter video (antara video dan komentar) - desktop only */}
+        <div className="hidden flex-1 md:block" />
+
+        {/* Panel komentar desktop - di kanan, animasi lebar */}
+        <div
+          className={`hidden md:flex md:shrink-0 md:overflow-hidden md:transition-[width] md:duration-300 md:ease-in-out ${
+            commentsPanelOpen && activePost ? "md:w-[420px]" : "md:w-0"
+          }`}
+        >
+          {!loading && activePost && (
+            <ReelsCommentSidebar
+              post={activePost}
+              variant="sidebar"
+              onClose={() => setCommentsPanelOpen(false)}
+              onCommentCountChange={(count) => handleCommentCountChange(activePost.id, count)}
+              refreshTrigger={activeIndex}
+            />
+          )}
+        </div>
       </div>
 
-      <CommentDialog
-        open={commentOpen}
-        onClose={() => { setCommentOpen(false); setSelectedPostForComment(null); }}
-        post={selectedPostForComment}
-        onCommentCountChange={(count) => selectedPostForComment && handleCommentCountChange(selectedPostForComment.id, count)}
-      />
+      {/* Panel komentar mobile - bottom sheet, slide dari bawah */}
+      {!loading && activePost && (
+        <>
+          {/* Backdrop - klik untuk tutup */}
+          <div
+            className={`fixed inset-0 z-40 bg-black/50 md:hidden transition-opacity duration-300 ${
+              commentsPanelOpen ? "opacity-100" : "pointer-events-none opacity-0"
+            }`}
+            onClick={() => setCommentsPanelOpen(false)}
+            aria-hidden="true"
+          />
+          <div
+            className={`fixed bottom-0 left-0 right-0 z-50 flex max-h-[85vh] flex-col md:hidden transition-transform duration-300 ease-out ${
+              commentsPanelOpen ? "translate-y-0" : "translate-y-full"
+            }`}
+          >
+            <ReelsCommentSidebar
+              post={activePost}
+              variant="bottomsheet"
+              onClose={() => setCommentsPanelOpen(false)}
+              onCommentCountChange={(count) => handleCommentCountChange(activePost.id, count)}
+              refreshTrigger={activeIndex}
+            />
+          </div>
+        </>
+      )}
     </AppLayout>
   );
 }
