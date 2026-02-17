@@ -1041,13 +1041,38 @@ class ApiClient {
     );
   }
 
+  async getMyReports(limit = 20, offset = 0): Promise<{
+    reports: Array<{
+      id: string;
+      user_id: string;
+      description: string;
+      admin_reply?: string;
+      admin_replied_at?: string;
+      admin_id?: string;
+      created_at: string;
+      admin?: { id: string; full_name: string; email?: string };
+    }>;
+    total: number;
+    limit: number;
+    offset: number;
+  }> {
+    return this.request(
+      `/api/v1/reports/me?limit=${limit}&offset=${offset}`,
+      { method: "GET" }
+    );
+  }
+
   async getReports(limit = 20, offset = 0): Promise<{
     reports: Array<{
       id: string;
       user_id: string;
       description: string;
+      admin_reply?: string;
+      admin_replied_at?: string;
+      admin_id?: string;
       created_at: string;
-      user?: { id: string; full_name: string; email?: string };
+      user?: { id: string; full_name: string; email?: string; user_type?: string; username?: string; profile_photo?: string };
+      admin?: { id: string; full_name: string; email?: string };
     }>;
     total: number;
     limit: number;
@@ -1056,6 +1081,13 @@ class ApiClient {
     return this.request(
       `/api/v1/admin/reports?limit=${limit}&offset=${offset}`,
       { method: "GET" }
+    );
+  }
+
+  async replyReport(reportId: string, reply: string): Promise<{ report_id: string }> {
+    return this.request<{ report_id: string }>(
+      `/api/v1/admin/reports/${reportId}/reply`,
+      { method: "POST", body: JSON.stringify({ reply }) }
     );
   }
 

@@ -426,6 +426,8 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
         return <Crown className="h-5 w-5 text-amber-500" />;
       case "new_report":
         return <AlertCircle className="h-5 w-5 text-amber-500" />;
+      case "report_reply":
+        return <MessageCircle className="h-5 w-5 text-blue-500" />;
       default:
         return <Bell className="h-5 w-5 text-gray-500" />;
     }
@@ -642,6 +644,27 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
           >
             <AlertCircle className="h-4 w-4 mr-1" />
             Lihat Report
+          </Button>
+        </div>
+      );
+    }
+
+    // Show action button for report_reply (user who reported gets admin's reply)
+    if (notification.type === "report_reply") {
+      return (
+        <div className="flex gap-2 mt-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push("/report");
+              onOpenChange(false);
+            }}
+            className="h-8"
+          >
+            <MessageCircle className="h-4 w-4 mr-1" />
+            Lihat Balasan
           </Button>
         </div>
       );
