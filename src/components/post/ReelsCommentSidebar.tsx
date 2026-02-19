@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
@@ -8,89 +8,13 @@ import { CommentInput } from "./CommentInput";
 import { formatDistanceToNow } from "date-fns";
 import { id } from "date-fns/locale";
 import { Heart, MessageCircle } from "lucide-react";
+import { useApi } from "@/components/contex/ApiProvider";
 import type { Comment } from "@/types/comment";
 import type { Post } from "@/types/post";
 
-const DUMMY_COMMENTS: Comment[] = [
-  {
-    id: "dummy-c1",
-    post_id: "",
-    user_id: "u1",
-    content: "Keren banget! 🔥",
-    created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    updated_at: new Date().toISOString(),
-    user: {
-      id: "u1",
-      full_name: "Budi Santoso",
-      username: "budisantoso",
-      profile_photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=budi",
-    },
-    like_count: 114,
-  },
-  {
-    id: "dummy-c2",
-    post_id: "",
-    user_id: "u2",
-    content: "Mantap videonya! Sukses terus",
-    created_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-    updated_at: new Date().toISOString(),
-    user: {
-      id: "u2",
-      full_name: "Siti Aminah",
-      username: "sitiaminah",
-      profile_photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=siti",
-    },
-    like_count: 89,
-  },
-  {
-    id: "dummy-c3",
-    post_id: "",
-    user_id: "u3",
-    content: "Gila AI serem banget 😱",
-    created_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-    updated_at: new Date().toISOString(),
-    user: {
-      id: "u3",
-      full_name: "Andi Wijaya",
-      username: "andiwijaya",
-      profile_photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=andi",
-    },
-    like_count: 256,
-  },
-  {
-    id: "dummy-c4",
-    post_id: "",
-    user_id: "u4",
-    content: "GEMES BANGET! ❤️",
-    created_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-    updated_at: new Date().toISOString(),
-    user: {
-      id: "u4",
-      full_name: "Dewi Lestari",
-      username: "dewilestari",
-      profile_photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=dewi",
-    },
-    like_count: 432,
-  },
-  {
-    id: "dummy-c5",
-    post_id: "",
-    user_id: "u5",
-    content: "Bentar sayang mama lagi nyawit",
-    created_at: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-    updated_at: new Date().toISOString(),
-    user: {
-      id: "u5",
-      full_name: "Rina Kusuma",
-      username: "rinakusuma",
-      profile_photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=rina",
-    },
-    like_count: 67,
-  },
-];
-
 interface ReelsCommentSidebarProps {
   post: Post | null;
+  isOpen?: boolean;
   variant?: "sidebar" | "bottomsheet";
   onClose?: () => void;
   onCommentCountChange?: (count: number) => void;
@@ -99,15 +23,47 @@ interface ReelsCommentSidebarProps {
 
 export const ReelsCommentSidebar: React.FC<ReelsCommentSidebarProps> = ({
   post,
+  isOpen = false,
   variant = "sidebar",
   onClose,
   onCommentCountChange,
   refreshTrigger = 0,
 }) => {
-  const comments = DUMMY_COMMENTS;
-  const count = comments.length;
+  const { api } = useApi();
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [loading, setLoading] = useState(false);
+  const onCommentCountChangeRef = useRef(onCommentCountChange);
+  onCommentCountChangeRef.current = onCommentCountChange;
+
+  const loadComments = useCallback(async () => {
+    if (!post?.id) return;
+    try {
+      setLoading(true);
+      const response = await api.getCommentsByPostID(post.id, 50, 0);
+      const list = response.comments || response.data?.comments || [];
+      const total = response.total ?? response.data?.total ?? list.length;
+      setComments(list);
+      onCommentCountChangeRef.current?.(total);
+    } catch (e) {
+      console.error("Reels comments load error:", e);
+      setComments([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [post?.id, api]);
+
+  useEffect(() => {
+    if (post?.id && isOpen) loadComments();
+    else if (!post?.id) setComments([]);
+  }, [post?.id, isOpen, loadComments, refreshTrigger]);
+
+  const handleCommentAdded = useCallback(() => {
+    if (post?.id) loadComments();
+  }, [post?.id, loadComments]);
 
   if (!post) return null;
+
+  const count = comments.length;
 
   const isBottomsheet = variant === "bottomsheet";
 
@@ -136,7 +92,12 @@ export const ReelsCommentSidebar: React.FC<ReelsCommentSidebarProps> = ({
 
       {/* Scrollable comment list */}
       <div className="scrollbar-hide flex-1 overflow-y-auto px-4 py-3">
-        {comments.length === 0 ? (
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-violet-500 border-t-transparent" />
+            <p className="text-zinc-400 text-sm mt-3">Memuat komentar...</p>
+          </div>
+        ) : comments.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <MessageCircle className="h-12 w-12 text-zinc-600 mb-3" />
             <p className="text-zinc-400 text-sm">Belum ada komentar</p>
@@ -194,7 +155,7 @@ export const ReelsCommentSidebar: React.FC<ReelsCommentSidebarProps> = ({
         <CommentInput
           postID={post.id}
           placeholder="Tambah komentar..."
-          onCommentAdded={() => onCommentCountChange?.(count + 1)}
+          onCommentAdded={handleCommentAdded}
           compact
         />
       </div>

@@ -412,6 +412,7 @@ export default function ReelsPage() {
           {!loading && activePost && (
             <ReelsCommentSidebar
               post={activePost}
+              isOpen={commentsPanelOpen}
               variant="sidebar"
               onClose={() => setCommentsPanelOpen(false)}
               onCommentCountChange={(count) => handleCommentCountChange(activePost.id, count)}
@@ -439,6 +440,7 @@ export default function ReelsPage() {
           >
             <ReelsCommentSidebar
               post={activePost}
+              isOpen={commentsPanelOpen}
               variant="bottomsheet"
               onClose={() => setCommentsPanelOpen(false)}
               onCommentCountChange={(count) => handleCommentCountChange(activePost.id, count)}
