@@ -125,6 +125,16 @@ export default function ReelsPage() {
   const [commentsPanelOpen, setCommentsPanelOpen] = useState(false);
   const [postCommentCounts, setPostCommentCounts] = useState<Record<string, number>>({});
   const videoRefs = useRef<Record<number, HTMLVideoElement | null>>({});
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  // Hanya satu instance ReelsCommentSidebar (desktop ATAU mobile) agar GET comments tidak dobel
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const update = () => setIsDesktop(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -403,38 +413,39 @@ export default function ReelsPage() {
         {/* Spacer kanan - untuk senter video (antara video dan komentar) - desktop only */}
         <div className="hidden flex-1 md:block" />
 
-        {/* Panel komentar desktop - di kanan, animasi lebar */}
-        <div
-          className={`hidden md:flex md:shrink-0 md:overflow-hidden md:transition-[width] md:duration-300 md:ease-in-out ${
-            commentsPanelOpen && activePost ? "md:w-[420px]" : "md:w-0"
-          }`}
-        >
-          {!loading && activePost && (
-            <ReelsCommentSidebar
-              post={activePost}
-              isOpen={commentsPanelOpen}
-              variant="sidebar"
-              onClose={() => setCommentsPanelOpen(false)}
-              onCommentCountChange={(count) => handleCommentCountChange(activePost.id, count)}
-              refreshTrigger={activeIndex}
-            />
-          )}
-        </div>
+        {/* Panel komentar desktop - di kanan (hanya mount di desktop supaya GET tidak dobel) */}
+        {isDesktop && (
+          <div
+            className={`flex shrink-0 overflow-hidden transition-[width] duration-300 ease-in-out ${
+              commentsPanelOpen && activePost ? "w-[420px]" : "w-0"
+            }`}
+          >
+            {!loading && activePost && (
+              <ReelsCommentSidebar
+                post={activePost}
+                isOpen={commentsPanelOpen}
+                variant="sidebar"
+                onClose={() => setCommentsPanelOpen(false)}
+                onCommentCountChange={(count) => handleCommentCountChange(activePost.id, count)}
+                refreshTrigger={activeIndex}
+              />
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Panel komentar mobile - bottom sheet, slide dari bawah */}
-      {!loading && activePost && (
+      {/* Panel komentar mobile - bottom sheet (hanya mount di mobile supaya GET tidak dobel) */}
+      {!isDesktop && !loading && activePost && (
         <>
-          {/* Backdrop - klik untuk tutup */}
           <div
-            className={`fixed inset-0 z-40 bg-black/50 md:hidden transition-opacity duration-300 ${
+            className={`fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 ${
               commentsPanelOpen ? "opacity-100" : "pointer-events-none opacity-0"
             }`}
             onClick={() => setCommentsPanelOpen(false)}
             aria-hidden="true"
           />
           <div
-            className={`fixed bottom-0 left-0 right-0 z-50 flex max-h-[85vh] flex-col md:hidden transition-transform duration-300 ease-out ${
+            className={`fixed bottom-0 left-0 right-0 z-50 flex max-h-[85vh] flex-col transition-transform duration-300 ease-out ${
               commentsPanelOpen ? "translate-y-0" : "translate-y-full"
             }`}
           >
