@@ -4,11 +4,12 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
-import { Volume2, VolumeX, MessageCircle, Bookmark, Share2, ChevronUp, ChevronDown, Heart, Play, Pause } from "lucide-react";
+import { Volume2, VolumeX, MessageCircle, Bookmark, Share2, ChevronUp, ChevronDown, Play, Pause } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useApi } from "@/components/contex/ApiProvider";
 import { ReelsCommentSidebar } from "@/components/post/ReelsCommentSidebar";
+import { LikeButton } from "@/components/post/LikeButton";
 import { AppLayout } from "@/components/layout/AppLayout";
 import type { Post } from "@/types/post";
 
@@ -124,6 +125,7 @@ export default function ReelsPage() {
   const [paused, setPaused] = useState(false);
   const [commentsPanelOpen, setCommentsPanelOpen] = useState(false);
   const [postCommentCounts, setPostCommentCounts] = useState<Record<string, number>>({});
+  const [postLikeCounts, setPostLikeCounts] = useState<Record<string, number>>({});
   const videoRefs = useRef<Record<number, HTMLVideoElement | null>>({});
   const [isDesktop, setIsDesktop] = useState(false);
 
@@ -351,34 +353,49 @@ export default function ReelsPage() {
                       <span className="text-xs text-white">Ikuti</span>
                     </Link>
 
-                    {/* Like - statik */}
+                    {/* Like - dinamis, ukuran tombol sama seperti comment */}
                     <div className="flex flex-col items-center">
-                      <div className="rounded-full p-2 text-white">
-                        <Heart className="h-8 w-8" />
-                      </div>
-                      <span className="text-xs text-white">{post.likes_count ?? 0}</span>
+                      <LikeButton
+                        targetType="post"
+                        targetID={post.id}
+                        initialLikeCount={postLikeCounts[post.id] ?? post.likes_count ?? 0}
+                        initialUserLike={
+                          post.user_liked
+                            ? { id: "", user_id: post.user_id, target_type: "post", target_id: post.id, reaction: "love", created_at: "" }
+                            : null
+                        }
+                        onLikeChange={(_, count) => setPostLikeCounts((p) => ({ ...p, [post.id]: count }))}
+                        compact
+                        defaultReaction="love"
+                        singleReaction
+                        unlikedClassName="text-white hover:text-white"
+                        compactIconClassName="h-10 w-10 min-w-10 min-h-10"
+                        iconFilledWhenLiked
+                        compactButtonClassName="!h-12 !w-12 !min-h-12 !min-w-12 rounded-full !p-0 hover:bg-white/10"
+                      />
+                      <span className="text-xs text-white">{postLikeCounts[post.id] ?? post.likes_count ?? 0}</span>
                     </div>
 
                     {/* Comment - toggle panel komentar */}
                     <div className="flex flex-col items-center">
                       <button
                         type="button"
-                        className="rounded-full p-2 text-white hover:bg-white/10"
+                        className="flex h-12 w-12 items-center justify-center rounded-full text-white hover:bg-white/10"
                         onClick={handleCommentClick}
                       >
-                        <MessageCircle className="h-8 w-8" />
+                        <MessageCircle className="h-10 w-10 shrink-0" />
                       </button>
                       <span className="text-xs text-white">{postCommentCounts[post.id] ?? post.comments_count ?? 0}</span>
                     </div>
 
                     {/* Bookmark */}
-                    <button type="button" className="rounded-full p-2 text-white hover:bg-white/10" aria-label="Simpan">
-                      <Bookmark className="h-8 w-8" />
+                    <button type="button" className="flex h-12 w-12 items-center justify-center rounded-full text-white hover:bg-white/10" aria-label="Simpan">
+                      <Bookmark className="h-10 w-10 shrink-0" />
                     </button>
 
                     {/* Share */}
-                    <button type="button" className="rounded-full p-2 text-white hover:bg-white/10" aria-label="Bagikan">
-                      <Share2 className="h-8 w-8" />
+                    <button type="button" className="flex h-12 w-12 items-center justify-center rounded-full text-white hover:bg-white/10" aria-label="Bagikan">
+                      <Share2 className="h-10 w-10 shrink-0" />
                     </button>
                   </div>
                 </section>

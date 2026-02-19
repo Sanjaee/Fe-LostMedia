@@ -25,6 +25,18 @@ interface LikeButtonProps {
   initialUserLike?: Like | null;
   onLikeChange?: (liked: boolean, likeCount: number) => void;
   compact?: boolean;
+  /** Reaksi yang dipakai saat klik sekali (mis. "love" untuk reels = heart merah) */
+  defaultReaction?: "like" | "love" | "haha" | "wow" | "sad" | "angry";
+  /** Warna ikon saat belum like (mis. "text-white" untuk overlay gelap) */
+  unlikedClassName?: string;
+  /** Sembunyikan picker reaksi, hanya satu reaksi (defaultReaction) */
+  singleReaction?: boolean;
+  /** Class ukuran ikon saat compact (mis. "h-8 w-8" untuk reels) */
+  compactIconClassName?: string;
+  /** Saat like, ikon (Heart) ditampilkan filled (full bg) */
+  iconFilledWhenLiked?: boolean;
+  /** Class tambahan untuk tombol compact (mis. h-12 w-12 agar sama dengan tombol lain) */
+  compactButtonClassName?: string;
 }
 
 const REACTIONS = [
@@ -43,6 +55,12 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
   initialUserLike = null,
   onLikeChange,
   compact = false,
+  defaultReaction = "like",
+  unlikedClassName,
+  singleReaction = false,
+  compactIconClassName,
+  iconFilledWhenLiked = false,
+  compactButtonClassName,
 }) => {
   const { api } = useApi();
   const { toast } = useToast();
@@ -148,36 +166,45 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
 
   // When liked but no reaction type (e.g. from API user_liked), show default "like" (blue)
   const effectiveReaction = currentReaction || (liked ? "like" : null);
-  const ReactionIcon = effectiveReaction
-    ? REACTIONS.find((r) => r.type === effectiveReaction)?.icon || ThumbsUp
-    : ThumbsUp;
+  // Reels: selalu pakai Heart, bukan ThumbsUp
+  const ReactionIcon =
+    singleReaction && defaultReaction === "love"
+      ? Heart
+      : effectiveReaction
+        ? REACTIONS.find((r) => r.type === effectiveReaction)?.icon || ThumbsUp
+        : ThumbsUp;
 
   const reactionColor = effectiveReaction
     ? REACTIONS.find((r) => r.type === effectiveReaction)?.color || "text-blue-500"
     : "text-gray-600 dark:text-gray-400";
 
+  const unlikedClass = unlikedClassName ?? "text-zinc-600 dark:text-zinc-400";
+
   if (compact) {
     return (
       <div 
         className="relative"
-        onMouseEnter={() => setShowReactions(true)}
-        onMouseLeave={() => setShowReactions(false)}
+        onMouseEnter={() => !singleReaction && setShowReactions(true)}
+        onMouseLeave={() => !singleReaction && setShowReactions(false)}
       >
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => handleLike("like")}
+          onClick={() => handleLike(defaultReaction)}
           disabled={loading}
-          className={`h-8 px-2 ${liked ? reactionColor : "text-zinc-600 dark:text-zinc-400"}`}
+          className={`h-8 px-2 flex items-center justify-center ${liked ? reactionColor : unlikedClass} ${compactButtonClassName ?? ""}`}
         >
           {loading ? (
-            <Skeleton className="h-4 w-4 shrink-0" />
+            <Skeleton className={`shrink-0 ${compactIconClassName || "h-4 w-4"}`} />
           ) : (
-            <ReactionIcon className="h-4 w-4" />
+            <ReactionIcon
+              className={`shrink-0 ${compactIconClassName || "h-4 w-4"} ${liked && iconFilledWhenLiked ? "fill-current" : ""}`}
+              {...(liked && iconFilledWhenLiked ? { fill: "currentColor" } : {})}
+            />
           )}
         </Button>
 
-        {showReactions && (
+        {!singleReaction && showReactions && (
           <div
             className="absolute bottom-full left-0 mb-2 flex gap-1 bg-white dark:bg-zinc-800 rounded-full shadow-lg p-1 border border-zinc-200 dark:border-zinc-700 z-10"
           >
