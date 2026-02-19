@@ -74,6 +74,7 @@ export default function MainNavbar() {
   const searchRequestIdRef = useRef(0);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const [profileSidebarOpen, setProfileSidebarOpen] = useState(false);
   const [messengerOpen, setMessengerOpen] = useState(false);
   const [friends, setFriends] = useState<Friendship[]>([]);
@@ -106,6 +107,36 @@ export default function MainNavbar() {
       })();
     }
   }, [status, notificationOpen, api]);
+
+  const fetchChatUnreadCount = React.useCallback(async () => {
+    try {
+      const res = await api.getChatUnreadCount() as { count?: number; data?: { count?: number } };
+      const n = res?.count ?? res?.data?.count ?? 0;
+      setUnreadMessageCount(typeof n === "number" ? n : 0);
+    } catch {
+      setUnreadMessageCount(0);
+    }
+  }, [api]);
+
+  // Load chat/message unread count (tampil di ikon Message, bukan di Notification)
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    fetchChatUnreadCount();
+  }, [status, fetchChatUnreadCount]);
+
+  useEffect(() => {
+    if (router.pathname === "/message") {
+      const t = setTimeout(fetchChatUnreadCount, 500);
+      return () => clearTimeout(t);
+    }
+  }, [router.pathname, fetchChatUnreadCount]);
+
+  // Refresh message count when user closes chat (e.g. from ContactsList/ChatDialog)
+  useEffect(() => {
+    const onChatClosed = () => void fetchChatUnreadCount();
+    window.addEventListener("chat-closed", onChatClosed);
+    return () => window.removeEventListener("chat-closed", onChatClosed);
+  }, [fetchChatUnreadCount]);
 
   // Load friends for messenger dropdown
   const loadFriends = React.useCallback(async () => {
@@ -321,7 +352,7 @@ export default function MainNavbar() {
             <DropdownMenuTrigger asChild>
               <button
                 className={cn(
-                  "flex items-center justify-center w-10 h-10 rounded-full transition-colors",
+                  "relative flex items-center justify-center w-10 h-10 rounded-full transition-colors",
                   messengerOpen
                     ? "bg-gray-600 dark:bg-gray-700"
                     : "bg-gray-700 dark:bg-gray-800 hover:bg-gray-600 dark:hover:bg-gray-700"
@@ -329,6 +360,11 @@ export default function MainNavbar() {
                 title="Messenger"
               >
                 <MessageCircle className="h-5 w-5 text-gray-300" />
+                {unreadMessageCount > 0 && (
+                  <span className="absolute top-1 right-1 flex items-center justify-center min-w-4 h-4 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full">
+                    {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
+                  </span>
+                )}
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
@@ -542,16 +578,21 @@ export default function MainNavbar() {
           >
             <Users className="h-5 w-5 text-gray-300" />
           </button>
-          {/* Message - Mobile: navigate to /message */}
+          {/* Message - Mobile: count chat unread di sini (bukan di notification) */}
           <button
             onClick={() => router.push("/message")}
             className={cn(
-              "flex items-center justify-center w-10 h-10 rounded-full transition-colors",
+              "relative flex items-center justify-center w-10 h-10 rounded-full transition-colors",
               router.pathname === "/message" ? "bg-gray-600 dark:bg-gray-700" : "bg-gray-700 dark:bg-gray-800 hover:bg-gray-600 dark:hover:bg-gray-700"
             )}
             title="Messenger"
           >
             <MessageCircle className="h-5 w-5 text-gray-300" />
+            {unreadMessageCount > 0 && (
+              <span className="absolute top-1 right-1 flex items-center justify-center min-w-4 h-4 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full">
+                {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
+              </span>
+            )}
           </button>
           {/* Notifications - Mobile */}
           <button

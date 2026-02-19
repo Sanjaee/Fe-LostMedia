@@ -462,7 +462,7 @@ export default function ReelsPage() {
             aria-hidden="true"
           />
           <div
-            className={`fixed bottom-0 left-0 right-0 z-50 flex max-h-[85vh] flex-col transition-transform duration-300 ease-out ${
+            className={`fixed bottom-0 left-0 right-0 z-50 flex max-h-[70vh] flex-col transition-transform duration-300 ease-out ${
               commentsPanelOpen ? "translate-y-0" : "translate-y-full"
             }`}
           >

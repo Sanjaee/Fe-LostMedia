@@ -39,7 +39,7 @@ export const ReelsCommentSidebar: React.FC<ReelsCommentSidebarProps> = ({
     <div
       className={`flex h-full flex-col bg-white dark:bg-zinc-950 ${
         isBottomsheet
-          ? "max-h-[85vh] w-full rounded-t-xl border-t border-zinc-200 dark:border-zinc-800"
+          ? "max-h-[70vh] w-full rounded-t-xl border-t border-zinc-200 dark:border-zinc-800"
           : "max-h-dvh w-full max-w-[380px] border-l border-zinc-200 dark:border-zinc-800 md:max-w-[420px]"
       }`}
     >
