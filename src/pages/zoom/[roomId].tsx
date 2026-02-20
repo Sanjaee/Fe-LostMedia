@@ -9,6 +9,14 @@ import { Room, RemoteParticipant, RoomEvent, Track } from "livekit-client";
 import ChatSidebar from "@/components/zoom/ChatSidebar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import {
   Mic,
@@ -40,6 +48,7 @@ export default function ZoomCallPage() {
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
   const [isSwitchingCamera, setIsSwitchingCamera] = useState(false);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const [enableDeviceDialog, setEnableDeviceDialog] = useState<"mic" | "camera" | null>(null);
 
   const videoElementsRef = useRef<Map<string, HTMLVideoElement>>(new Map());
   const screenShareElementsRef = useRef<Map<string, HTMLVideoElement>>(new Map());
@@ -165,7 +174,13 @@ export default function ZoomCallPage() {
         });
         newRoom.on(RoomEvent.TrackUnsubscribed, (track) => track.detach());
 
-        await newRoom.connect(url, tokenVal);
+        // Connect tanpa publish mic/camera; timeout & retry lebih longgar agar PC connection tidak gagal
+        await newRoom.connect(url, tokenVal, {
+          autoSubscribe: true,
+          maxRetries: 4,
+          peerConnectionTimeout: 30_000,
+          websocketTimeout: 20_000,
+        });
 
         const existing = new Map<string, RemoteParticipant>();
         newRoom.remoteParticipants.forEach((p) => {
@@ -235,27 +250,50 @@ export default function ZoomCallPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: only run on route/auth change
   }, [router.isReady, roomId, session, status, router]);
 
-  const toggleMic = async () => {
+  const doEnableMic = async () => {
     if (!room || room.state !== "connected") return;
     try {
-      await room.localParticipant.setMicrophoneEnabled(!room.localParticipant.isMicrophoneEnabled);
-      setIsMicMuted(!room.localParticipant.isMicrophoneEnabled);
+      await room.localParticipant.setMicrophoneEnabled(true);
+      setIsMicMuted(false);
+      setEnableDeviceDialog(null);
     } catch (e: any) {
       if (e?.name === "NotAllowedError") toast({ title: "Izin mikrofon diperlukan", variant: "default" });
+      setEnableDeviceDialog(null);
     }
   };
 
-  const toggleCamera = async () => {
+  const doEnableCamera = async () => {
     if (!room || room.state !== "connected") return;
     try {
-      await room.localParticipant.setCameraEnabled(!room.localParticipant.isCameraEnabled);
-      setIsCameraOff(!room.localParticipant.isCameraEnabled);
-      if (room.localParticipant.isCameraEnabled && localVideoRef.current) {
-        const pub = room.localParticipant.getTrackPublication(Track.Source.Camera);
-        if (pub?.track) pub.track.attach(localVideoRef.current);
-      } else if (localVideoRef.current) localVideoRef.current.srcObject = null;
+      await room.localParticipant.setCameraEnabled(true);
+      setIsCameraOff(false);
+      setEnableDeviceDialog(null);
+      const pub = room.localParticipant.getTrackPublication(Track.Source.Camera);
+      if (pub?.track && localVideoRef.current) pub.track.attach(localVideoRef.current);
     } catch (e: any) {
       if (e?.name === "NotAllowedError") toast({ title: "Izin kamera diperlukan", variant: "default" });
+      setEnableDeviceDialog(null);
+    }
+  };
+
+  const toggleMic = () => {
+    if (!room || room.state !== "connected") return;
+    if (isMicMuted) {
+      setEnableDeviceDialog("mic");
+    } else {
+      room.localParticipant.setMicrophoneEnabled(false).then(() => setIsMicMuted(true)).catch(() => {});
+    }
+  };
+
+  const toggleCamera = () => {
+    if (!room || room.state !== "connected") return;
+    if (isCameraOff) {
+      setEnableDeviceDialog("camera");
+    } else {
+      room.localParticipant.setCameraEnabled(false).then(() => {
+        setIsCameraOff(true);
+        if (localVideoRef.current) localVideoRef.current.srcObject = null;
+      }).catch(() => {});
     }
   };
 
@@ -550,6 +588,31 @@ export default function ZoomCallPage() {
           )}
         </div>
       </div>
+
+      <Dialog open={!!enableDeviceDialog} onOpenChange={(open) => !open && setEnableDeviceDialog(null)}>
+        <DialogContent className="bg-gray-800 border-gray-700 text-white sm:max-w-md" showCloseButton={true}>
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              {enableDeviceDialog === "mic" && <Mic className="h-5 w-5" />}
+              {enableDeviceDialog === "camera" && <Video className="h-5 w-5" />}
+              {enableDeviceDialog === "mic" ? "Aktifkan mikrofon?" : "Aktifkan kamera?"}
+            </DialogTitle>
+            <DialogDescription className="text-gray-400">
+              {enableDeviceDialog === "mic"
+                ? "Aplikasi akan meminta izin akses mikrofon. Peserta lain dapat mendengar Anda."
+                : "Aplikasi akan meminta izin akses kamera. Peserta lain dapat melihat Anda."}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" className="border-gray-600 text-gray-300" onClick={() => setEnableDeviceDialog(null)}>
+              Batal
+            </Button>
+            <Button onClick={enableDeviceDialog === "mic" ? doEnableMic : doEnableCamera} className="bg-green-600 hover:bg-green-700">
+              {enableDeviceDialog === "mic" ? "Aktifkan Mikrofon" : "Aktifkan Kamera"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
