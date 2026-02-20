@@ -19,7 +19,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Video, Plus, Users, Calendar, Trash2 } from "lucide-react";
+import { Video, Plus, Users, Calendar, Trash2, Loader2 } from "lucide-react";
 
 function extractRooms(res: any): Room[] {
   if (Array.isArray(res)) return res;
@@ -40,6 +40,7 @@ export default function ZoomRoomsPage() {
   const [roomDescription, setRoomDescription] = useState("");
   const [maxParticipants, setMaxParticipants] = useState<number | undefined>();
   const [creating, setCreating] = useState(false);
+  const [deletingRoomId, setDeletingRoomId] = useState<string | null>(null);
 
   const ensureToken = useCallback(() => {
     let token: string | null = null;
@@ -131,6 +132,7 @@ export default function ZoomRoomsPage() {
     if (!confirm("Apakah Anda yakin ingin menghapus room ini?")) return;
     if (!ensureToken()) return;
     try {
+      setDeletingRoomId(roomId);
       await api.deleteRoom(roomId);
       toast({ title: "Sukses", description: "Room berhasil dihapus" });
       fetchRooms();
@@ -140,6 +142,8 @@ export default function ZoomRoomsPage() {
         description: err.message || "Gagal menghapus room",
         variant: "destructive",
       });
+    } finally {
+      setDeletingRoomId(null);
     }
   };
 
@@ -209,7 +213,14 @@ export default function ZoomRoomsPage() {
                   disabled={creating}
                   className="w-full bg-blue-600 hover:bg-blue-700"
                 >
-                  {creating ? "Membuat..." : "Buat Room"}
+                  {creating ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Membuat...
+                    </>
+                  ) : (
+                    "Buat Room"
+                  )}
                 </Button>
               </div>
             </DialogContent>
@@ -255,10 +266,15 @@ export default function ZoomRoomsPage() {
                     <Button
                       variant="ghost"
                       size="icon"
+                      disabled={deletingRoomId === room.id}
                       className="ml-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 shrink-0"
                       onClick={(e) => handleDeleteRoom(room.id, e)}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      {deletingRoomId === room.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
                     </Button>
                   )}
                 </div>
