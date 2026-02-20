@@ -374,9 +374,12 @@ export default function ZoomCallPage() {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="fixed inset-0 flex items-center justify-center bg-gray-900">
-          <div className="text-center">
+          <div className="text-center max-w-xs px-4">
             <div className="h-12 w-12 animate-spin rounded-full border-2 border-blue-600 border-t-transparent mx-auto mb-4" />
-            <p className="text-gray-400">Menghubungkan ke room...</p>
+            <p className="text-gray-400 font-medium">Menghubungkan ke room...</p>
+            <p className="text-gray-500 text-sm mt-2">
+              Anda masuk tanpa mikrofon dan kamera. Nyalakan dari tombol di bawah setelah terhubung.
+            </p>
           </div>
         </div>
       </div>
