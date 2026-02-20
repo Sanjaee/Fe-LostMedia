@@ -188,6 +188,18 @@ export default function ZoomCallPage() {
     }
   }, [room]);
 
+  // Attach local camera track to video element when ref is ready (fixes "Anda" not showing)
+  useEffect(() => {
+    if (!room || room.state !== "connected" || isCameraOff) return;
+    const pub = room.localParticipant.getTrackPublication(Track.Source.Camera);
+    if (!pub?.track) return;
+    const id = requestAnimationFrame(() => {
+      const el = localVideoRef.current;
+      if (el) pub.track!.attach(el);
+    });
+    return () => cancelAnimationFrame(id);
+  }, [room, isCameraOff]);
+
   useEffect(() => {
     if (status === "loading" || !roomId || typeof roomId !== "string") return;
     if (hasJoinedRef.current || isJoiningRef.current) return;
