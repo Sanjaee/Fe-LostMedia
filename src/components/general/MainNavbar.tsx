@@ -32,7 +32,8 @@ import {
   Moon,
   Sun,
   AlertCircle,
-  Clapperboard
+  Clapperboard,
+  Video
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationDialog } from "./NotificationDialog";
@@ -275,6 +276,7 @@ export default function MainNavbar() {
     { icon: Home, label: "Home", path: "/" },
     { icon: Users, label: "Grup", path: "/groups" },
     { icon: Clapperboard, label: "Reels", path: "/reels" },
+    { icon: Video, label: "Zoom", path: "/zoom" },
     { icon: Crown, label: "Role", path: "/role" },
     { icon: AlertCircle, label: "Report", path: "/report" },
   ];

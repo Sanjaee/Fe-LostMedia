@@ -59,6 +59,7 @@ import type {
 } from "@/types/group";
 import type { RolePrice } from "@/types/role";
 import type { Payment } from "@/types/payment";
+import type { Room, CreateRoomRequest, JoinRoomResponse } from "@/types/room";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.194.248:5000";
 
@@ -1423,6 +1424,49 @@ class ApiClient {
       throw new Error(errorData.error || errorData.message || "Failed to upload cover");
     }
     return response.json();
+  }
+
+  // Room (Zoom/LiveKit) endpoints
+  async getRooms(): Promise<{ data?: Room[]; rooms?: Room[] } | Room[]> {
+    const res = await this.request<{ data?: Room[]; rooms?: Room[] } | Room[]>(
+      "/api/v1/rooms",
+      { method: "GET" }
+    );
+    return res;
+  }
+
+  async createRoom(data: CreateRoomRequest): Promise<{ data?: Room; room?: Room } | Room> {
+    return this.request<{ data?: Room; room?: Room } | Room>("/api/v1/rooms", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getRoom(roomId: string): Promise<{ data?: Room; room?: Room } | Room> {
+    return this.request<{ data?: Room; room?: Room } | Room>(
+      `/api/v1/rooms/${roomId}`,
+      { method: "GET" }
+    );
+  }
+
+  async joinRoom(roomId: string): Promise<JoinRoomResponse> {
+    const res = await this.request<{ data?: JoinRoomResponse } & JoinRoomResponse>(
+      `/api/v1/rooms/${roomId}/join`,
+      { method: "POST" }
+    );
+    return (res as { data?: JoinRoomResponse }).data || (res as JoinRoomResponse);
+  }
+
+  async leaveRoom(roomId: string): Promise<void> {
+    return this.request<void>(`/api/v1/rooms/${roomId}/leave`, {
+      method: "POST",
+    });
+  }
+
+  async deleteRoom(roomId: string): Promise<void> {
+    return this.request<void>(`/api/v1/rooms/${roomId}`, {
+      method: "DELETE",
+    });
   }
 }
 
