@@ -5,7 +5,14 @@ import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
 import { api, TokenManager } from "@/lib/api";
 import type { JoinRoomResponse } from "@/types/room";
-import { Room, RemoteParticipant, RoomEvent, Track } from "livekit-client";
+import {
+  Room,
+  RemoteParticipant,
+  RoomEvent,
+  Track,
+  getEmptyAudioStreamTrack,
+  getEmptyVideoStreamTrack,
+} from "livekit-client";
 import ChatSidebar from "@/components/zoom/ChatSidebar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -50,6 +57,8 @@ export default function ZoomCallPage() {
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [enableDeviceDialog, setEnableDeviceDialog] = useState<"mic" | "camera" | null>(null);
   const [loadingDeviceDialogDismissed, setLoadingDeviceDialogDismissed] = useState(false);
+  const [usingDummyMic, setUsingDummyMic] = useState(false);
+  const [usingDummyCamera, setUsingDummyCamera] = useState(false);
 
   const videoElementsRef = useRef<Map<string, HTMLVideoElement>>(new Map());
   const screenShareElementsRef = useRef<Map<string, HTMLVideoElement>>(new Map());
@@ -213,6 +222,26 @@ export default function ZoomCallPage() {
           } catch {
             // Izin ditolak atau error; tetap masuk tanpa mic/kamera
           }
+        } else {
+          // Publish track dummy (audio diam + video hitam) agar koneksi tetap jalan tanpa izin mic/kamera
+          try {
+            await newRoom.localParticipant.publishTrack(getEmptyAudioStreamTrack(), {
+              name: "microphone",
+              source: Track.Source.Microphone,
+            });
+            setUsingDummyMic(true);
+          } catch {
+            // Abaikan jika publish dummy audio gagal
+          }
+          try {
+            await newRoom.localParticipant.publishTrack(getEmptyVideoStreamTrack(), {
+              name: "camera",
+              source: Track.Source.Camera,
+            });
+            setUsingDummyCamera(true);
+          } catch {
+            // Abaikan jika publish dummy video gagal
+          }
         }
       } catch (err: any) {
         const msg = err.message || err.response?.data?.message || "Gagal bergabung";
@@ -229,15 +258,15 @@ export default function ZoomCallPage() {
   );
 
   useEffect(() => {
-    if (room?.state === "connected") {
-      setIsMicMuted(!room.localParticipant.isMicrophoneEnabled);
-      setIsCameraOff(!room.localParticipant.isCameraEnabled);
-    }
-  }, [room]);
+    if (room?.state !== "connected") return;
+    if (usingDummyMic || usingDummyCamera) return;
+    setIsMicMuted(!room.localParticipant.isMicrophoneEnabled);
+    setIsCameraOff(!room.localParticipant.isCameraEnabled);
+  }, [room, usingDummyMic, usingDummyCamera]);
 
   // Attach local camera track to video element when ref is ready (fixes "Anda" not showing)
   useEffect(() => {
-    if (!room || room.state !== "connected" || isCameraOff) return;
+    if (!room || room.state !== "connected" || isCameraOff || usingDummyCamera) return;
     const pub = room.localParticipant.getTrackPublication(Track.Source.Camera);
     if (!pub?.track) return;
     const id = requestAnimationFrame(() => {
@@ -245,7 +274,7 @@ export default function ZoomCallPage() {
       if (el) pub.track!.attach(el);
     });
     return () => cancelAnimationFrame(id);
-  }, [room, isCameraOff]);
+  }, [room, isCameraOff, usingDummyCamera]);
 
   useEffect(() => {
     // Tunggu router siap (penting di mobile/Chrome agar roomId tidak undefined)
@@ -271,6 +300,11 @@ export default function ZoomCallPage() {
   const doEnableMic = async () => {
     if (!room || room.state !== "connected") return;
     try {
+      if (usingDummyMic) {
+        const pub = room.localParticipant.getTrackPublication(Track.Source.Microphone);
+        if (pub?.track) await room.localParticipant.unpublishTrack(pub.track, false);
+        setUsingDummyMic(false);
+      }
       await room.localParticipant.setMicrophoneEnabled(true);
       setIsMicMuted(false);
       setEnableDeviceDialog(null);
@@ -283,6 +317,11 @@ export default function ZoomCallPage() {
   const doEnableCamera = async () => {
     if (!room || room.state !== "connected") return;
     try {
+      if (usingDummyCamera) {
+        const pub = room.localParticipant.getTrackPublication(Track.Source.Camera);
+        if (pub?.track) await room.localParticipant.unpublishTrack(pub.track, false);
+        setUsingDummyCamera(false);
+      }
       await room.localParticipant.setCameraEnabled(true);
       setIsCameraOff(false);
       setEnableDeviceDialog(null);
@@ -384,6 +423,8 @@ export default function ZoomCallPage() {
     setIsMicMuted(false);
     setIsCameraOff(false);
     setIsScreenSharing(false);
+    setUsingDummyMic(false);
+    setUsingDummyCamera(false);
     await new Promise((r) => setTimeout(r, 300));
     router.push("/zoom");
   };
