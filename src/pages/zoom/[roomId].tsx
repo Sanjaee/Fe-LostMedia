@@ -49,6 +49,7 @@ export default function ZoomCallPage() {
   const [isSwitchingCamera, setIsSwitchingCamera] = useState(false);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [enableDeviceDialog, setEnableDeviceDialog] = useState<"mic" | "camera" | null>(null);
+  const [loadingDeviceDialogDismissed, setLoadingDeviceDialogDismissed] = useState(false);
 
   const videoElementsRef = useRef<Map<string, HTMLVideoElement>>(new Map());
   const screenShareElementsRef = useRef<Map<string, HTMLVideoElement>>(new Map());
@@ -58,6 +59,7 @@ export default function ZoomCallPage() {
   const hasJoinedRef = useRef(false);
   const roomRef = useRef<Room | null>(null);
   const roomIdRef = useRef<string | null>(null);
+  const enableMicCameraOnJoinRef = useRef(false);
 
   roomRef.current = room;
   roomIdRef.current = typeof roomId === "string" ? roomId : null;
@@ -196,6 +198,19 @@ export default function ZoomCallPage() {
         // Bergabung tanpa mic & kamera; user bisa nyalakan nanti lewat tombol
         setIsMicMuted(true);
         setIsCameraOff(true);
+        // Jika user pilih "Aktifkan setelah terhubung" di dialog loading, nyalakan mic & kamera sekarang
+        if (enableMicCameraOnJoinRef.current) {
+          enableMicCameraOnJoinRef.current = false;
+          try {
+            await newRoom.localParticipant.enableCameraAndMicrophone();
+            setIsMicMuted(false);
+            setIsCameraOff(false);
+            const pub = newRoom.localParticipant.getTrackPublication(Track.Source.Camera);
+            if (pub?.track && localVideoRef.current) pub.track.attach(localVideoRef.current);
+          } catch {
+            // Izin ditolak atau error; tetap masuk tanpa mic/kamera
+          }
+        }
       } catch (err: any) {
         const msg = err.message || err.response?.data?.message || "Gagal bergabung";
         setError(msg);
@@ -382,6 +397,44 @@ export default function ZoomCallPage() {
             </p>
           </div>
         </div>
+
+        <Dialog
+          open={!loadingDeviceDialogDismissed}
+          onOpenChange={(open) => {
+            if (!open) setLoadingDeviceDialogDismissed(true);
+          }}
+        >
+          <DialogContent className="bg-gray-800 border-gray-700 text-white sm:max-w-md" showCloseButton={true}>
+            <DialogHeader>
+              <DialogTitle className="text-white flex items-center gap-2">
+                <Mic className="h-5 w-5" />
+                <Video className="h-5 w-5" />
+                Aktifkan mic & kamera setelah terhubung?
+              </DialogTitle>
+              <DialogDescription className="text-gray-400">
+                Setelah koneksi berhasil, mikrofon dan kamera akan otomatis diaktifkan. Browser akan meminta izin akses.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                variant="outline"
+                className="border-gray-600 text-gray-300"
+                onClick={() => setLoadingDeviceDialogDismissed(true)}
+              >
+                Tidak, masuk tanpa mic & kamera
+              </Button>
+              <Button
+                className="bg-green-600 hover:bg-green-700"
+                onClick={() => {
+                  enableMicCameraOnJoinRef.current = true;
+                  setLoadingDeviceDialogDismissed(true);
+                }}
+              >
+                Ya, aktifkan setelah terhubung
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
