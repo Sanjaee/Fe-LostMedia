@@ -178,14 +178,9 @@ export default function ZoomCallPage() {
         setRoom(newRoom);
         hasJoinedRef.current = true;
         setLoading(false);
-
-        try {
-          await newRoom.localParticipant.enableCameraAndMicrophone();
-        } catch {
-          // Continue without cam/mic
-        }
-        setIsMicMuted(!newRoom.localParticipant.isMicrophoneEnabled);
-        setIsCameraOff(!newRoom.localParticipant.isCameraEnabled);
+        // Bergabung tanpa mic & kamera; user bisa nyalakan nanti lewat tombol
+        setIsMicMuted(true);
+        setIsCameraOff(true);
       } catch (err: any) {
         const msg = err.message || err.response?.data?.message || "Gagal bergabung";
         setError(msg);
