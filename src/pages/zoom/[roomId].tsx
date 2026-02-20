@@ -300,16 +300,37 @@ export default function ZoomCallPage() {
   const doEnableMic = async () => {
     if (!room || room.state !== "connected") return;
     try {
+      // 1. Minta izin browser secara eksplisit dulu
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      // 2. Unpublish dummy track jika ada
       if (usingDummyMic) {
         const pub = room.localParticipant.getTrackPublication(Track.Source.Microphone);
-        if (pub?.track) await room.localParticipant.unpublishTrack(pub.track, false);
+        if (pub?.track) {
+          await room.localParticipant.unpublishTrack(pub.track, false);
+        }
         setUsingDummyMic(false);
       }
-      await room.localParticipant.setMicrophoneEnabled(true);
+
+      // 3. Publish track asli dari stream yang sudah dapat izin
+      const audioTrack = stream.getAudioTracks()[0];
+      await room.localParticipant.publishTrack(audioTrack, {
+        name: "microphone",
+        source: Track.Source.Microphone,
+      });
+
       setIsMicMuted(false);
       setEnableDeviceDialog(null);
     } catch (e: any) {
-      if (e?.name === "NotAllowedError") toast({ title: "Izin mikrofon diperlukan", variant: "default" });
+      if (e?.name === "NotAllowedError") {
+        toast({
+          title: "Izin mikrofon ditolak",
+          description: "Klik ikon 🔒 di address bar browser, lalu izinkan akses mikrofon.",
+          variant: "destructive",
+        });
+      } else {
+        toast({ title: "Gagal mengaktifkan mikrofon", description: e?.message, variant: "destructive" });
+      }
       setEnableDeviceDialog(null);
     }
   };
@@ -317,18 +338,44 @@ export default function ZoomCallPage() {
   const doEnableCamera = async () => {
     if (!room || room.state !== "connected") return;
     try {
+      // 1. Minta izin browser secara eksplisit dulu
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode, width: { ideal: 1280 }, height: { ideal: 720 } },
+      });
+
+      // 2. Unpublish dummy track jika ada
       if (usingDummyCamera) {
         const pub = room.localParticipant.getTrackPublication(Track.Source.Camera);
-        if (pub?.track) await room.localParticipant.unpublishTrack(pub.track, false);
+        if (pub?.track) {
+          await room.localParticipant.unpublishTrack(pub.track, false);
+        }
         setUsingDummyCamera(false);
       }
-      await room.localParticipant.setCameraEnabled(true);
+
+      // 3. Publish track asli
+      const videoTrack = stream.getVideoTracks()[0];
+      await room.localParticipant.publishTrack(videoTrack, {
+        name: "camera",
+        source: Track.Source.Camera,
+      });
+
+      // 4. Attach ke elemen video lokal
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = stream;
+      }
+
       setIsCameraOff(false);
       setEnableDeviceDialog(null);
-      const pub = room.localParticipant.getTrackPublication(Track.Source.Camera);
-      if (pub?.track && localVideoRef.current) pub.track.attach(localVideoRef.current);
     } catch (e: any) {
-      if (e?.name === "NotAllowedError") toast({ title: "Izin kamera diperlukan", variant: "default" });
+      if (e?.name === "NotAllowedError") {
+        toast({
+          title: "Izin kamera ditolak",
+          description: "Klik ikon 🔒 di address bar browser, lalu izinkan akses kamera.",
+          variant: "destructive",
+        });
+      } else {
+        toast({ title: "Gagal mengaktifkan kamera", description: e?.message, variant: "destructive" });
+      }
       setEnableDeviceDialog(null);
     }
   };
@@ -708,9 +755,15 @@ export default function ZoomCallPage() {
               {enableDeviceDialog === "mic" ? "Aktifkan mikrofon?" : "Aktifkan kamera?"}
             </DialogTitle>
             <DialogDescription className="text-gray-400">
-              {enableDeviceDialog === "mic"
-                ? "Aplikasi akan meminta izin akses mikrofon. Peserta lain dapat mendengar Anda."
-                : "Aplikasi akan meminta izin akses kamera. Peserta lain dapat melihat Anda."}
+              Browser akan memunculkan popup izin akses{" "}
+              {enableDeviceDialog === "mic" ? "mikrofon" : "kamera"}. Klik{" "}
+              <strong className="text-white">&quot;Allow&quot; / &quot;Izinkan&quot;</strong> untuk
+              melanjutkan.
+              <br />
+              <span className="text-yellow-400 text-xs mt-1 block">
+                ⚠️ Jika tidak muncul popup, klik ikon 🔒 di address bar dan ubah izin
+                {enableDeviceDialog === "mic" ? " mikrofon" : " kamera"} ke &quot;Allow&quot;.
+              </span>
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0">
