@@ -157,6 +157,9 @@ export default function ZoomCallPage() {
           attachTrack(track, participant);
           setParticipants((prev) => new Map(prev).set(participant.identity, participant));
         });
+        newRoom.on(RoomEvent.TrackPublished, (_pub, participant) => {
+          setParticipants((prev) => new Map(prev).set(participant.identity, participant));
+        });
         newRoom.on(RoomEvent.LocalTrackPublished, (pub) => {
           if (pub.kind === "video" && pub.track) {
             if (pub.source === Track.Source.ScreenShare && localScreenShareRef.current) {
@@ -549,21 +552,31 @@ export default function ZoomCallPage() {
                   const micPub = p.getTrackPublication(Track.Source.Microphone);
                   const camOff = !camPub?.isSubscribed || !camPub.track;
                   const micMuted = !micPub?.isSubscribed || micPub.isMuted;
+                  const noMediaYet = !camPub?.track && !micPub?.track;
                   return (
                     <Card key={identity} className="relative aspect-video bg-gray-800 overflow-hidden border-0">
-                      <div
-                        ref={(el) => {
-                          if (el) {
-                            const v = videoElementsRef.current.get(identity);
-                            if (v && !el.contains(v)) el.appendChild(v);
-                          }
-                        }}
-                        className="w-full h-full"
-                      />
+                      {noMediaYet ? (
+                        <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-gray-900/80 p-4">
+                          <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-600 border-t-blue-500" />
+                          <p className="text-gray-400 text-xs text-center">
+                            Menunggu <span className="text-white truncate block max-w-full">{identity}</span> terhubung
+                          </p>
+                        </div>
+                      ) : (
+                        <div
+                          ref={(el) => {
+                            if (el) {
+                              const v = videoElementsRef.current.get(identity);
+                              if (v && !el.contains(v)) el.appendChild(v);
+                            }
+                          }}
+                          className="w-full h-full bg-gray-900"
+                        />
+                      )}
                       <div className="absolute bottom-2 left-2 text-xs text-white bg-black/70 px-2 py-1 rounded truncate max-w-[80%]">{identity}</div>
                       <div className="absolute top-2 right-2 flex gap-1">
                         {micMuted && <div className="bg-red-600/90 rounded-full p-1"><MicOff className="h-3 w-3 text-white" /></div>}
-                        {camOff && <div className="bg-red-600/90 rounded-full p-1"><VideoOff className="h-3 w-3 text-white" /></div>}
+                        {camOff && !noMediaYet && <div className="bg-red-600/90 rounded-full p-1"><VideoOff className="h-3 w-3 text-white" /></div>}
                       </div>
                     </Card>
                   );
