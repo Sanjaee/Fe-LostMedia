@@ -47,6 +47,25 @@ export default function ZoomCallPage() {
   const localScreenShareRef = useRef<HTMLVideoElement>(null);
   const isJoiningRef = useRef(false);
   const hasJoinedRef = useRef(false);
+  const roomRef = useRef<Room | null>(null);
+  const roomIdRef = useRef<string | null>(null);
+
+  roomRef.current = room;
+  roomIdRef.current = typeof roomId === "string" ? roomId : null;
+
+  // Keluar dari room saat user meninggalkan halaman (navigasi/close)
+  useEffect(() => {
+    return () => {
+      const r = roomRef.current;
+      const id = roomIdRef.current;
+      if (r?.state === "connected") {
+        r.disconnect(true).catch(() => {});
+      }
+      if (id) api.leaveRoom(id).catch(() => {});
+      hasJoinedRef.current = false;
+      isJoiningRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     const check = () => {
@@ -91,7 +110,7 @@ export default function ZoomCallPage() {
         setError(null);
         if (room) await room.disconnect().catch(() => {});
 
-        let token: string | null = (session?.accessToken as string) || TokenManager.getAccessToken();
+        const token: string | null = (session?.accessToken as string) || TokenManager.getAccessToken();
         if (session?.refreshToken) TokenManager.setTokens(session.accessToken as string, session.refreshToken as string);
         if (!token) throw new Error("Silakan login kembali.");
         api.setAccessToken(token);
