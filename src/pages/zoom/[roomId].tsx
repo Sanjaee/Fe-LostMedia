@@ -220,7 +220,8 @@ export default function ZoomCallPage() {
   }, [room, isCameraOff]);
 
   useEffect(() => {
-    if (status === "loading" || !roomId || typeof roomId !== "string") return;
+    // Tunggu router siap (penting di mobile/Chrome agar roomId tidak undefined)
+    if (!router.isReady || status === "loading" || !roomId || typeof roomId !== "string") return;
     if (hasJoinedRef.current || isJoiningRef.current) return;
     const token = session?.accessToken ?? TokenManager.getAccessToken();
     if (!token) {
@@ -230,11 +231,14 @@ export default function ZoomCallPage() {
     api.setAccessToken(token);
     joinRoom(roomId);
     return () => {
-      if (room?.state === "connected") room.disconnect().catch(() => {});
+      const r = roomRef.current;
+      if (r?.state === "connected") r.disconnect().catch(() => {});
       hasJoinedRef.current = false;
       isJoiningRef.current = false;
     };
-  }, [roomId, session, status, router]);
+    // joinRoom sengaja tidak di-deps agar cleanup tidak disconnect saat room baru ter-set
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: only run on route/auth change
+  }, [router.isReady, roomId, session, status, router]);
 
   const toggleMic = async () => {
     if (!room || room.state !== "connected") return;
@@ -298,8 +302,8 @@ export default function ZoomCallPage() {
         const track = stream.getVideoTracks()[0];
         track.onended = () => {
           setIsScreenSharing(false);
-          room.localParticipant.getTrackPublication(Track.Source.ScreenShare)?.track &&
-            room.localParticipant.unpublishTrack(room.localParticipant.getTrackPublication(Track.Source.ScreenShare)!.track!).catch(() => {});
+          const pub = room.localParticipant.getTrackPublication(Track.Source.ScreenShare);
+          if (pub?.track) room.localParticipant.unpublishTrack(pub.track).catch(() => {});
         };
         if (localScreenShareRef.current) localScreenShareRef.current.srcObject = stream;
         await room.localParticipant.publishTrack(track, { name: "screen-share", source: Track.Source.ScreenShare });
