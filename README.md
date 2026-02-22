@@ -33,6 +33,25 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
+## Deploy di VPS (Docker)
+
+Tidak perlu install Node/npm di server. Cukup Docker.
+
+```bash
+# Clone dari GitHub (atau git pull jika sudah ada)
+git clone https://github.com/.../fe-lost.git
+cd fe-lost
+
+# Opsional: atur .env (API URL, NextAuth)
+cp .env.prod.example .env
+nano .env
+
+# Build dan jalankan (npm jalan di dalam container)
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+Frontend jalan di port **3000**. Nginx di server bisa diarahkan ke `localhost:3000` (lihat `be/nginx.conf`).
+
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.

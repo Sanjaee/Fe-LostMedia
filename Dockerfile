@@ -3,8 +3,9 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Tanpa npm di host: install hanya di dalam container
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN npm install --legacy-peer-deps
 
 COPY . .
 ARG NEXT_PUBLIC_API_URL
