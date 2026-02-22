@@ -1,0 +1,27 @@
+# Frontend (Next.js) — untuk dijalankan di VPS, nginx proxy ke container ini
+# Domain: zacloth.com (atau lostmedia.zacloth.com) → nginx → fe:3000
+#
+# Di .env fe set:
+#   NEXT_PUBLIC_API_URL=https://lostmedia.zacloth.com
+#   NEXTAUTH_URL=https://zacloth.com
+#
+# Cara jalan: docker compose -f docker-compose.prod.yml up -d --build
+
+services:
+  fe:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://lostmedia.zacloth.com}
+        NEXTAUTH_URL: ${NEXTAUTH_URL:-https://zacloth.com}
+    container_name: lost_fe
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-https://zacloth.com}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+    restart: unless-stopped

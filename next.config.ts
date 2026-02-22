@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  output: "standalone",
   reactCompiler: true,
   reactStrictMode: true,
   images: {
@@ -9,12 +9,12 @@ const nextConfig: NextConfig = {
       "res.cloudinary.com",
       "i.pinimg.com",
       "via.placeholder.com",
-      "axiomtrading.sfo3.cdn.digitaloceanspaces.com",
       "localhost",
-      "localhost:5000",
+      "lostmedia.zacloth.com",
+      "zacloth.com",
       "avatars.githubusercontent.com",
-      "lh3.googleusercontent.com", // Google profile pictures
-      "googleusercontent.com", // Other Google image domains
+      "lh3.googleusercontent.com",
+      "googleusercontent.com",
     ],
   },
 };
