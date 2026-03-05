@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useApi } from "@/components/contex/ApiProvider";
-import { X, Plus, Upload, Image as ImageIcon, Video } from "lucide-react";
+import { X, Image as ImageIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Post, CreatePostRequest, UpdatePostRequest } from "@/types/post";
 import Image from "next/image";
@@ -37,8 +37,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
 }) => {
   const { toast } = useToast();
   const { api } = useApi();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const videoInputRef = useRef<HTMLInputElement>(null);
+  const mediaInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -111,11 +110,21 @@ export const PostDialog: React.FC<PostDialogProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const hasImages = imageFiles.length > 0;
+    const hasVideos = videoFiles.length > 0;
+    const hasMedia = hasImages || hasVideos;
+    if (!hasMedia && !(formData.content?.trim())) {
+      toast({
+        title: "Isi konten atau media",
+        description: "Tambahkan teks atau gambar/video.",
+        variant: "destructive",
+      });
+      return;
+    }
     setLoading(true);
 
     try {
       if (isEditMode && post) {
-        // Edit mode: formData.image_urls sudah gabungan image+video dari post, pisah untuk API
         const manualUrls = formData.image_urls?.filter(url => url?.trim() && !url.startsWith("blob:")) || [];
         const finalImageUrls = manualUrls.filter(url => !isVideoUrl(url));
         const finalVideoUrls = manualUrls.filter(url => isVideoUrl(url));
@@ -130,9 +139,19 @@ export const PostDialog: React.FC<PostDialogProps> = ({
         toast({ title: "Success", description: "Post updated successfully" });
         onSuccess();
       } else {
-        // For create mode, use async upload endpoints if there are media files
-        if (videoFiles.length > 0) {
-          // Use async video upload endpoint — post will appear via WebSocket when upload finishes
+        if (hasImages && hasVideos) {
+          await api.createPostWithMedia(
+            formData.content?.trim(),
+            imageFiles,
+            videoFiles,
+            formData.group_id
+          );
+          toast({
+            title: "Diproses",
+            description: "Post dibuat. Gambar & video sedang diupload...",
+            variant: "pending",
+          });
+        } else if (hasVideos) {
           await api.createPostWithVideos(
             formData.content?.trim(),
             videoFiles,
@@ -143,9 +162,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
             description: "Post dibuat. Video sedang diproses...",
             variant: "pending",
           });
-          // Don't call onSuccess — wait for WebSocket new_post when upload is done
-        } else if (imageFiles.length > 0) {
-          // Use async image upload endpoint — post will appear via WebSocket when upload finishes
+        } else if (hasImages) {
           await api.createPostWithImages(
             formData.content?.trim(),
             imageFiles,
@@ -156,7 +173,6 @@ export const PostDialog: React.FC<PostDialogProps> = ({
             description: "Post dibuat. Gambar sedang diproses...",
             variant: "pending",
           });
-          // Don't call onSuccess — wait for WebSocket new_post when upload is done
         } else {
           // No media files, use regular create endpoint (manual URLs: pisah gambar vs video)
           const manualUrls = formData.image_urls?.filter(url => url?.trim() && !url.startsWith("blob:")) || [];
@@ -262,88 +278,73 @@ export const PostDialog: React.FC<PostDialogProps> = ({
     });
   };
 
-  const processFiles = (files: File[]) => {
-    const imageFiles = files.filter((file) => file.type.startsWith("image/"));
+  const processFiles = (files: File[], allowVideo = false) => {
+    const imageFilesFromInput = files.filter((file) => file.type.startsWith("image/"));
+    const videoFilesFromInput = allowVideo ? files.filter((file) => file.type.startsWith("video/")) : [];
 
-    if (imageFiles.length === 0) {
+    if (imageFilesFromInput.length === 0 && videoFilesFromInput.length === 0) {
       toast({
         title: "Error",
-        description: "Please select image files only",
+        description: "Pilih file gambar atau video",
         variant: "destructive",
       });
       return;
     }
 
+    // Boleh gabung gambar + video dalam satu post
+    if (imageFilesFromInput.length > 0) processImageFiles(imageFilesFromInput);
+    if (videoFilesFromInput.length > 0) processVideoFiles(videoFilesFromInput);
+  };
+
+  const processImageFiles = (files: File[]) => {
     const remainingSlots = MAX_IMAGES - imagePreviews.length;
     if (remainingSlots <= 0) {
       toast({
         title: "Error",
-        description: `Maximum ${MAX_IMAGES} images allowed.`,
+        description: `Maksimal ${MAX_IMAGES} gambar.`,
         variant: "destructive",
       });
       return;
     }
 
-    const filesToAdd = imageFiles.slice(0, remainingSlots);
-    if (filesToAdd.length < imageFiles.length) {
+    const filesToAdd = files.slice(0, remainingSlots);
+    if (filesToAdd.length < files.length) {
       toast({
         title: "Limit reached",
-        description: `Only ${remainingSlots} more image(s) can be added. Maximum ${MAX_IMAGES} images per post.`,
+        description: `Hanya ${remainingSlots} gambar lagi. Maksimal ${MAX_IMAGES} per post.`,
         variant: "destructive",
       });
     }
 
-    // Validate file sizes (max 10MB each)
     const maxSize = 10 * 1024 * 1024; // 10MB
     const invalidFiles = filesToAdd.filter((file) => file.size > maxSize);
     if (invalidFiles.length > 0) {
       toast({
         title: "Error",
-        description: `Some images exceed 10MB limit. Maximum file size is 10MB per image.`,
+        description: "Beberapa gambar melebihi 10MB. Maksimal 10MB per gambar.",
         variant: "destructive",
       });
       return;
     }
 
-    // Store File objects in state
     setImageFiles((prev) => [...prev, ...filesToAdd]);
-
-    // Create preview URLs for selected files
-    const newPreviews: string[] = [];
-    filesToAdd.forEach((file) => {
-      const previewUrl = URL.createObjectURL(file);
-      newPreviews.push(previewUrl);
-    });
-
+    const newPreviews = filesToAdd.map((file) => URL.createObjectURL(file));
     setImagePreviews((prev) => [...prev, ...newPreviews]);
-
-    toast({
-      title: "Success",
-      description: `${filesToAdd.length} image(s) added. They will be uploaded when you submit.`,
-    });
+    toast({ title: "Berhasil", description: `${filesToAdd.length} gambar ditambahkan.` });
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMediaSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-
-    const fileArray = Array.from(files);
-    processFiles(fileArray);
-
-    // Reset file input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    processFiles(Array.from(files), true);
+    if (mediaInputRef.current) mediaInputRef.current.value = "";
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
-
     const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) {
-      processFiles(files);
-    }
+    if (files.length > 0) processFiles(files, true);
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -361,19 +362,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
     e.stopPropagation();
   };
 
-  // --- Video handling ---
   const processVideoFiles = (files: File[]) => {
-    const vFiles = files.filter((file) => file.type.startsWith("video/"));
-
-    if (vFiles.length === 0) {
-      toast({
-        title: "Error",
-        description: "Pilih file video saja (mp4, mov, avi, webm, mkv, 3gp)",
-        variant: "destructive",
-      });
-      return;
-    }
-
     const remainingSlots = MAX_VIDEOS - videoPreviews.length;
     if (remainingSlots <= 0) {
       toast({
@@ -384,51 +373,29 @@ export const PostDialog: React.FC<PostDialogProps> = ({
       return;
     }
 
-    const filesToAdd = vFiles.slice(0, remainingSlots);
-    if (filesToAdd.length < vFiles.length) {
+    const filesToAdd = files.slice(0, remainingSlots);
+    if (filesToAdd.length < files.length) {
       toast({
         title: "Limit reached",
-        description: `Hanya ${remainingSlots} video lagi yang bisa ditambahkan. Maksimal ${MAX_VIDEOS} video per post.`,
+        description: `Hanya ${remainingSlots} video lagi. Maksimal ${MAX_VIDEOS} per post.`,
         variant: "destructive",
       });
     }
 
-    // Validate file sizes (max 20MB each)
     const invalidFiles = filesToAdd.filter((file) => file.size > MAX_VIDEO_SIZE);
     if (invalidFiles.length > 0) {
       toast({
         title: "Error",
-        description: `Beberapa video melebihi batas 20MB. Maksimal ukuran file 20MB per video.`,
+        description: "Beberapa video melebihi 20MB. Maksimal 20MB per video.",
         variant: "destructive",
       });
       return;
     }
 
     setVideoFiles((prev) => [...prev, ...filesToAdd]);
-
-    const newPreviews: string[] = [];
-    filesToAdd.forEach((file) => {
-      const previewUrl = URL.createObjectURL(file);
-      newPreviews.push(previewUrl);
-    });
-
+    const newPreviews = filesToAdd.map((file) => URL.createObjectURL(file));
     setVideoPreviews((prev) => [...prev, ...newPreviews]);
-
-    toast({
-      title: "Success",
-      description: `${filesToAdd.length} video ditambahkan. Akan diupload saat submit.`,
-    });
-  };
-
-  const handleVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    processVideoFiles(Array.from(files));
-
-    if (videoInputRef.current) {
-      videoInputRef.current.value = "";
-    }
+    toast({ title: "Berhasil", description: `${filesToAdd.length} video ditambahkan.` });
   };
 
   const handleRemoveVideo = (index: number) => {
@@ -508,82 +475,73 @@ export const PostDialog: React.FC<PostDialogProps> = ({
             />
           </div>
 
-          {/* Image Upload */}
+          {/* Media (gambar + video) — satu kotak: klik = browse, drag = drop */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label>Images</Label>
-              <div className="flex gap-2">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleFileSelect}
-                  className="hidden"
-                  id="image-upload"
-                  disabled={loading || uploading || imagePreviews.length >= MAX_IMAGES}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={loading || uploading || imagePreviews.length >= MAX_IMAGES || videoFiles.length > 0}
-                  title={
-                    videoFiles.length > 0
-                      ? "Tidak bisa upload gambar bersamaan dengan video"
-                      : imagePreviews.length >= MAX_IMAGES
-                      ? `Maximum ${MAX_IMAGES} images allowed`
-                      : `Select up to ${MAX_IMAGES} images (max 10MB each)`
-                  }
-                >
-                  <Upload className="h-4 w-4 mr-1" />
-                  Select Images {imagePreviews.length > 0 && `(${imagePreviews.length}/${MAX_IMAGES})`}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleAddImageURL}
-                  disabled={loading || uploading || imagePreviews.length >= MAX_IMAGES || videoFiles.length > 0}
-                  title={imagePreviews.length >= MAX_IMAGES ? `Maximum ${MAX_IMAGES} images allowed` : "Add image URL"}
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add URL
-                </Button>
-              </div>
-            </div>
-
-            {/* Drag and Drop Zone */}
+            <Label>Gambar & Video</Label>
+            <input
+              ref={mediaInputRef}
+              type="file"
+              accept="image/*,video/mp4,video/quicktime,video/x-msvideo,video/webm,video/x-matroska,video/3gpp"
+              multiple
+              onChange={handleMediaSelect}
+              className="hidden"
+              id="media-upload"
+              disabled={loading || uploading || (imagePreviews.length >= MAX_IMAGES && videoPreviews.length >= MAX_VIDEOS)}
+            />
+            {/* Kotak klik + drag: klik membuka file picker, drag menambah file */}
             <div
               ref={dropZoneRef}
+              role="button"
+              tabIndex={0}
+              onClick={() => {
+                if (loading || uploading) return;
+                if (imagePreviews.length >= MAX_IMAGES && videoPreviews.length >= MAX_VIDEOS) return;
+                mediaInputRef.current?.click();
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  if (loading || uploading) return;
+                  if (imagePreviews.length >= MAX_IMAGES && videoPreviews.length >= MAX_VIDEOS) return;
+                  mediaInputRef.current?.click();
+                }
+              }}
               onDrop={handleDrop}
               onDragOver={handleDragOver}
               onDragEnter={handleDragEnter}
               onDragLeave={handleDragLeave}
-              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                imagePreviews.length === 0 && (!formData.image_urls || formData.image_urls.length === 0)
-                  ? "border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 hover:border-gray-400 dark:hover:border-gray-600"
-                  : "border-transparent"
-              } ${imagePreviews.length >= MAX_IMAGES ? "opacity-50 cursor-not-allowed" : ""}`}
+              className={`border-2 border-dashed rounded-xl text-center transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+                imagePreviews.length === 0 && videoPreviews.length === 0 && (!formData.image_urls || formData.image_urls.length === 0)
+                  ? "border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 hover:border-gray-400 dark:hover:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-900/70 cursor-pointer min-h-[140px] flex items-center justify-center p-8"
+                  : (imagePreviews.length > 0 || videoPreviews.length > 0)
+                    ? "border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/30 hover:border-gray-300 dark:hover:border-gray-600 cursor-pointer min-h-[56px] flex items-center justify-center p-3"
+                    : "border-transparent min-h-0 p-3"
+              } ${imagePreviews.length >= MAX_IMAGES && videoPreviews.length >= MAX_VIDEOS ? "opacity-50 cursor-not-allowed pointer-events-none" : ""}`}
             >
-              {imagePreviews.length === 0 && (!formData.image_urls || formData.image_urls.length === 0) ? (
-                <div className="flex flex-col items-center justify-center">
-                  <ImageIcon className="h-12 w-12 text-gray-400 mb-2" />
+              {imagePreviews.length === 0 && videoPreviews.length === 0 && (!formData.image_urls || formData.image_urls.length === 0) ? (
+                <div className="flex flex-col items-center justify-center pointer-events-none">
+                  <ImageIcon className="h-12 w-12 text-gray-400 dark:text-gray-500 mb-2" />
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                    Drag and drop images here, or click &quot;Select Images&quot;
+                    Drag and drop images or video here, or click to browse
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-500">
-                    Maximum {MAX_IMAGES} images, 10MB per image. Images will be uploaded when you submit.
+                    Maks {MAX_IMAGES} gambar (10MB/pc) + {MAX_VIDEOS} video (20MB/pc). Bisa digabung dalam satu post.
                   </p>
                 </div>
-              ) : null}
+              ) : (
+                imagePreviews.length > 0 || videoPreviews.length > 0 ? (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Drop untuk tambah lagi, atau klik untuk browse
+                  </p>
+                ) : null
+              )}
             </div>
 
-            {/* Image count indicator */}
-            {imagePreviews.length > 0 && (
+            {(imagePreviews.length > 0 || videoPreviews.length > 0) && (
               <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
-                {imagePreviews.length}/{MAX_IMAGES} images selected (max 10MB each)
+                {imagePreviews.length > 0 && `${imagePreviews.length}/${MAX_IMAGES} gambar`}
+                {imagePreviews.length > 0 && videoPreviews.length > 0 && " · "}
+                {videoPreviews.length > 0 && `${videoPreviews.length}/${MAX_VIDEOS} video`}
               </p>
             )}
 
@@ -592,7 +550,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
               <div className="space-y-1">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-600 dark:text-gray-400">
-                    Uploading images
+                    Uploading media
                   </span>
                   <span className="text-gray-600 dark:text-gray-400">
                     {Math.round(uploadProgress)}%
@@ -607,168 +565,73 @@ export const PostDialog: React.FC<PostDialogProps> = ({
               </div>
             )}
 
-            {/* Image & Video URL Previews (gambar dan video digabung) */}
-            {imagePreviews.length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
-                {imagePreviews.map((preview, index) => {
-                  if (!preview || preview.trim() === "") return null;
-                  const isVideo = isVideoUrl(preview);
-                  return (
-                    <div key={`preview-${index}-${preview.substring(0, 30)}`} className="relative group">
-                      <div className={`relative rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 ${isVideo ? "aspect-video" : "aspect-square"}`}>
-                        {isVideo ? (
-                          <video
-                            src={preview}
-                            controls
-                            className="w-full h-full object-contain bg-black"
-                            preload="metadata"
-                          />
-                        ) : (
-                          <Image
-                            src={preview}
-                            alt={`Preview ${index + 1}`}
-                            fill
-                            className="object-cover"
-                            sizes="(max-width: 768px) 50vw, 33vw"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = "none";
-                            }}
-                          />
-                        )}
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => handleRemoveImage(index)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
+            {/* Previews: satu grid rapi untuk gambar + video */}
+            {(imagePreviews.length > 0 || videoPreviews.length > 0) && (
+              <div className="mt-4 space-y-3">
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                  Dipilih: {imagePreviews.length} gambar, {videoPreviews.length} video
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {imagePreviews.map((preview, index) => {
+                    if (!preview || preview.trim() === "") return null;
+                    const isVideo = isVideoUrl(preview);
+                    return (
+                      <div key={`img-${index}`} className="relative group rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800/50 shadow-sm">
+                        <div className={`relative ${isVideo ? "aspect-video" : "aspect-square"}`}>
+                          {isVideo ? (
+                            <video src={preview} controls className="w-full h-full object-cover bg-black" preload="metadata" />
+                          ) : (
+                            <Image
+                              src={preview}
+                              alt={`Preview ${index + 1}`}
+                              fill
+                              className="object-cover"
+                              sizes="(max-width: 640px) 50vw, 33vw"
+                              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                            />
+                          )}
+                          <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-black/60 text-white">
+                            {isVideo ? "Video" : "Gambar"}
+                          </span>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            className="absolute top-1.5 right-1.5 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
+                            onClick={() => handleRemoveImage(index)}
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Manual URL Input: gambar dan video digabung (URL video ditampilkan sebagai video) */}
-            {formData.image_urls && formData.image_urls.some(url => !url || url.trim() === "") && (
-              <div className="space-y-2 mt-4">
-                <Label className="text-sm text-gray-600 dark:text-gray-400">
-                  Add image or video URLs manually:
-                </Label>
-                {formData.image_urls.map((url, index) => {
-                  if (url && url.trim() !== "") return null;
-                  return (
-                    <div key={`url-${index}`} className="flex gap-2">
-                      <Input
-                        type="url"
-                        value={url || ""}
-                        onChange={(e) =>
-                          handleImageURLChange(index, e.target.value)
-                        }
-                        placeholder="https://example.com/image.jpg atau video.mp4"
-                        className="flex-1"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveImageURL(index)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-          </div>
-
-          {/* Video Upload */}
-          {!isEditMode && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Video</Label>
-                <div className="flex gap-2">
-                  <input
-                    ref={videoInputRef}
-                    type="file"
-                    accept="video/mp4,video/quicktime,video/x-msvideo,video/webm,video/x-matroska,video/3gpp"
-                    multiple
-                    onChange={handleVideoSelect}
-                    className="hidden"
-                    id="video-upload"
-                    disabled={loading || uploading || videoPreviews.length >= MAX_VIDEOS || imageFiles.length > 0}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => videoInputRef.current?.click()}
-                    disabled={loading || uploading || videoPreviews.length >= MAX_VIDEOS || imageFiles.length > 0}
-                    title={
-                      imageFiles.length > 0
-                        ? "Tidak bisa upload video bersamaan dengan gambar"
-                        : videoPreviews.length >= MAX_VIDEOS
-                        ? `Maksimal ${MAX_VIDEOS} video`
-                        : `Pilih video (maks ${MAX_VIDEOS}, 20MB per video)`
-                    }
-                  >
-                    <Video className="h-4 w-4 mr-1" />
-                    Pilih Video {videoPreviews.length > 0 && `(${videoPreviews.length}/${MAX_VIDEOS})`}
-                  </Button>
-                </div>
-              </div>
-
-              {imageFiles.length > 0 && videoPreviews.length === 0 && (
-                <p className="text-xs text-amber-600 dark:text-amber-400">
-                  Tidak bisa upload video bersamaan dengan gambar. Hapus gambar terlebih dahulu.
-                </p>
-              )}
-
-              {videoFiles.length > 0 && imageFiles.length === 0 && imagePreviews.length === 0 && (
-                <p className="text-xs text-amber-600 dark:text-amber-400">
-                  Tidak bisa upload gambar bersamaan dengan video. Hapus video terlebih dahulu.
-                </p>
-              )}
-
-              {/* Video Previews */}
-              {videoPreviews.length > 0 && (
-                <div className="space-y-3 mt-2">
+                    );
+                  })}
                   {videoPreviews.map((preview, index) => (
-                    <div key={`video-preview-${index}`} className="relative group">
-                      <div className="relative rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
-                        <video
-                          src={preview}
-                          controls
-                          className="w-full max-h-64 object-contain bg-black"
-                          preload="metadata"
-                        />
+                    <div key={`vid-${index}`} className="relative group rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800/50 shadow-sm">
+                      <div className="relative aspect-video">
+                        <video src={preview} controls className="w-full h-full object-cover bg-black" preload="metadata" />
+                        <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-black/60 text-white">
+                          Video
+                        </span>
                         <Button
                           type="button"
                           variant="destructive"
-                          size="sm"
-                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                          size="icon"
+                          className="absolute top-1.5 right-1.5 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
                           onClick={() => handleRemoveVideo(index)}
                         >
-                          <X className="h-4 w-4" />
+                          <X className="h-3.5 w-3.5" />
                         </Button>
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {videoFiles[index]?.name} ({(videoFiles[index]?.size / (1024 * 1024)).toFixed(1)} MB)
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400 px-2 py-1 truncate">
+                        {videoFiles[index]?.name} · {((videoFiles[index]?.size || 0) / (1024 * 1024)).toFixed(1)} MB
                       </p>
                     </div>
                   ))}
-                  <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                    {videoPreviews.length}/{MAX_VIDEOS} video (maks 20MB per video)
-                  </p>
                 </div>
-              )}
-            </div>
-          )}
+              </div>
+            )}
+          </div>
 
           {/* Is Pinned (only for edit) */}
           {isEditMode && (

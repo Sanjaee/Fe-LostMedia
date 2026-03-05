@@ -947,6 +947,57 @@ class ApiClient {
     }
   }
 
+  // Create post with both images and videos in one post (async)
+  async createPostWithMedia(
+    content: string | undefined,
+    imageFiles: File[],
+    videoFiles: File[],
+    groupId?: string
+  ): Promise<PostResponse> {
+    const formData = new FormData();
+    if (content?.trim()) formData.append("content", content.trim());
+    if (groupId) formData.append("group_id", groupId);
+    imageFiles.forEach((file) => formData.append("images", file));
+    videoFiles.forEach((file) => formData.append("videos", file));
+
+    const url = `${this.baseURL}/api/v1/posts/upload-media`;
+    if (!this.accessToken && typeof window !== "undefined") {
+      const stored = TokenManager.getAccessToken();
+      if (stored) this.accessToken = stored;
+    }
+    const config: RequestInit = {
+      method: "POST",
+      headers: this.accessToken ? { Authorization: `Bearer ${this.accessToken}` } : {},
+      body: formData,
+    };
+
+    try {
+      const response = await fetch(url, config);
+      if (response.status === 401) {
+        const refreshed = await this.handleTokenRefresh();
+        if (refreshed && this.accessToken) {
+          (config.headers as Record<string, string>)["Authorization"] = `Bearer ${this.accessToken}`;
+          const retry = await fetch(url, config);
+          if (!retry.ok) {
+            const err = await retry.json().catch(() => ({}));
+            throw new Error(err.error || err.message || "Request failed");
+          }
+          return retry.json();
+        }
+        redirectToLoginOnce();
+        throw new Error("Unauthorized");
+      }
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || err.message || "Request failed");
+      }
+      return response.json();
+    } catch (e: any) {
+      if (e instanceof Error) throw e;
+      throw new Error("Network error");
+    }
+  }
+
   async getPost(postID: string): Promise<PostResponse> {
     return this.request<PostResponse>(`/api/v1/posts/${postID}`, {
       method: "GET",
