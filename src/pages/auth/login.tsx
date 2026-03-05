@@ -10,6 +10,19 @@ const LoginPage = () => {
   const router = useRouter();
   const sessionCheckedRef = useRef(false);
 
+  // Pesan saat redirect karena session/cookie tidak cocok (mis. BE di-update)
+  useEffect(() => {
+    const { reason } = router.query;
+    if (reason === "session_expired") {
+      toast({
+        title: "Sesi berakhir",
+        description: "Silakan masuk kembali. Ini bisa terjadi setelah pembaruan sistem.",
+        variant: "default",
+      });
+      router.replace("/auth/login", undefined, { shallow: true });
+    }
+  }, [router.query.reason]);
+
   // Handle OAuth errors from URL parameters
   useEffect(() => {
     const { error } = router.query;

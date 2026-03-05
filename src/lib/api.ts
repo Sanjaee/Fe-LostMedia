@@ -63,6 +63,19 @@ import type { Room, CreateRoomRequest, JoinRoomResponse } from "@/types/room";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.194.248:5000";
 
+// Satu kali redirect ke login saat session/cookie tidak cocok (mis. BE volume di-update). Tanpa loop/polling.
+let sessionInvalidRedirectDone = false;
+function redirectToLoginOnce(): void {
+  if (typeof window === "undefined" || sessionInvalidRedirectDone || window.location.pathname.startsWith("/auth")) return;
+  sessionInvalidRedirectDone = true;
+  TokenManager.clearTokens();
+  import("next-auth/react").then(({ signOut }) => signOut({ redirect: false })).then(() => {
+    window.location.replace("/auth/login?reason=session_expired");
+  }).catch(() => {
+    window.location.replace("/auth/login?reason=session_expired");
+  });
+}
+
 class ApiClient {
   private baseURL: string;
   private accessToken: string | null = null;
@@ -184,6 +197,8 @@ class ApiClient {
               return retryData.data || retryData;
             }
           }
+          // Session/cookie tidak cocok (mis. BE di-update) → redirect ke login sekali, tanpa loop
+          redirectToLoginOnce();
         }
 
         const errorData = await response.json().catch(() => ({}));
@@ -817,10 +832,8 @@ class ApiClient {
       const response = await fetch(url, config);
       
       if (response.status === 401) {
-        // Try to refresh token
         const refreshed = await this.handleTokenRefresh();
         if (refreshed) {
-          // Retry with new token
           if (this.accessToken) {
             config.headers = {
               ...config.headers,
@@ -834,6 +847,7 @@ class ApiClient {
           }
           return retryResponse.json();
         }
+        redirectToLoginOnce();
         throw new Error("Unauthorized");
       }
 
@@ -913,6 +927,7 @@ class ApiClient {
           }
           return retryResponse.json();
         }
+        redirectToLoginOnce();
         throw new Error("Unauthorized");
       }
 
@@ -1306,6 +1321,7 @@ class ApiClient {
           }
           return retryResponse.json();
         }
+        redirectToLoginOnce();
         throw new Error("Unauthorized");
       }
       if (!response.ok) {
