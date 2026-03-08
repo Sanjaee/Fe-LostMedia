@@ -34,14 +34,9 @@ function formatIdr(n: number): string {
 
 function StatusBadge({ status }: { status: string }) {
   const v = status?.toLowerCase();
-  const variant =
-    v === "success"
-      ? "default"
-      : v === "pending"
-        ? "secondary"
-        : v === "failed" || v === "expired" || v === "cancelled"
-          ? "destructive"
-          : "outline";
+  const isSuccess = v === "success";
+  const isError = v === "failed" || v === "expired" || v === "cancelled";
+  const variant = isSuccess ? "default" : isError ? "destructive" : v === "pending" ? "secondary" : "outline";
   const label =
     v === "success"
       ? "Sukses"
@@ -54,7 +49,18 @@ function StatusBadge({ status }: { status: string }) {
             : v === "expired"
               ? "Kadaluarsa"
               : status;
-  return <Badge variant={variant}>{label}</Badge>;
+  return (
+    <Badge
+      variant={variant}
+      className={
+        isSuccess
+          ? "border-green-600 bg-green-600 text-white hover:bg-green-600/90"
+          : undefined
+      }
+    >
+      {label}
+    </Badge>
+  );
 }
 
 export default function AdminTransactionsPage() {
