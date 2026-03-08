@@ -590,6 +590,16 @@ class ApiClient {
     });
   }
 
+  /**
+   * Verify Plisio order when user lands on "Ke situs" success page.
+   * Validates order_id + current user (no duplicate/other user claim), syncs status from Plisio if pending, updates role if paid.
+   */
+  async verifyPlisioOrder(orderId: string): Promise<{ payment: Payment; status: "success" | "pending" }> {
+    return this.request(`/api/v1/payments/verify-order?order_id=${encodeURIComponent(orderId)}`, {
+      method: "GET",
+    });
+  }
+
   // Notification endpoints
   async getNotifications(
     limit: number = 20,
