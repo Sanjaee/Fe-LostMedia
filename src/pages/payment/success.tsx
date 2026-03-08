@@ -8,19 +8,30 @@ import { useApi } from "@/components/contex/ApiProvider";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { getRoleBadge, getRoleDisplayName } from "@/utils/roleStyles";
 import type { Payment } from "@/types/payment";
 
 export default function PaymentSuccessPage() {
   const router = useRouter();
-  const { status: sessionStatus, update } = useSession();
+  const { data: session, status: sessionStatus, update } = useSession();
   const { api } = useApi();
   const { toast } = useToast();
   const [state, setState] = useState<"loading" | "success" | "pending" | "error">("loading");
   const [errorMessage, setErrorMessage] = useState("");
+  const [successPayment, setSuccessPayment] = useState<Payment | null>(null);
   const verifyStartedRef = useRef(false);
 
   const orderId = typeof router.query.order_id === "string" ? router.query.order_id : "";
+  const userName =
+    successPayment?.customer_name ||
+    (session?.user as { name?: string })?.name ||
+    (session?.user as { full_name?: string })?.full_name ||
+    "";
+  const targetRole = successPayment?.target_role ?? "";
+  const roleLabel = targetRole ? getRoleDisplayName(targetRole) : "";
 
   // Satu kali verifikasi saat sudah login dan ada order_id — tanpa polling/loop
   useEffect(() => {
@@ -42,13 +53,13 @@ export default function PaymentSuccessPage() {
         const status = res?.status ?? "pending";
         const payment = res?.payment;
         if (status === "success") {
+          if (payment) setSuccessPayment(payment);
           setState("success");
           update().then(() => {
+            const roleName = payment?.target_role ? getRoleDisplayName(payment.target_role) : "role baru";
             toast({
-              title: "Selamat atas role baru Anda!",
-              description: payment?.target_role
-                ? `Role ${payment.target_role} telah aktif. Session diperbarui.`
-                : "Session diperbarui.",
+              title: "Selamat! Upgrade Anda berhasil.",
+              description: `${roleName} sudah aktif. Terima kasih telah mempercayakan kami!`,
             });
           }).catch(() => {});
         } else {
@@ -102,7 +113,7 @@ export default function PaymentSuccessPage() {
             </CardHeader>
             <CardContent className="flex justify-center sm:justify-start">
               <Button asChild>
-                <Link href="/role">Kembali ke halaman Role</Link>
+                <Link href="/">Kembali ke Beranda</Link>
               </Button>
             </CardContent>
           </Card>
@@ -136,7 +147,7 @@ export default function PaymentSuccessPage() {
               </CardHeader>
               <CardContent className="flex justify-center sm:justify-start">
                 <Button asChild>
-                  <Link href="/role">Kembali ke halaman Role</Link>
+                  <Link href="/">Kembali ke Beranda</Link>
                 </Button>
               </CardContent>
             </>
@@ -155,7 +166,7 @@ export default function PaymentSuccessPage() {
               </CardHeader>
               <CardContent className="flex justify-center sm:justify-start">
                 <Button asChild variant="outline">
-                  <Link href="/role">Ke halaman Role</Link>
+                  <Link href="/">Kembali ke Beranda</Link>
                 </Button>
               </CardContent>
             </>
@@ -163,22 +174,36 @@ export default function PaymentSuccessPage() {
 
           {state === "success" && (
             <>
-              <CardHeader className="text-center space-y-4 pt-8 sm:pt-10 pb-4">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
-                  <CheckCircle2 className="h-8 w-8 text-green-600 dark:text-green-400" />
+              <CardHeader className="text-center space-y-5 pt-8 sm:pt-10 pb-4">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30 ring-4 ring-green-200/50 dark:ring-green-800/30">
+                  <CheckCircle2 className="h-9 w-9 text-green-600 dark:text-green-400" />
                 </div>
-                <div className="space-y-2">
-                  <CardTitle className="text-xl sm:text-2xl text-green-700 dark:text-green-300">
-                    Selamat atas role baru Anda!
+                <div className="space-y-3">
+                  <CardTitle className="text-xl sm:text-2xl font-bold text-foreground">
+                    {userName ? (
+                      <>
+                        Selamat, <span className="text-green-600 dark:text-green-400">{userName}</span>!
+                      </>
+                    ) : (
+                      "Selamat! Upgrade Anda berhasil."
+                    )}
                   </CardTitle>
-                  <CardDescription className="text-base text-muted-foreground max-w-sm mx-auto">
-                    Pembayaran berhasil. Role Anda telah aktif dan session diperbarui—navbar serta halaman akan menampilkan role baru.
+                  <CardDescription className="text-base text-muted-foreground max-w-sm mx-auto leading-relaxed">
+                    {roleLabel ? (
+                      <>
+                        Anda sekarang resmi sebagai{" "}
+                        <Badge variant="secondary" className={cn(getRoleBadge(targetRole), "font-semibold mx-0.5")}>{roleLabel}</Badge>
+                        . Terima kasih telah mempercayakan kami—selamat menikmati manfaatnya!
+                      </>
+                    ) : (
+                      "Terima kasih telah mempercayakan upgrade Anda. Selamat menikmati manfaatnya!"
+                    )}
                   </CardDescription>
                 </div>
               </CardHeader>
               <CardContent className="flex justify-center pb-8 sm:pb-10">
                 <Button asChild size="lg" className="min-w-[200px]">
-                  <Link href="/role">Ke halaman Role</Link>
+                  <Link href="/">Kembali ke Beranda</Link>
                 </Button>
               </CardContent>
             </>
