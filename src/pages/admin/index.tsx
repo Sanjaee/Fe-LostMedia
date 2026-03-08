@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useApi } from "@/components/contex/ApiProvider";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
-import { Users, UserCheck, UserX, DollarSign } from "lucide-react";
+import { Users, UserCheck, UserX, DollarSign, Receipt } from "lucide-react";
 import { Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -98,12 +98,20 @@ export default function AdminPage() {
               Kelola pengguna dan lihat statistik platform
             </p>
           </div>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/admin/role-prices">
-              <DollarSign className="h-4 w-4 mr-2" />
-              Kelola Role Prices
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/admin/transactions">
+                <Receipt className="h-4 w-4 mr-2" />
+                Semua Transaksi
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/admin/role-prices">
+                <DollarSign className="h-4 w-4 mr-2" />
+                Kelola Role Prices
+              </Link>
+            </Button>
+          </div>
         </div>
 
         {stats && (

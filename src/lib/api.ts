@@ -1119,6 +1119,17 @@ class ApiClient {
     });
   }
 
+  /** Owner only: list all payments/transactions. status filter optional (pending|success|failed|cancelled|expired). */
+  async getAdminPayments(
+    limit: number = 20,
+    offset: number = 0,
+    status?: string
+  ): Promise<{ payments: Payment[]; total: number; limit: number; offset: number }> {
+    const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+    if (status && status.trim()) params.set("status", status.trim());
+    return this.request(`/api/v1/admin/payments?${params.toString()}`, { method: "GET" });
+  }
+
   async createReport(description: string): Promise<{ report: { id: string; user_id: string; description: string; created_at: string } }> {
     return this.request<{ report: { id: string; user_id: string; description: string; created_at: string } }>(
       "/api/v1/reports",
