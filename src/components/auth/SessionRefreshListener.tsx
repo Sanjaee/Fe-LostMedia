@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useWebSocketSubscription } from "@/contexts/WebSocketContext";
+import { useToast } from "@/hooks/use-toast";
 
 /** Custom event to trigger session refresh (e.g. when role is updated or payment succeeds) */
 export const SESSION_REFRESH_ROLE_EVENT = "session:refresh-role";
@@ -25,6 +26,7 @@ export function SessionRefreshListener() {
       const now = Date.now();
       if (now - lastUpdateRef.current < REFRESH_DEBOUNCE_MS) return;
       lastUpdateRef.current = now;
+      // Triggers NextAuth JWT callback with trigger "update" → fetches /auth/me → session gets new role
       update().catch(() => {});
     };
     window.addEventListener(SESSION_REFRESH_ROLE_EVENT, handler);
@@ -34,12 +36,16 @@ export function SessionRefreshListener() {
   return null;
 }
 
-/** Listens for WebSocket role_updated and payment_status success, triggers single session refresh. Must be inside WebSocketProvider. */
+/** Listens for WebSocket role_updated and payment_status success; refreshes session (role) and shows toast. Must be inside WebSocketProvider. */
 export function RoleUpdateWebSocketListener() {
   const lastRefreshRef = useRef<{ key: string; at: number } | null>(null);
+  const { toast } = useToast();
 
   useWebSocketSubscription((data: Record<string, unknown>) => {
-    const payload = (data.payload || data) as { type?: string; payment?: { status?: string; order_id?: string } };
+    const payload = (data.payload || data) as {
+      type?: string;
+      payment?: { status?: string; order_id?: string; target_role?: string };
+    };
     const type = payload.type || (data.type as string);
     const now = Date.now();
     if (type === "role_updated") {
@@ -54,6 +60,13 @@ export function RoleUpdateWebSocketListener() {
       if (lastRefreshRef.current?.key !== key || now - lastRefreshRef.current.at > REFRESH_DEBOUNCE_MS) {
         lastRefreshRef.current = { key, at: now };
         dispatchSessionRefreshRole();
+        const roleLabel = payload.payment?.target_role
+          ? payload.payment.target_role.charAt(0).toUpperCase() + payload.payment.target_role.slice(1)
+          : "Role";
+        toast({
+          title: "Pembayaran berhasil",
+          description: `${roleLabel} Anda telah aktif. Session diperbarui.`,
+        });
       }
     }
   });
