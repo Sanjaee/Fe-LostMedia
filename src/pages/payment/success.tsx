@@ -8,10 +8,9 @@ import { useApi } from "@/components/contex/ApiProvider";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { UserNameWithRole } from "@/components/ui/UserNameWithRole";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { getRoleBadge, getRoleDisplayName } from "@/utils/roleStyles";
+import { getRoleDisplayName } from "@/utils/roleStyles";
 import type { Payment } from "@/types/payment";
 
 export default function PaymentSuccessPage() {
@@ -179,10 +178,10 @@ export default function PaymentSuccessPage() {
                   <CheckCircle2 className="h-9 w-9 text-green-600 dark:text-green-400" />
                 </div>
                 <div className="space-y-3">
-                  <CardTitle className="text-xl sm:text-2xl font-bold text-foreground">
+                  <CardTitle className="text-xl sm:text-2xl font-bold text-foreground flex flex-wrap items-center justify-center gap-x-1">
                     {userName ? (
                       <>
-                        Selamat, <span className="text-green-600 dark:text-green-400">{userName}</span>!
+                        Selamat, <UserNameWithRole displayName={userName} role={targetRole} className="text-xl sm:text-2xl font-bold" />!
                       </>
                     ) : (
                       "Selamat! Upgrade Anda berhasil."
@@ -192,8 +191,7 @@ export default function PaymentSuccessPage() {
                     {roleLabel ? (
                       <>
                         Anda sekarang resmi sebagai{" "}
-                        <Badge variant="secondary" className={cn(getRoleBadge(targetRole), "font-semibold mx-0.5")}>{roleLabel}</Badge>
-                        . Terima kasih telah mempercayakan kami—selamat menikmati manfaatnya!
+                        <UserNameWithRole displayName={roleLabel} role={targetRole} className="inline-flex font-semibold" />. Terima kasih telah mempercayakan kami—selamat menikmati manfaatnya!
                       </>
                     ) : (
                       "Terima kasih telah mempercayakan upgrade Anda. Selamat menikmati manfaatnya!"
