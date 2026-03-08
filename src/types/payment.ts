@@ -5,6 +5,19 @@ export type PaymentStatus =
   | "cancelled"
   | "expired";
 
+/** From GET /api/v1/payments/plisio/currencies (Plisio API) */
+export interface PlisioCurrency {
+  name: string;
+  cid: string;
+  currency: string;
+  icon: string;
+  price_usd: string;
+  rate_usd?: string;
+  min_sum_in?: string;
+  hidden?: number;
+  maintenance?: boolean;
+}
+
 export interface Payment {
   id: string;
   user_id: string;
@@ -23,7 +36,9 @@ export interface Payment {
   va_number?: string;
   bank_type?: string;
   qr_code_url?: string;
-  redirect_url?: string;
+  redirect_url?: string; // For crypto (Plisio): invoice URL — redirect user here to pay
+  plisio_currency?: string;
+  plisio_source_amount?: number;
   masked_card?: string;
   card_type?: string;
   expiry_time?: string;

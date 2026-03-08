@@ -58,7 +58,7 @@ import type {
   UpdateGroupRequest,
 } from "@/types/group";
 import type { RolePrice } from "@/types/role";
-import type { Payment } from "@/types/payment";
+import type { Payment, PlisioCurrency } from "@/types/payment";
 import type { Room, CreateRoomRequest, JoinRoomResponse } from "@/types/room";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.194.248:5000";
@@ -561,10 +561,11 @@ class ApiClient {
   // Payment for role upgrade
   async createPaymentForRole(data: {
     target_role: string;
-    payment_method: "bank_transfer" | "gopay" | "credit_card" | "qris";
+    payment_method: "bank_transfer" | "gopay" | "credit_card" | "qris" | "crypto";
     bank?: string;
     card_token_id?: string;
     save_card?: boolean;
+    currency?: string; // optional: crypto currency (BTC, ETH, SOL, etc.) for Plisio
   }): Promise<{ payment: Payment }> {
     return this.request("/api/v1/payments/role", {
       method: "POST",
@@ -579,6 +580,13 @@ class ApiClient {
   async checkPaymentStatus(orderId: string): Promise<{ payment: Payment }> {
     return this.request(`/api/v1/payments/${orderId}/status`, {
       method: "POST",
+    });
+  }
+
+  /** Plisio supported cryptocurrencies (for crypto payment dropdown) */
+  async getPlisioCurrencies(): Promise<{ currencies: PlisioCurrency[] }> {
+    return this.request("/api/v1/payments/plisio/currencies", {
+      method: "GET",
     });
   }
 

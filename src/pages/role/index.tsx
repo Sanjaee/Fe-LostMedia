@@ -34,9 +34,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getRoleBadge, getRoleNameClass, getRoleDisplayName } from "@/utils/roleStyles";
+import { getRoleBadge, getRoleNameClass } from "@/utils/roleStyles";
 import type { RolePrice } from "@/types/role";
+import type { PlisioCurrency } from "@/types/payment";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Coins } from "lucide-react";
 
 const UPGRADED_ROLE_ORDER = ["admin", "mod", "god", "mvp", "vip"] as const;
 
@@ -70,6 +72,7 @@ const midtransClientKey = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || "SB-Mid
 const midtransEnv = process.env.NEXT_PUBLIC_MIDTRANS_ENV || "sandbox";
 
 const getPaymentMethodLogo = (method: string, bank?: string): string | null => {
+  if (method === "crypto") return null; // Crypto uses Coins icon in UI
   const base = "https://simulator.sandbox.midtrans.com/assets/images/payment_partners";
   if (method === "qris") return `${base}/e_wallet/qris.png`;
   if (method === "gopay") return `${base}/e_wallet/gopay.png`;
@@ -92,9 +95,21 @@ const PAYMENT_METHODS = [
   { id: "gopay" as const, label: "GoPay" },
   { id: "bank_transfer" as const, label: "Bank Transfer" },
   { id: "credit_card" as const, label: "Kartu Kredit" },
+  { id: "crypto" as const, label: "Crypto" },
 ];
 
 const BANKS = ["bca", "bni", "bri", "permata", "mandiri"];
+
+function formatPriceUsd(value: string): string {
+  const n = parseFloat(value);
+  if (Number.isNaN(n)) return value;
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 6,
+  }).format(n);
+}
 
 const CARD_MONTHS = Array.from({ length: 12 }, (_, i) => {
   const mm = String(i + 1).padStart(2, "0");
@@ -118,8 +133,11 @@ export default function RolePage() {
   const [rolePrices, setRolePrices] = useState<RolePrice[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRole, setSelectedRole] = useState<RolePrice | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<"bank_transfer" | "gopay" | "qris" | "credit_card">("gopay");
+  const [paymentMethod, setPaymentMethod] = useState<"bank_transfer" | "gopay" | "qris" | "credit_card" | "crypto">("gopay");
   const [bank, setBank] = useState("bca");
+  const [cryptoCurrency, setCryptoCurrency] = useState("");
+  const [plisioCurrencies, setPlisioCurrencies] = useState<PlisioCurrency[]>([]);
+  const [cryptoCurrenciesLoading, setCryptoCurrenciesLoading] = useState(false);
   const [loadingPayment, setLoadingPayment] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [cardNumber, setCardNumber] = useState("");
@@ -193,6 +211,27 @@ export default function RolePage() {
       if (rp) setSelectedRole(rp);
     }
   }, [router.query.select, rolePrices, selectedRole]);
+
+  // Fetch Plisio currencies when user selects crypto
+  useEffect(() => {
+    if (paymentMethod !== "crypto") return;
+    setCryptoCurrenciesLoading(true);
+    api
+      .getPlisioCurrencies()
+      .then((res) => {
+        const list = res?.currencies ?? [];
+        setPlisioCurrencies(list);
+        if (list.length > 0 && !cryptoCurrency) {
+          const hasBtc = list.some((c) => (c.cid || c.currency) === "BTC");
+          setCryptoCurrency(hasBtc ? "BTC" : list[0].cid || list[0].currency);
+        }
+      })
+      .catch(() => {
+        setPlisioCurrencies([]);
+        toast({ title: "Error", description: "Gagal memuat daftar cryptocurrency", variant: "destructive" });
+      })
+      .finally(() => setCryptoCurrenciesLoading(false));
+  }, [paymentMethod]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load Midtrans script for credit card
   useEffect(() => {
@@ -303,6 +342,21 @@ export default function RolePage() {
         return;
       }
 
+      // Crypto: create invoice then redirect to Plisio (no custom checkout page)
+      if (paymentMethod === "crypto") {
+        const { payment } = await api.createPaymentForRole({
+          target_role: selectedRole.role,
+          payment_method: "crypto",
+          currency: cryptoCurrency || undefined,
+        });
+        if (payment?.redirect_url) {
+          window.location.href = payment.redirect_url;
+          return;
+        }
+        router.push(`/role/${payment.order_id}`);
+        return;
+      }
+
       const { payment } = await api.createPaymentForRole({
         target_role: selectedRole.role,
         payment_method: paymentMethod,
@@ -383,7 +437,7 @@ export default function RolePage() {
 
                   <div className="space-y-3">
                     <Label>Metode Pembayaran</Label>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                       {PAYMENT_METHODS.map((pm) => (
                         <button
                           key={pm.id}
@@ -395,14 +449,18 @@ export default function RolePage() {
                               : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300"
                           }`}
                         >
-                          {getPaymentMethodLogo(pm.id, bank) && (
+                          {pm.id === "crypto" ? (
+                            <div className="h-10 w-10 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center">
+                              <Coins className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                            </div>
+                          ) : getPaymentMethodLogo(pm.id, bank) ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
                               src={getPaymentMethodLogo(pm.id, bank)!}
                               alt={pm.label}
                               className="h-10 w-10 object-contain"
                             />
-                          )}
+                          ) : null}
                           <span className="text-xs font-medium">{pm.label}</span>
                         </button>
                       ))}
@@ -425,6 +483,80 @@ export default function RolePage() {
                           </Button>
                         ))}
                       </div>
+                    </div>
+                  )}
+
+                  {paymentMethod === "crypto" && (
+                    <div className="space-y-3">
+                      <Label>Pilih Cryptocurrency</Label>
+                      {cryptoCurrenciesLoading ? (
+                        <div className="flex items-center justify-center py-8 gap-2 text-muted-foreground">
+                          <div className="animate-spin rounded-full h-5 w-5 border-2 border-amber-500 border-t-transparent" />
+                          <span className="text-sm">Memuat daftar cryptocurrency...</span>
+                        </div>
+                      ) : plisioCurrencies.length > 0 ? (
+                        <>
+                          <div className="overflow-y-auto max-h-[280px] space-y-2 pr-1">
+                            {plisioCurrencies.map((c) => {
+                              const cid = c.cid || c.currency;
+                              const isSelected = cryptoCurrency === cid;
+                              return (
+                                <button
+                                  key={cid}
+                                  type="button"
+                                  onClick={() => setCryptoCurrency(cid)}
+                                  className={`w-full p-3 rounded-lg border-2 text-left flex items-center gap-3 transition-all duration-200 ${
+                                    isSelected
+                                      ? "border-amber-500 bg-amber-50 dark:bg-amber-950/30"
+                                      : "border-zinc-200 dark:border-zinc-700 hover:border-amber-300 dark:hover:border-amber-800"
+                                  }`}
+                                >
+                                  {c.icon ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                      src={c.icon}
+                                      alt=""
+                                      className="w-8 h-8 rounded-full object-contain shrink-0"
+                                      onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = "none";
+                                      }}
+                                    />
+                                  ) : (
+                                    <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center shrink-0">
+                                      <Coins className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                                    </div>
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <div className="font-semibold text-zinc-900 dark:text-white truncate">
+                                      {c.name}
+                                    </div>
+                                    <div className="text-sm text-zinc-500 dark:text-zinc-400 flex items-center gap-2">
+                                      <span>{cid}</span>
+                                      {c.price_usd && (
+                                        <span className="text-amber-600 dark:text-amber-400 font-medium">
+                                          {formatPriceUsd(c.price_usd)}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  {isSelected && (
+                                    <span className="text-amber-600 dark:text-amber-400 text-sm font-medium shrink-0">
+                                      Dipilih
+                                    </span>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Setelah klik Bayar, Anda akan diarahkan ke halaman pembayaran Plisio.
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-sm text-muted-foreground py-4">
+                          Tidak ada cryptocurrency tersedia. Coba lagi nanti atau periksa koneksi.
+                        </p>
+                      )}
                     </div>
                   )}
 

@@ -12,6 +12,7 @@ import type { RolePrice } from "@/types/role";
 import type { Payment } from "@/types/payment";
 
 const getPaymentMethodLogo = (method: string, bankType?: string): string | null => {
+  if (method === "crypto") return null;
   const base = "https://simulator.sandbox.midtrans.com/assets/images/payment_partners";
   if (method === "qris") return `${base}/e_wallet/qris.png`;
   if (method === "gopay") return `${base}/e_wallet/gopay.png`;
@@ -35,6 +36,7 @@ const getPaymentMethodLabel = (method: string): string => {
     gopay: "GoPay",
     bank_transfer: "Bank Transfer",
     credit_card: "Credit Card",
+    crypto: "Crypto",
   };
   return labels[method] || method.toUpperCase();
 };
@@ -323,10 +325,16 @@ export default function RoleIdPage() {
             {payment.status === "pending" && (
               <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl overflow-hidden mb-4">
                 <div className="px-6 pt-6 pb-4 flex items-center justify-between">
-                  {logo && (
+                  {payment.payment_method === "crypto" ? (
+                    <span className="text-sm font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      {getPaymentMethodLabel(payment.payment_method)}
+                      {payment.plisio_currency && ` (${payment.plisio_currency})`}
+                    </span>
+                  ) : logo ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={logo} alt={getPaymentMethodLabel(payment.payment_method)} className="h-6 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                  )}
+                  ) : null}
                 </div>
                 <div className="px-6 pb-4">
                   <p className="text-sm font-semibold">{payment.customer_name || "Upgrade Role"}</p>
@@ -366,6 +374,21 @@ export default function RoleIdPage() {
                       <a href={payment.redirect_url} target="_blank" rel="noopener noreferrer">
                         <Button>Lanjutkan ke 3D Secure →</Button>
                       </a>
+                    </div>
+                  </div>
+                )}
+
+                {/* Crypto (Plisio): redirect link — no custom checkout, user pays on Plisio */}
+                {payment.payment_method === "crypto" && payment.redirect_url && (
+                  <div className="px-6 pb-4">
+                    <div className="bg-amber-50 dark:bg-amber-950/30 py-6 rounded-xl text-center border border-amber-200 dark:border-amber-800">
+                      <p className="text-sm text-amber-800 dark:text-amber-200 mb-2">Selesaikan pembayaran di halaman Plisio</p>
+                      <Button
+                        onClick={() => { window.location.href = payment.redirect_url!; }}
+                        className="bg-amber-600 hover:bg-amber-700"
+                      >
+                        Lanjutkan ke halaman pembayaran →
+                      </Button>
                     </div>
                   </div>
                 )}
