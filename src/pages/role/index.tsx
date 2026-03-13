@@ -71,6 +71,8 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 const midtransClientKey = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || "SB-Mid-client-AyXigF7mydBiMeLq";
 const midtransEnv = process.env.NEXT_PUBLIC_MIDTRANS_ENV || "sandbox";
 
+// Dipakai lagi bila Metode Pembayaran Midtrans diaktifkan
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const getPaymentMethodLogo = (method: string, bank?: string): string | null => {
   if (method === "crypto") return null; // Crypto uses Coins icon in UI
   const base = "https://simulator.sandbox.midtrans.com/assets/images/payment_partners";
@@ -90,12 +92,14 @@ const getPaymentMethodLogo = (method: string, bank?: string): string | null => {
   return null;
 };
 
+// Hanya Crypto; Metode Midtrans di-comment — saat pilih role langsung tampil flow crypto
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const PAYMENT_METHODS = [
-  { id: "qris" as const, label: "QRIS" },
-  { id: "gopay" as const, label: "GoPay" },
-  { id: "bank_transfer" as const, label: "Bank Transfer" },
-  { id: "credit_card" as const, label: "Kartu Kredit" },
   { id: "crypto" as const, label: "Crypto" },
+  // { id: "qris" as const, label: "QRIS" },
+  // { id: "gopay" as const, label: "GoPay" },
+  // { id: "bank_transfer" as const, label: "Bank Transfer" },
+  // { id: "credit_card" as const, label: "Kartu Kredit" },
 ];
 
 const BANKS = ["bca", "bni", "bri", "permata", "mandiri"];
@@ -133,7 +137,9 @@ export default function RolePage() {
   const [rolePrices, setRolePrices] = useState<RolePrice[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRole, setSelectedRole] = useState<RolePrice | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<"bank_transfer" | "gopay" | "qris" | "credit_card" | "crypto">("gopay");
+    // paymentMethod tetap "crypto"; setPaymentMethod dipakai bila blok Metode Pembayaran di-uncomment
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [paymentMethod, setPaymentMethod] = useState<"bank_transfer" | "gopay" | "qris" | "credit_card" | "crypto">("crypto");
   const [bank, setBank] = useState("bca");
   const [cryptoCurrency, setCryptoCurrency] = useState("");
   const [plisioCurrencies, setPlisioCurrencies] = useState<PlisioCurrency[]>([]);
@@ -435,37 +441,15 @@ export default function RolePage() {
                     </Button>
                   </div>
 
-                  <div className="space-y-3">
+                  {/* Metode Pembayaran Midtrans di-comment — langsung tampil flow Crypto saat pilih role */}
+                  {/* <div className="space-y-3">
                     <Label>Metode Pembayaran</Label>
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                       {PAYMENT_METHODS.map((pm) => (
-                        <button
-                          key={pm.id}
-                          type="button"
-                          onClick={() => setPaymentMethod(pm.id)}
-                          className={`p-4 rounded-lg border-2 transition-all flex flex-col items-center gap-1 cursor-pointer ${
-                            paymentMethod === pm.id
-                              ? "border-blue-600 bg-blue-50 dark:bg-blue-950/50"
-                              : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300"
-                          }`}
-                        >
-                          {pm.id === "crypto" ? (
-                            <div className="h-10 w-10 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center">
-                              <Coins className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                            </div>
-                          ) : getPaymentMethodLogo(pm.id, bank) ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={getPaymentMethodLogo(pm.id, bank)!}
-                              alt={pm.label}
-                              className="h-10 w-10 object-contain"
-                            />
-                          ) : null}
-                          <span className="text-xs font-medium">{pm.label}</span>
-                        </button>
+                        <button key={pm.id} type="button" onClick={() => setPaymentMethod(pm.id)} ... />
                       ))}
                     </div>
-                  </div>
+                  </div> */}
 
                   {paymentMethod === "bank_transfer" && (
                     <div className="space-y-2">
