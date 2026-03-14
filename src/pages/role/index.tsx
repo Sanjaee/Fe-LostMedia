@@ -170,7 +170,7 @@ export default function RolePage() {
       setRolePrices(list);
     } catch (err) {
       console.error("Failed to load role prices:", err);
-      toast({ title: "Error", description: "Gagal memuat daftar role", variant: "destructive" });
+      toast({ title: "Error", description: "Failed to load role list", variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -234,7 +234,7 @@ export default function RolePage() {
       })
       .catch(() => {
         setPlisioCurrencies([]);
-        toast({ title: "Error", description: "Gagal memuat daftar cryptocurrency", variant: "destructive" });
+        toast({ title: "Error", description: "Failed to load cryptocurrency list", variant: "destructive" });
       })
       .finally(() => setCryptoCurrenciesLoading(false));
   }, [paymentMethod]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -264,7 +264,7 @@ export default function RolePage() {
   const handlePay = async () => {
     if (!selectedRole) return;
     if (!session?.user) {
-      toast({ title: "Login diperlukan", description: "Silakan login untuk upgrade role", variant: "destructive" });
+      toast({ title: "Login required", description: "Please sign in to upgrade role", variant: "destructive" });
       router.push("/auth/login");
       return;
     }
@@ -275,13 +275,13 @@ export default function RolePage() {
     try {
       if (paymentMethod === "credit_card") {
         if (!midtransClientKey || !window.MidtransNew3ds) {
-          toast({ title: "Error", description: "Midtrans belum siap. Coba lagi.", variant: "destructive" });
+          toast({ title: "Error", description: "Midtrans is not ready. Please try again.", variant: "destructive" });
           setLoadingPayment(false);
           return;
         }
         const cardNum = (cardNumber || "").replace(/\s/g, "");
         if (!cardNum || cardNum.length < 15) {
-          toast({ title: "Error", description: "Nomor kartu tidak valid", variant: "destructive" });
+          toast({ title: "Error", description: "Invalid card number", variant: "destructive" });
           setLoadingPayment(false);
           return;
         }
@@ -316,8 +316,8 @@ export default function RolePage() {
                       close3DSModal();
                       setLoadingPayment(false);
                       toast({
-                        title: "Verifikasi 3DS Gagal",
-                        description: "Pembayaran ditolak atau dibatalkan.",
+                        title: "3DS Verification Failed",
+                        description: "Payment was rejected or cancelled.",
                         variant: "destructive",
                       });
                     },
@@ -333,14 +333,14 @@ export default function RolePage() {
                   router.push(`/role/${payment.order_id}`);
                 }
               } catch (err: unknown) {
-                const msg = err instanceof Error ? err.message : "Gagal membuat pembayaran";
+                const msg = err instanceof Error ? err.message : "Failed to create payment";
                 toast({ title: "Error", description: msg, variant: "destructive" });
               } finally {
                 setLoadingPayment(false);
               }
             },
             onFailure: () => {
-              toast({ title: "Token gagal", description: "Data kartu tidak valid", variant: "destructive" });
+              toast({ title: "Token failed", description: "Invalid card data", variant: "destructive" });
               setLoadingPayment(false);
             },
           }
@@ -370,7 +370,7 @@ export default function RolePage() {
       });
       router.push(`/role/${payment.order_id}`);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Gagal membuat pembayaran";
+      const msg = err instanceof Error ? err.message : "Failed to create payment";
       toast({ title: "Error", description: msg, variant: "destructive" });
     } finally {
       setLoadingPayment(false);
@@ -384,7 +384,7 @@ export default function RolePage() {
             <CardHeader>
               <CardTitle className="text-2xl">Upgrade Role</CardTitle>
               <CardDescription>
-                Pilih role dan bayar untuk upgrade akun Anda
+                Choose a role and pay to upgrade your account
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -396,7 +396,7 @@ export default function RolePage() {
                 </div>
               ) : rolePrices.length === 0 ? (
                 <p className="text-muted-foreground text-center py-8">
-                  Belum ada role tersedia untuk upgrade. Hubungi admin.
+                  No roles available for upgrade. Contact the administrator.
                 </p>
               ) : !selectedRole ? (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -437,7 +437,7 @@ export default function RolePage() {
                       </p>
                     </div>
                     <Button variant="outline" size="sm" onClick={() => setSelectedRole(null)}>
-                      Ganti
+                      Change
                     </Button>
                   </div>
 
@@ -453,7 +453,7 @@ export default function RolePage() {
 
                   {paymentMethod === "bank_transfer" && (
                     <div className="space-y-2">
-                      <Label>Pilih Bank</Label>
+                      <Label>Select Bank</Label>
                       <div className="flex flex-wrap gap-2">
                         {BANKS.map((b) => (
                           <Button
@@ -472,11 +472,11 @@ export default function RolePage() {
 
                   {paymentMethod === "crypto" && (
                     <div className="space-y-3">
-                      <Label>Pilih Cryptocurrency</Label>
+                      <Label>Select Cryptocurrency</Label>
                       {cryptoCurrenciesLoading ? (
                         <div className="flex items-center justify-center py-8 gap-2 text-muted-foreground">
                           <div className="animate-spin rounded-full h-5 w-5 border-2 border-amber-500 border-t-transparent" />
-                          <span className="text-sm">Memuat daftar cryptocurrency...</span>
+                          <span className="text-sm">Loading cryptocurrency list...</span>
                         </div>
                       ) : plisioCurrencies.length > 0 ? (
                         <>
@@ -525,7 +525,7 @@ export default function RolePage() {
                                   </div>
                                   {isSelected && (
                                     <span className="text-amber-600 dark:text-amber-400 text-sm font-medium shrink-0">
-                                      Dipilih
+                                      Selected
                                     </span>
                                   )}
                                 </button>
@@ -533,7 +533,7 @@ export default function RolePage() {
                             })}
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            Setelah klik Bayar, Anda akan diarahkan ke halaman pembayaran Plisio.
+                            After clicking Pay, you will be redirected to the Plisio payment page.
                           </p>
                         </>
                       ) : (
@@ -548,7 +548,7 @@ export default function RolePage() {
                     <div className="space-y-4 p-4 rounded-lg border border-zinc-200 dark:border-zinc-800">
                       {!midtransClientKey && (
                         <p className="text-sm text-amber-600">
-                          Set NEXT_PUBLIC_MIDTRANS_CLIENT_KEY untuk kartu kredit.
+                          Set NEXT_PUBLIC_MIDTRANS_CLIENT_KEY for credit card.
                         </p>
                       )}
                       <div className="grid gap-3">
@@ -563,7 +563,7 @@ export default function RolePage() {
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                           <div className="space-y-2">
-                            <Label>Bulan (MM)</Label>
+                            <Label>Month (MM)</Label>
                             <Select value={cardExpMonth || undefined} onValueChange={setCardExpMonth}>
                               <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Bulan" />
@@ -578,7 +578,7 @@ export default function RolePage() {
                             </Select>
                           </div>
                           <div className="space-y-2">
-                            <Label>Tahun (YYYY)</Label>
+                            <Label>Year (YYYY)</Label>
                             <Select value={cardExpYear || undefined} onValueChange={setCardExpYear}>
                               <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Tahun" />
@@ -608,7 +608,7 @@ export default function RolePage() {
                             checked={saveCard}
                             onChange={(e) => setSaveCard(e.target.checked)}
                           />
-                          <span className="text-sm">Simpan kartu</span>
+                          <span className="text-sm">Save card</span>
                         </label>
                       </div>
                     </div>
@@ -620,10 +620,10 @@ export default function RolePage() {
                       disabled={loadingPayment}
                       className="flex-1"
                     >
-                      {loadingPayment ? "Memproses..." : "Bayar Rp " + selectedRole.price.toLocaleString("id-ID")}
+                      {loadingPayment ? "Processing..." : "Pay Rp " + selectedRole.price.toLocaleString("id-ID")}
                     </Button>
                     <Button variant="outline" onClick={() => setSelectedRole(null)}>
-                      Batal
+                      Cancel
                     </Button>
                   </div>
                 </div>
@@ -636,7 +636,7 @@ export default function RolePage() {
               <Link href="/auth/login" className="text-blue-600 hover:underline">
                 Login
               </Link>
-              {" "}untuk upgrade role.
+              {" "}to upgrade role.
             </p>
           )}
 
@@ -657,7 +657,7 @@ export default function RolePage() {
                 </div>
               ) : upgradedUsersSorted.length === 0 ? (
                 <p className="text-muted-foreground text-center py-6">
-                  Belum ada user dengan role upgrade.
+                  No users with upgraded roles yet.
                 </p>
               ) : (
                 <div className="flex flex-wrap gap-2">
@@ -694,16 +694,16 @@ export default function RolePage() {
       <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Konfirmasi Pembayaran</AlertDialogTitle>
+            <AlertDialogTitle>Confirm Payment</AlertDialogTitle>
             <AlertDialogDescription>
-              Upgrade ke <strong>{selectedRole?.name}</strong> sebesar Rp{" "}
+              Upgrade to <strong>{selectedRole?.name}</strong> for Rp{" "}
               {selectedRole?.price.toLocaleString("id-ID")}?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handlePay} disabled={loadingPayment}>
-              {loadingPayment ? "Memproses..." : "Ya, Bayar"}
+              {loadingPayment ? "Processing..." : "Yes, Pay"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -724,7 +724,7 @@ export default function RolePage() {
                   </svg>
                 </div>
                 <div>
-                  <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">Verifikasi 3D Secure</h2>
+                  <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">3D Secure Verification</h2>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">Issuing Bank</p>
                 </div>
               </div>
@@ -732,7 +732,7 @@ export default function RolePage() {
                 type="button"
                 onClick={close3DSModal}
                 className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors"
-                aria-label="Tutup"
+                aria-label="Close"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

@@ -137,8 +137,8 @@ export default function Register() {
       // Check if verification is required
       if (data.requires_verification) {
         toast({
-          title: "✅ Pendaftaran Berhasil!",
-          description: "OTP telah dikirim ke email Anda. Silakan verifikasi email untuk melanjutkan.",
+          title: "✅ Registration Successful!",
+          description: "OTP has been sent to your email. Please verify your email to continue.",
         });
         
         // Always redirect to verify-otp page for OTP input
@@ -146,16 +146,16 @@ export default function Register() {
       } else {
         // User already verified (shouldn't happen for new registration)
         toast({
-          title: "✅ Pendaftaran Berhasil!",
-          description: "Akun berhasil dibuat. Silakan login.",
+          title: "✅ Registration Successful!",
+          description: "Account created successfully. Please sign in.",
         });
         router.push("/auth/login");
       }
     } catch (error) {
       console.error("Registration error:", error);
 
-      let errorTitle = "❌ Pendaftaran Gagal";
-      let errorDescription = "Terjadi kesalahan saat mendaftar. Silakan coba lagi.";
+      let errorTitle = "❌ Registration Failed";
+      let errorDescription = "An error occurred while registering. Please try again.";
 
       // Handle specific error cases
       if (error instanceof Error) {
@@ -164,21 +164,21 @@ export default function Register() {
         // Check for specific error messages
         if (errorMessage.includes("already registered with Google") || 
             errorMessage.includes("already registered with password")) {
-          errorTitle = "❌ Email Sudah Terdaftar";
+          errorTitle = "❌ Email Already Registered";
           errorDescription = errorMessage.includes("Google") 
-            ? "Email ini sudah terdaftar dengan Google. Silakan login menggunakan Google Sign In."
-            : "Email ini sudah terdaftar dengan password. Silakan login dengan email dan password.";
+            ? "This email is already registered with Google. Please sign in using Google Sign In."
+            : "This email is already registered with password. Please sign in with email and password.";
         } else if (errorMessage.includes("already registered") || 
                    errorMessage.includes("already exists")) {
-          errorTitle = "❌ Email Sudah Terdaftar";
-          errorDescription = "Email yang Anda gunakan sudah terdaftar. Silakan gunakan yang lain atau coba login.";
+          errorTitle = "❌ Email Already Registered";
+          errorDescription = "The email you used is already registered. Please use another or try signing in.";
         } else if (errorMessage.includes("username already taken")) {
-          errorTitle = "❌ Username Sudah Digunakan";
-          errorDescription = "Username yang Anda pilih sudah digunakan. Silakan pilih username lain.";
+          errorTitle = "❌ Username Already Taken";
+          errorDescription = "The username you chose is already in use. Please choose another username.";
         } else if (errorMessage.includes("Invalid request data") || 
                    errorMessage.includes("VALIDATION_ERROR")) {
-          errorTitle = "❌ Data Tidak Valid";
-          errorDescription = "Pastikan semua field diisi dengan benar. Username min 3 karakter, password min 8 karakter.";
+          errorTitle = "❌ Invalid Data";
+          errorDescription = "Please ensure all fields are filled correctly. Username min 3 characters, password min 8 characters.";
         } else if (typeof errorMessage === 'string' && errorMessage.trim() !== '') {
           // Use the error message if it's a valid string
           errorDescription = errorMessage;
@@ -234,7 +234,7 @@ export default function Register() {
           className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Kembali
+          Back
         </Button>
       </div>
       <div className={cn("flex flex-col gap-6")}>
@@ -244,7 +244,7 @@ export default function Register() {
               Lost Media
             </CardTitle>
             <CardDescription className="text-gray-600 dark:text-gray-400">
-              Buat akun baru untuk memulai
+              Create a new account to get started
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -256,7 +256,7 @@ export default function Register() {
                     id="username"
                     name="username"
                     type="text"
-                    placeholder="Masukkan username (min 3, max 50 karakter)"
+                    placeholder="Enter username (min 3, max 50 characters)"
                     value={formData.username}
                     onChange={handleInputChange}
                     required
@@ -271,7 +271,7 @@ export default function Register() {
                     id="email"
                     name="email"
                     type="email"
-                    placeholder="Masukkan email"
+                    placeholder="Enter email"
                     value={formData.email}
                     onChange={handleInputChange}
                     required
@@ -285,7 +285,7 @@ export default function Register() {
                       id="password"
                       name="password"
                       type={showPassword ? "text" : "password"}
-                      placeholder="Masukkan password"
+                      placeholder="Enter password"
                       value={formData.password}
                       onChange={handleInputChange}
                       required
@@ -306,13 +306,13 @@ export default function Register() {
                   </div>
                 </div>
                 <div className="grid gap-3">
-                  <Label htmlFor="confirmPassword">Konfirmasi Password</Label>
+                  <Label htmlFor="confirmPassword">Confirm Password</Label>
                   <div className="relative">
                     <Input
                       id="confirmPassword"
                       name="confirmPassword"
                       type={showConfirmPassword ? "text" : "password"}
-                      placeholder="Konfirmasi password"
+                      placeholder="Confirm password"
                       value={formData.confirmPassword}
                       onChange={handleInputChange}
                       required
@@ -336,7 +336,7 @@ export default function Register() {
                 </div>
                 <div className="flex flex-col gap-3">
                   <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? "Membuat Akun..." : "Buat Akun"}
+                    {loading ? "Creating Account..." : "Create Account"}
                   </Button>
                 </div>
               </div>
@@ -349,7 +349,7 @@ export default function Register() {
               </div>
               <div className="relative flex justify-center text-xs uppercase">
                 <span className="bg-white dark:bg-gray-800 px-2 text-muted-foreground">
-                  Atau lanjutkan dengan
+                  Or continue with
                 </span>
               </div>
             </div>
@@ -384,20 +384,20 @@ export default function Register() {
                   fill="#EA4335"
                 />
               </svg>
-              {googleLoading ? "Memproses..." : "Daftar dengan Google"}
+              {googleLoading ? "Processing..." : "Sign up with Google"}
             </Button>
 
             {/* Login Link */}
             <div className="text-center mt-6">
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Sudah punya akun?{" "}
+                Already have an account?{" "}
                 <Button
                   type="button"
                   variant="link"
                   className="p-0 h-auto text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
                   onClick={() => router.push("/auth/login")}
                 >
-                  Masuk di sini
+                  Sign in here
                 </Button>
               </p>
             </div>

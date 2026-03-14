@@ -77,17 +77,17 @@ export const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !file.type.startsWith("image/")) {
-      toast({ title: "Pilih file gambar (JPEG, PNG, WebP)", variant: "destructive" });
+      toast({ title: "Select image file (JPEG, PNG, WebP)", variant: "destructive" });
       return;
     }
     setUploading(true);
     try {
       await api.uploadAvatar(file);
       await updateSession({ trigger: "update" });
-      toast({ title: "Foto profil berhasil diubah" });
+      toast({ title: "Profile photo updated successfully" });
       setIsDialogOpen(false);
     } catch (err: any) {
-      toast({ title: "Gagal mengupload", description: err?.message || "Coba lagi", variant: "destructive" });
+      toast({ title: "Upload failed", description: err?.message || "Please try again", variant: "destructive" });
     } finally {
       setUploading(false);
       e.target.value = "";
@@ -168,7 +168,7 @@ export const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
                 className="gap-2"
               >
                 <Upload className="h-4 w-4" />
-                {uploading ? "Mengupload..." : "Ubah foto profil"}
+                {uploading ? "Uploading..." : "Change profile photo"}
               </Button>
             )}
           </div>

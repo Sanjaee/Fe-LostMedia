@@ -55,8 +55,8 @@ const CreateGroupPage: React.FC = () => {
 
     if (file.size > 10 * 1024 * 1024) {
       toast({
-        title: "File terlalu besar",
-        description: "Maksimal 10MB",
+        title: "File too large",
+        description: "Maximum 10MB",
         variant: "destructive",
       });
       return;
@@ -78,7 +78,7 @@ const CreateGroupPage: React.FC = () => {
 
     if (!name.trim()) {
       toast({
-        title: "Nama grup diperlukan",
+        title: "Group name is required",
         variant: "destructive",
       });
       return;
@@ -107,12 +107,12 @@ const CreateGroupPage: React.FC = () => {
       const data = res as any;
       const group = data.group || data;
 
-      toast({ title: "Grup berhasil dibuat!" });
+      toast({ title: "Group created successfully!" });
       router.push(`/groups/${group.slug}`);
     } catch (err: any) {
       toast({
-        title: "Gagal membuat grup",
-        description: err?.message || "Coba lagi nanti",
+        title: "Failed to create group",
+        description: err?.message || "Please try again later",
         variant: "destructive",
       });
     } finally {
@@ -123,11 +123,11 @@ const CreateGroupPage: React.FC = () => {
   const getPrivacyDescription = () => {
     switch (privacy) {
       case "open":
-        return "Siapa pun bisa melihat grup dan postingan di dalamnya.";
+        return "Anyone can see the group and its posts.";
       case "closed":
-        return "Siapa pun bisa menemukan grup, tapi hanya anggota yang bisa melihat postingan.";
+        return "Anyone can find the group, but only members can see posts.";
       case "secret":
-        return "Hanya anggota yang bisa menemukan dan melihat grup.";
+        return "Only members can find and see the group.";
       default:
         return "";
     }
@@ -136,7 +136,7 @@ const CreateGroupPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 pt-4 pb-10">
       <Head>
-        <title>Buat Grup - Lost Media</title>
+        <title>Create Group - Lost Media</title>
       </Head>
 
       <div className="container mx-auto max-w-2xl px-4">
@@ -149,7 +149,7 @@ const CreateGroupPage: React.FC = () => {
             <ArrowLeft className="h-5 w-5 text-gray-700 dark:text-gray-300" />
           </button>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Buat Grup
+            Create Group
           </h1>
         </div>
 
@@ -196,11 +196,11 @@ const CreateGroupPage: React.FC = () => {
           {/* Group Name */}
           <div className="space-y-2">
             <Label htmlFor="name" className="text-gray-900 dark:text-white">
-              Nama Grup <span className="text-red-500">*</span>
+              Group Name <span className="text-red-500">*</span>
             </Label>
             <Input
               id="name"
-              placeholder="Masukkan nama grup..."
+              placeholder="Enter group name..."
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800"
@@ -214,11 +214,11 @@ const CreateGroupPage: React.FC = () => {
               htmlFor="description"
               className="text-gray-900 dark:text-white"
             >
-              Deskripsi
+              Description
             </Label>
             <Textarea
               id="description"
-              placeholder="Tentang grup ini..."
+              placeholder="About this group..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800 min-h-[100px]"
@@ -228,7 +228,7 @@ const CreateGroupPage: React.FC = () => {
           {/* Privacy */}
           <div className="space-y-2">
             <Label className="text-gray-900 dark:text-white">
-              Privasi Grup
+              Group Privacy
             </Label>
             <Select value={privacy} onValueChange={setPrivacy}>
               <SelectTrigger className="bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800">
@@ -238,19 +238,19 @@ const CreateGroupPage: React.FC = () => {
                 <SelectItem value="open">
                   <div className="flex items-center gap-2">
                     <Globe className="h-4 w-4" />
-                    Publik
+                    Public
                   </div>
                 </SelectItem>
                 <SelectItem value="closed">
                   <div className="flex items-center gap-2">
                     <Lock className="h-4 w-4" />
-                    Tertutup
+                    Closed
                   </div>
                 </SelectItem>
                 <SelectItem value="secret">
                   <div className="flex items-center gap-2">
                     <EyeOff className="h-4 w-4" />
-                    Rahasia
+                    Secret
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -263,7 +263,7 @@ const CreateGroupPage: React.FC = () => {
           {/* Membership Policy */}
           <div className="space-y-2">
             <Label className="text-gray-900 dark:text-white">
-              Kebijakan Keanggotaan
+              Membership Policy
             </Label>
             <Select
               value={membershipPolicy}
@@ -276,13 +276,13 @@ const CreateGroupPage: React.FC = () => {
                 <SelectItem value="anyone_can_join">
                   <div className="flex items-center gap-2">
                     <Users className="h-4 w-4" />
-                    Siapa saja bisa bergabung
+                    Anyone can join
                   </div>
                 </SelectItem>
                 <SelectItem value="approval_required">
                   <div className="flex items-center gap-2">
                     <Lock className="h-4 w-4" />
-                    Perlu persetujuan admin
+                    Admin approval required
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -297,14 +297,14 @@ const CreateGroupPage: React.FC = () => {
               onClick={() => router.back()}
               className="flex-1 border-gray-300 dark:border-zinc-700"
             >
-              Batal
+              Cancel
             </Button>
             <Button
               type="submit"
               disabled={creating || !name.trim()}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
             >
-              {creating ? "Membuat..." : "Buat Grup"}
+              {creating ? "Creating..." : "Create Group"}
             </Button>
           </div>
         </form>

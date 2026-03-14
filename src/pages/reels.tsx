@@ -259,13 +259,13 @@ export default function ReelsPage() {
           >
           {loading ? (
             <div className="flex h-full w-full items-center justify-center text-zinc-500">
-              Memuat reels...
+              Loading reels...
             </div>
           ) : posts.length === 0 ? (
             <div className="flex h-full w-full flex-col items-center justify-center gap-4 text-zinc-500">
-              <p>Belum ada video reels.</p>
+              <p>No video reels yet.</p>
               <Link href="/">
-                <Button variant="outline">Kembali ke Feed</Button>
+                <Button variant="outline">Back to Feed</Button>
               </Link>
             </div>
           ) : (
@@ -389,12 +389,12 @@ export default function ReelsPage() {
                     </div>
 
                     {/* Bookmark */}
-                    <button type="button" className="flex h-12 w-12 items-center justify-center rounded-full text-white hover:bg-white/10" aria-label="Simpan">
+                    <button type="button" className="flex h-12 w-12 items-center justify-center rounded-full text-white hover:bg-white/10" aria-label="Save">
                       <Bookmark className="h-10 w-10 shrink-0" />
                     </button>
 
                     {/* Share */}
-                    <button type="button" className="flex h-12 w-12 items-center justify-center rounded-full text-white hover:bg-white/10" aria-label="Bagikan">
+                    <button type="button" className="flex h-12 w-12 items-center justify-center rounded-full text-white hover:bg-white/10" aria-label="Share">
                       <Share2 className="h-10 w-10 shrink-0" />
                     </button>
                   </div>

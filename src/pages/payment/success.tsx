@@ -57,8 +57,8 @@ export default function PaymentSuccessPage() {
           update().then(() => {
             const roleName = payment?.target_role ? getRoleDisplayName(payment.target_role) : "role baru";
             toast({
-              title: "Selamat! Upgrade Anda berhasil.",
-              description: `${roleName} sudah aktif. Terima kasih telah mempercayakan kami!`,
+              title: "Congratulations! Your upgrade was successful.",
+              description: `${roleName} is now active. Thank you for choosing us!`,
             });
           }).catch(() => {});
         } else {
@@ -66,10 +66,10 @@ export default function PaymentSuccessPage() {
         }
       })
       .catch((err: Error & { response?: { status: number } }) => {
-        const msg = err?.message || "Gagal memverifikasi pembayaran.";
+        const msg = err?.message || "Failed to verify payment.";
         const status = err?.response?.status ?? 0;
         if (status === 403) {
-          setErrorMessage("Pembayaran ini milik akun lain. Anda tidak dapat mengklaimnya.");
+          setErrorMessage("This payment belongs to another account. You cannot claim it.");
         } else if (status === 404) {
           setErrorMessage("Pembayaran tidak ditemukan.");
         } else {
@@ -87,7 +87,7 @@ export default function PaymentSuccessPage() {
       <div className="min-h-[60vh] flex items-center justify-center px-4">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">Memuat...</p>
+          <p className="text-sm text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
@@ -104,7 +104,7 @@ export default function PaymentSuccessPage() {
             <CardHeader className="text-center sm:text-left">
               <CardTitle className="flex items-center justify-center sm:justify-start gap-2 text-destructive">
                 <XCircle className="h-5 w-5 shrink-0" />
-                Verifikasi gagal
+                Verification failed
               </CardTitle>
               <CardDescription className="text-center sm:text-left">
                 Parameter order_id tidak ditemukan.
@@ -112,7 +112,7 @@ export default function PaymentSuccessPage() {
             </CardHeader>
             <CardContent className="flex justify-center sm:justify-start">
               <Button asChild>
-                <Link href="/">Kembali ke Beranda</Link>
+                <Link href="/">Back to Home</Link>
               </Button>
             </CardContent>
           </Card>
@@ -140,13 +140,13 @@ export default function PaymentSuccessPage() {
               <CardHeader className="text-center sm:text-left">
                 <CardTitle className="flex items-center justify-center sm:justify-start gap-2 text-destructive">
                   <XCircle className="h-5 w-5 shrink-0" />
-                  Verifikasi gagal
+                  Verification failed
                 </CardTitle>
                 <CardDescription className="text-center sm:text-left">{errorMessage}</CardDescription>
               </CardHeader>
               <CardContent className="flex justify-center sm:justify-start">
                 <Button asChild>
-                  <Link href="/">Kembali ke Beranda</Link>
+                  <Link href="/">Back to Home</Link>
                 </Button>
               </CardContent>
             </>
@@ -157,15 +157,15 @@ export default function PaymentSuccessPage() {
               <CardHeader className="text-center sm:text-left">
                 <CardTitle className="flex items-center justify-center sm:justify-start gap-2 text-muted-foreground">
                   <Loader2 className="h-5 w-5 shrink-0 animate-spin" />
-                  Menunggu konfirmasi
+                  Waiting for confirmation
                 </CardTitle>
                 <CardDescription className="text-center sm:text-left">
-                  Pembayaran sedang diproses. Role akan diperbarui setelah konfirmasi. Anda bisa menutup halaman ini dan kembali nanti.
+                  Payment is being processed. Your role will be updated after confirmation. You can close this page and come back later.
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex justify-center sm:justify-start">
                 <Button asChild variant="outline">
-                  <Link href="/">Kembali ke Beranda</Link>
+                  <Link href="/">Back to Home</Link>
                 </Button>
               </CardContent>
             </>
@@ -201,7 +201,7 @@ export default function PaymentSuccessPage() {
               </CardHeader>
               <CardContent className="flex justify-center pb-8 sm:pb-10">
                 <Button asChild size="lg" className="min-w-[200px]">
-                  <Link href="/">Kembali ke Beranda</Link>
+                  <Link href="/">Back to Home</Link>
                 </Button>
               </CardContent>
             </>

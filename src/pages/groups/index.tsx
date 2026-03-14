@@ -204,7 +204,7 @@ const GroupsListPage: React.FC = () => {
               className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white"
             >
               <Plus className="h-4 w-4" />
-              Buat Grup
+              Create Group
             </Button>
           </Link>
         </div>
@@ -275,12 +275,12 @@ const GroupsListPage: React.FC = () => {
                 <div className="text-center py-8">
                   <Users className="h-12 w-12 mx-auto text-gray-400 mb-3" />
                   <p className="text-gray-500 dark:text-gray-400">
-                    Belum ada grup. Buat grup pertamamu!
+                    No groups yet. Create your first group!
                   </p>
                   <Link href="/groups/create">
                     <Button className="mt-3 gap-1.5 bg-blue-600 hover:bg-blue-700 text-white">
                       <Plus className="h-4 w-4" />
-                      Buat Grup
+                      Create Group
                     </Button>
                   </Link>
                 </div>

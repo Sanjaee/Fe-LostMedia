@@ -89,7 +89,7 @@ const GroupPage: React.FC = () => {
     } catch {
       toast({
         title: "Error",
-        description: "Grup tidak ditemukan",
+        description: "Group not found",
         variant: "destructive",
       });
       router.push("/");
@@ -143,12 +143,12 @@ const GroupPage: React.FC = () => {
       await api.joinGroup(group.id);
       setIsMember(true);
       setMemberRole("member");
-      toast({ title: "Berhasil bergabung!" });
+      toast({ title: "Successfully joined!" });
       loadGroup();
     } catch (err: any) {
       toast({
-        title: "Gagal bergabung",
-        description: err?.message || "Coba lagi nanti",
+        title: "Failed to join",
+        description: err?.message || "Please try again later",
         variant: "destructive",
       });
     } finally {
@@ -161,18 +161,18 @@ const GroupPage: React.FC = () => {
     try {
       const res = (await api.leaveGroup(group.id)) as { deleted?: boolean };
       if (res?.deleted) {
-        toast({ title: "Grup dihapus", description: "Anda keluar sebagai satu-satunya admin, grup telah dihapus." });
+        toast({ title: "Group deleted", description: "You left as the only admin, the group has been deleted." });
         router.push("/groups");
       } else {
         setIsMember(false);
         setMemberRole("");
-        toast({ title: "Berhasil keluar dari grup" });
+        toast({ title: "Successfully left the group" });
         loadGroup();
       }
     } catch (err: any) {
       toast({
-        title: "Gagal keluar",
-        description: err?.message || "Coba lagi nanti",
+        title: "Failed to leave",
+        description: err?.message || "Please try again later",
         variant: "destructive",
       });
     }
@@ -183,12 +183,12 @@ const GroupPage: React.FC = () => {
     setDeletingGroup(true);
     try {
       await api.deleteGroup(group.id);
-      toast({ title: "Grup dihapus", description: "Grup berhasil dihapus." });
+      toast({ title: "Group deleted", description: "Group deleted successfully." });
       router.push("/groups");
     } catch (err: any) {
       toast({
-        title: "Gagal menghapus grup",
-        description: err?.message || "Coba lagi nanti",
+        title: "Failed to delete group",
+        description: err?.message || "Please try again later",
         variant: "destructive",
       });
     } finally {
@@ -205,7 +205,7 @@ const GroupPage: React.FC = () => {
       });
     } else if (typeof window !== "undefined") {
       navigator.clipboard.writeText(window.location.href);
-      toast({ title: "Link disalin!" });
+      toast({ title: "Link copied!" });
     }
   };
 
@@ -225,20 +225,20 @@ const GroupPage: React.FC = () => {
   const getPrivacyLabel = () => {
     switch (group?.privacy) {
       case "open":
-        return "Grup Publik";
+        return "Public Group";
       case "closed":
-        return "Grup Tertutup";
+        return "Closed Group";
       case "secret":
-        return "Grup Rahasia";
+        return "Secret Group";
       default:
-        return "Grup Publik";
+        return "Public Group";
     }
   };
 
   const formatMemberCount = (count: number) => {
-    if (count >= 1000000) return `${(count / 1000000).toFixed(1)} jt anggota`;
-    if (count >= 1000) return `${(count / 1000).toFixed(1)} rb anggota`;
-    return `${count} anggota`;
+    if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M members`;
+    if (count >= 1000) return `${(count / 1000).toFixed(1)}K members`;
+    return `${count} members`;
   };
 
   if (loading) {
@@ -266,7 +266,7 @@ const GroupPage: React.FC = () => {
   if (!group) {
     return (
       <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 flex items-center justify-center">
-        <p className="text-gray-500 dark:text-gray-400">Grup tidak ditemukan</p>
+        <p className="text-gray-500 dark:text-gray-400">Group not found</p>
       </div>
     );
   }
@@ -275,7 +275,7 @@ const GroupPage: React.FC = () => {
     <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950">
       <Head>
         <title>{group.name} - Lost Media</title>
-        <meta name="description" content={group.description || `Grup ${group.name}`} />
+        <meta name="description" content={group.description || `Group ${group.name}`} />
       </Head>
 
       {/* Cover Photo */}
@@ -293,7 +293,7 @@ const GroupPage: React.FC = () => {
           {/* Overlay at bottom */}
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
             <p className="text-white text-sm">
-              Grup oleh{" "}
+              Group by{" "}
               <span className="font-semibold">
                 {group.creator?.full_name || group.creator?.username || "Unknown"}
               </span>
@@ -312,11 +312,11 @@ const GroupPage: React.FC = () => {
                   if (!file) return;
                   try {
                     await api.updateGroupCover(group.id, file);
-                    toast({ title: "Cover berhasil diubah" });
+                    toast({ title: "Cover updated successfully" });
                     loadGroup();
                   } catch {
                     toast({
-                      title: "Gagal upload cover",
+                      title: "Failed to upload cover",
                       variant: "destructive",
                     });
                   }
@@ -387,7 +387,7 @@ const GroupPage: React.FC = () => {
                         className="gap-1.5 bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-zinc-600 cursor-default"
                       >
                         <Check className="h-4 w-4 text-green-500" />
-                        Bergabung
+                        Join
                         <ChevronDown className="h-3 w-3" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -400,7 +400,7 @@ const GroupPage: React.FC = () => {
                         className="text-red-600 dark:text-red-400 cursor-pointer"
                       >
                         <LogOut className="h-4 w-4 mr-2" />
-                        Keluar Grup
+                        Leave Group
                       </DropdownMenuItem>
                       {memberRole === "admin" && (
                         <>
@@ -409,14 +409,14 @@ const GroupPage: React.FC = () => {
                             className="cursor-pointer"
                           >
                             <Settings className="h-4 w-4 mr-2" />
-                            Pengaturan Grup
+                            Group Settings
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => setDeleteGroupDialogOpen(true)}
                             className="text-red-600 dark:text-red-400 cursor-pointer"
                           >
                             <Trash2 className="h-4 w-4 mr-2" />
-                            Hapus Grup
+                            Delete Group
                           </DropdownMenuItem>
                         </>
                       )}
@@ -435,7 +435,7 @@ const GroupPage: React.FC = () => {
                   className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white"
                 >
                   <UserPlus className="h-4 w-4" />
-                  {joining ? "Bergabung..." : "Bergabung"}
+                  {joining ? "Joining..." : "Join"}
                 </Button>
               )}
             </div>
@@ -445,9 +445,9 @@ const GroupPage: React.FC = () => {
           <div className="flex items-center gap-1 mt-4 border-t border-gray-200 dark:border-zinc-800 pt-2 -mb-4 overflow-x-auto">
             {(
               [
-                { key: "tentang", label: "Tentang" },
-                { key: "diskusi", label: "Diskusi" },
-                { key: "orang", label: "Orang" },
+                { key: "tentang", label: "About" },
+                { key: "diskusi", label: "Discussion" },
+                { key: "orang", label: "Members" },
                 { key: "media", label: "Media" },
               ] as { key: TabType; label: string }[]
             ).map((tab) => (
@@ -511,13 +511,13 @@ const GroupPage: React.FC = () => {
       <AlertDialog open={deleteGroupDialogOpen} onOpenChange={setDeleteGroupDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Hapus Grup?</AlertDialogTitle>
+            <AlertDialogTitle>Delete Group?</AlertDialogTitle>
             <AlertDialogDescription>
-              Apakah Anda yakin ingin menghapus grup {group?.name}? Tindakan ini tidak dapat dibatalkan. Semua postingan dan anggota akan dihapus.
+              Are you sure you want to delete the group {group?.name}? This action cannot be undone. All posts and members will be removed.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deletingGroup}>Batal</AlertDialogCancel>
+            <AlertDialogCancel disabled={deletingGroup}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault();
@@ -529,10 +529,10 @@ const GroupPage: React.FC = () => {
               {deletingGroup ? (
                 <>
                   <Skeleton className="h-4 w-4 mr-2 shrink-0" />
-                  Menghapus...
+                  Deleting...
                 </>
               ) : (
-                "Hapus Grup"
+                "Delete Group"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -612,8 +612,8 @@ const DiskusiTab: React.FC<DiskusiTabProps> = ({
 
     if (messageData.type === "post_upload_pending") {
       toast({
-        title: "Upload Dimulai",
-        description: "Post sedang diproses, gambar sedang diupload...",
+        title: "Upload started",
+        description: "Post is being processed, images are uploading...",
       });
     } else if (
       messageData.type === "post_upload_completed" ||
@@ -637,10 +637,10 @@ const DiskusiTab: React.FC<DiskusiTabProps> = ({
       }
 
       toast({
-        title: notification.title || "Upload Selesai",
+        title: notification.title || "Upload complete",
         description:
           notification.message ||
-          `Post berhasil diupload dengan ${notification.data?.image_count || 0} gambar`,
+          `Post uploaded successfully with ${notification.data?.image_count || 0} image(s)`,
       });
 
       // Fetch the newly created post and prepend it
@@ -784,14 +784,14 @@ const DiskusiTab: React.FC<DiskusiTabProps> = ({
           ) : posts.length === 0 ? (
             <div className="bg-white dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-800 p-8 text-center">
               <p className="text-gray-500 dark:text-gray-400">
-                Belum ada postingan di grup ini
+                No posts in this group yet
               </p>
               {isMember && (
                 <Button
                   className="mt-3 bg-blue-600 hover:bg-blue-700 text-white"
                   onClick={() => setIsPostDialogOpen(true)}
                 >
-                  Buat postingan pertama
+                  Create the first post
                 </Button>
               )}
             </div>
@@ -822,24 +822,24 @@ const DiskusiTab: React.FC<DiskusiTabProps> = ({
         <div className="lg:col-span-2 space-y-4">
           {/* About Card */}
           <div className="bg-white dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-800 p-4">
-            <h3 className="font-bold text-gray-900 dark:text-white mb-3">Tentang</h3>
+            <h3 className="font-bold text-gray-900 dark:text-white mb-3">About</h3>
             <div className="space-y-3">
               <div className="flex items-start gap-3">
                 <Globe className="h-5 w-5 text-gray-500 dark:text-gray-400 mt-0.5 shrink-0" />
                 <div>
                   <p className="font-semibold text-sm text-gray-900 dark:text-white">
                     {group.privacy === "open"
-                      ? "Publik"
+                      ? "Public"
                       : group.privacy === "closed"
-                      ? "Tertutup"
-                      : "Rahasia"}
+                      ? "Closed"
+                      : "Secret"}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     {group.privacy === "open"
-                      ? "Siapa pun bisa melihat siapa saja anggota grup ini dan apa yang mereka posting."
+                      ? "Anyone can see who is in this group and what they post."
                       : group.privacy === "closed"
-                      ? "Hanya anggota yang bisa melihat postingan di grup ini."
-                      : "Hanya anggota yang bisa menemukan grup ini."}
+                      ? "Only members can see posts in this group."
+                      : "Only members can find this group."}
                   </p>
                 </div>
               </div>
@@ -848,10 +848,10 @@ const DiskusiTab: React.FC<DiskusiTabProps> = ({
                   <Users className="h-5 w-5 text-gray-500 dark:text-gray-400 mt-0.5 shrink-0" />
                   <div>
                     <p className="font-semibold text-sm text-gray-900 dark:text-white">
-                      Dapat dilihat
+                      Visibility
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Semua orang bisa menemukan grup ini.
+                      Everyone can find this group.
                     </p>
                   </div>
                 </div>
@@ -949,7 +949,7 @@ const TentangTab: React.FC<TentangTabProps> = ({ group, membersTotal }) => {
           </p>
         ) : (
           <p className="text-gray-500 dark:text-gray-400 italic">
-            Tidak ada deskripsi
+            No description
           </p>
         )}
       </div>
@@ -966,17 +966,17 @@ const TentangTab: React.FC<TentangTabProps> = ({ group, membersTotal }) => {
           <div>
             <p className="font-semibold text-gray-900 dark:text-white">
               {group.privacy === "open"
-                ? "Publik"
+                ? "Public"
                 : group.privacy === "closed"
-                ? "Tertutup"
-                : "Rahasia"}
+                ? "Closed"
+                : "Secret"}
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               {group.privacy === "open"
-                ? "Siapa pun bisa melihat siapa saja anggota grup ini dan apa yang mereka posting."
+                ? "Anyone can see who is in this group and what they post."
                 : group.privacy === "closed"
-                ? "Hanya anggota yang bisa melihat postingan di grup ini."
-                : "Hanya anggota yang bisa menemukan grup ini."}
+                ? "Only members can see posts in this group."
+                : "Only members can find this group."}
             </p>
           </div>
         </div>
@@ -985,10 +985,10 @@ const TentangTab: React.FC<TentangTabProps> = ({ group, membersTotal }) => {
           <Users className="h-5 w-5 text-gray-500 mt-0.5" />
           <div>
             <p className="font-semibold text-gray-900 dark:text-white">
-              {membersTotal} anggota
+              {membersTotal} members
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Bergabung untuk berinteraksi dengan anggota lainnya
+              Join to interact with other members
             </p>
           </div>
         </div>
@@ -1050,7 +1050,7 @@ const OrangTab: React.FC<OrangTabProps> = ({ members, membersTotal }) => {
     <div className="max-w-2xl mx-auto">
       <div className="bg-white dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-800 p-4">
         <h3 className="font-bold text-gray-900 dark:text-white mb-4">
-          Anggota · {membersTotal}
+          Members · {membersTotal}
         </h3>
         <div className="space-y-3">
           {sortedMembers.map((m) => (
@@ -1084,7 +1084,7 @@ const OrangTab: React.FC<OrangTabProps> = ({ members, membersTotal }) => {
                 <div className="flex items-center gap-2">
                   {getRoleBadge(m.role)}
                   <span className="text-xs text-gray-500 dark:text-gray-400">
-                    Bergabung{" "}
+                    Join{" "}
                     {new Date(m.created_at).toLocaleDateString("id-ID", {
                       month: "short",
                       year: "numeric",
@@ -1116,7 +1116,7 @@ const MediaTab: React.FC<MediaTabProps> = ({ posts }) => {
       <div className="max-w-2xl mx-auto bg-white dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-800 p-8 text-center">
         <ImageIcon className="h-12 w-12 mx-auto text-gray-400 mb-3" />
         <p className="text-gray-500 dark:text-gray-400">
-          Belum ada media di grup ini
+          No media in this group yet
         </p>
       </div>
     );

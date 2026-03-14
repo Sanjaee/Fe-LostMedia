@@ -75,7 +75,7 @@ export default function ReportPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!session?.user) {
-      toast({ title: "Login diperlukan", description: "Silakan login untuk mengirim report", variant: "destructive" });
+      toast({ title: "Login required", description: "Please sign in to submit a report", variant: "destructive" });
       router.push("/auth/login");
       return;
     }
@@ -96,8 +96,8 @@ export default function ReportPage() {
     } catch (err: unknown) {
       const e = err as { message?: string };
       toast({
-        title: "Gagal",
-        description: e?.message || "Gagal mengirim report",
+        title: "Failed",
+        description: e?.message || "Failed to send report",
         variant: "destructive",
       });
     } finally {
@@ -108,7 +108,7 @@ export default function ReportPage() {
   if (status === "loading") {
     return (
       <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 flex items-center justify-center">
-        <div className="animate-pulse text-zinc-500">Memuat...</div>
+        <div className="animate-pulse text-zinc-500">Loading...</div>
       </div>
     );
   }
@@ -120,7 +120,7 @@ export default function ReportPage() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <AlertCircle className="h-6 w-6 text-amber-500" />
-              <CardTitle className="text-xl">Kirim Report</CardTitle>
+              <CardTitle className="text-xl">Submit Report</CardTitle>
             </div>
             <CardDescription>
               Laporkan masalah, saran, atau keluhan. Tim kami akan meninjau sesegera mungkin.
@@ -130,7 +130,7 @@ export default function ReportPage() {
             {status === "unauthenticated" ? (
               <div className="text-center py-6">
                 <p className="text-zinc-600 dark:text-zinc-400 mb-4">
-                  Login terlebih dahulu untuk mengirim report
+                  Please sign in first to submit a report
                 </p>
                 <Button asChild>
                   <Link href="/auth/login">Login</Link>
@@ -146,10 +146,10 @@ export default function ReportPage() {
                   Terima kasih atas kontribusi Anda. Tim kami akan meninjau sesegera mungkin.
                 </p>
                 <Button onClick={() => setSubmitted(false)} variant="outline" className="mr-2">
-                  Kirim Report Lain
+                  Submit Another Report
                 </Button>
                 <Button asChild>
-                  <Link href="/">Kembali ke Beranda</Link>
+                  <Link href="/">Back to Home</Link>
                 </Button>
               </div>
             ) : (
@@ -168,10 +168,10 @@ export default function ReportPage() {
                 </div>
                 <div className="flex gap-2">
                   <Button type="submit" disabled={loading}>
-                    {loading ? "Mengirim..." : "Kirim Report"}
+                    {loading ? "Sending..." : "Submit Report"}
                   </Button>
                   <Button type="button" variant="outline" asChild>
-                    <Link href="/">Batal</Link>
+                    <Link href="/">Cancel</Link>
                   </Button>
                 </div>
               </form>
@@ -184,7 +184,7 @@ export default function ReportPage() {
             <CardHeader>
               <CardTitle className="text-lg">Report Saya</CardTitle>
               <CardDescription>
-                Daftar report yang telah Anda kirim beserta balasan dari admin
+                List of reports you have submitted and admin replies
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -196,7 +196,7 @@ export default function ReportPage() {
                 </div>
               ) : myReports.length === 0 ? (
                 <p className="text-center text-zinc-500 dark:text-zinc-400 py-6">
-                  Belum ada report. Kirim report pertama Anda di atas.
+                  No reports yet. Submit your first report above.
                 </p>
               ) : (
                 <div className="space-y-4">

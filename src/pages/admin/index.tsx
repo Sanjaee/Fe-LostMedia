@@ -80,8 +80,8 @@ export default function AdminPage() {
       loadStats();
       const name = messageData?.full_name || messageData?.email || "User baru";
       toast({
-        title: "User baru terdaftar",
-        description: `${name} baru saja mendaftar. Daftar user diperbarui.`,
+        title: "New user registered",
+        description: `${name} just registered. User list updated.`,
       });
     }
   });
@@ -95,20 +95,20 @@ export default function AdminPage() {
               Admin Dashboard
             </h1>
             <p className="text-zinc-600 dark:text-zinc-400">
-              Kelola pengguna dan lihat statistik platform
+              Manage users and view platform statistics
             </p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" asChild>
               <Link href="/admin/transactions">
                 <Receipt className="h-4 w-4 mr-2" />
-                Semua Transaksi
+                All Transactions
               </Link>
             </Button>
             <Button variant="outline" size="sm" asChild>
               <Link href="/admin/role-prices">
                 <DollarSign className="h-4 w-4 mr-2" />
-                Kelola Role Prices
+                Manage Role Prices
               </Link>
             </Button>
           </div>
@@ -123,7 +123,7 @@ export default function AdminPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats.total}</div>
-                <p className="text-xs text-muted-foreground">Semua pengguna terdaftar</p>
+                <p className="text-xs text-muted-foreground">All registered users</p>
               </CardContent>
             </Card>
 
@@ -156,7 +156,7 @@ export default function AdminPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats.by_verification.unverified}</div>
-                <p className="text-xs text-muted-foreground">Belum verifikasi</p>
+                <p className="text-xs text-muted-foreground">Unverified</p>
               </CardContent>
             </Card>
           </div>
@@ -167,7 +167,7 @@ export default function AdminPage() {
             <Card className="py-6">
               <CardHeader>
                 <CardTitle>User Distribution by Type</CardTitle>
-                <CardDescription>Distribusi pengguna berdasarkan tipe</CardDescription>
+                <CardDescription>User distribution by type</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -216,7 +216,7 @@ export default function AdminPage() {
             <Card className="py-6">
               <CardHeader>
                 <CardTitle>Verification Status</CardTitle>
-                <CardDescription>Status verifikasi email pengguna</CardDescription>
+                <CardDescription>User email verification status</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">

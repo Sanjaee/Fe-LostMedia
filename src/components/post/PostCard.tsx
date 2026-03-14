@@ -100,7 +100,7 @@ export function PostCard({
       toast({ title: "Tersalin", description: "Link post disalin ke clipboard" });
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast({ title: "Gagal", description: "Tidak bisa menyalin link", variant: "destructive" });
+      toast({ title: "Failed", description: "Could not copy link", variant: "destructive" });
     }
   };
 
@@ -113,7 +113,7 @@ export function PostCard({
       setDeleting(true);
       await api.deletePost(post.id);
       toast({
-        title: "Berhasil",
+        title: "Success",
         description: "Post berhasil dihapus",
       });
       if (onPostDeleted) {
@@ -478,7 +478,7 @@ export function PostCard({
                   Menghapus...
                 </>
               ) : (
-                "Hapus"
+                "Delete"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

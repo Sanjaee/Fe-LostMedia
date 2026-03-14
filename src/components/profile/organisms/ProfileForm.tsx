@@ -83,14 +83,14 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
       if (profile) {
         await api.updateProfile(profile.id, formData);
         toast({
-          title: "Berhasil",
-          description: "Profil berhasil diperbarui",
+          title: "Success",
+          description: "Profile updated successfully",
         });
       } else {
         await api.createProfile(formData);
         toast({
-          title: "Berhasil",
-          description: "Profil berhasil dibuat",
+          title: "Success",
+          description: "Profile created successfully",
         });
       }
       onSuccess();
@@ -100,7 +100,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Gagal menyimpan profil",
+        description: error.message || "Failed to save profile",
         variant: "destructive",
       });
     } finally {

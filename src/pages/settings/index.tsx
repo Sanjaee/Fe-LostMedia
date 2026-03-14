@@ -78,7 +78,7 @@ export default function SettingsPage() {
       router.push("/auth/login");
     } catch (err: any) {
       toast({
-        title: "Gagal menghapus akun",
+        title: "Failed to delete account",
         description: err?.message || "Terjadi kesalahan. Coba lagi.",
         variant: "destructive",
       });
@@ -183,7 +183,7 @@ export default function SettingsPage() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Hapus Akun?</AlertDialogTitle>
+            <AlertDialogTitle>Delete Account?</AlertDialogTitle>
             <AlertDialogDescription>
               Tindakan ini tidak dapat dibatalkan. Semua data akun Anda akan dihapus permanen.
               Ketik <strong>{CONFIRM_TEXT}</strong> untuk mengonfirmasi.
@@ -196,7 +196,7 @@ export default function SettingsPage() {
                 <Input
                   id="delete-password"
                   type="password"
-                  placeholder="Masukkan password Anda"
+                  placeholder="Enter your password"
                   value={deletePassword}
                   onChange={(e) => setDeletePassword(e.target.value)}
                   className="border-zinc-300 dark:border-zinc-700"
@@ -218,7 +218,7 @@ export default function SettingsPage() {
             </div>
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Batal</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
             <Button
               variant="destructive"
               onClick={handleDeleteAccount}

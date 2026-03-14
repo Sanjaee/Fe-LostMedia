@@ -16,12 +16,12 @@ const tabs: Array<{
   label: string;
   icon: React.ReactNode;
 }> = [
-  { id: "all", label: "Semua", icon: <Home className="h-4 w-4" /> },
-  { id: "about", label: "Tentang", icon: <Info className="h-4 w-4" /> },
-  { id: "photos", label: "Foto", icon: <Image className="h-4 w-4" /> },
-  { id: "followers", label: "Pengikut", icon: <Users className="h-4 w-4" /> },
-  { id: "mentions", label: "Penyebutan", icon: <MessageSquare className="h-4 w-4" /> },
-  { id: "more", label: "Lainnya", icon: <MoreHorizontal className="h-4 w-4" /> },
+  { id: "all", label: "All", icon: <Home className="h-4 w-4" /> },
+  { id: "about", label: "About", icon: <Info className="h-4 w-4" /> },
+  { id: "photos", label: "Photos", icon: <Image className="h-4 w-4" /> },
+  { id: "followers", label: "Followers", icon: <Users className="h-4 w-4" /> },
+  { id: "mentions", label: "Mentions", icon: <MessageSquare className="h-4 w-4" /> },
+  { id: "more", label: "More", icon: <MoreHorizontal className="h-4 w-4" /> },
 ];
 
 export const ProfileTabs: React.FC<ProfileTabsProps> = ({

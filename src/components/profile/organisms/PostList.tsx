@@ -182,7 +182,7 @@ export const PostList: React.FC<PostListProps> = ({
       setDeletingId(postToDelete.id);
       await api.deletePost(postToDelete.id);
       toast({
-        title: "Berhasil",
+        title: "Success",
         description: "Post berhasil dihapus",
       });
       loadPosts();
@@ -661,7 +661,7 @@ export const PostList: React.FC<PostListProps> = ({
                   Menghapus...
                 </>
               ) : (
-                "Hapus"
+                "Delete"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -134,8 +134,8 @@ export const LoginForm = () => {
         // Check if verification is required
         if (authResponse.requires_verification) {
           toast({
-            title: "📧 Email Belum Diverifikasi",
-            description: "OTP telah dikirim ke email Anda. Silakan verifikasi email untuk melanjutkan.",
+            title: "📧 Email Not Verified",
+            description: "OTP has been sent to your email. Please verify your email to continue.",
           });
 
           // Store email in session storage
@@ -155,14 +155,14 @@ export const LoginForm = () => {
 
         if (result?.ok) {
           toast({
-            title: "✅ Login Berhasil!",
-            description: "Selamat datang kembali di Lost Media!",
+            title: "✅ Login Successful!",
+            description: "Welcome back to Lost Media!",
           });
           router.push(callbackUrl);
         } else {
           toast({
-            title: "❌ Login Gagal",
-            description: "Terjadi kesalahan saat login. Silakan coba lagi.",
+            title: "❌ Login Failed",
+            description: "An error occurred while signing in. Please try again.",
             variant: "destructive",
           });
         }
@@ -192,10 +192,10 @@ export const LoginForm = () => {
           const email = error.response.data.error.email || formData.email;
           const errorMessage = error.response.data.error.message || 
             error.response.data.message || 
-            "OTP telah dikirim ke email Anda. Silakan verifikasi email untuk melanjutkan.";
+            "OTP has been sent to your email. Please verify your email to continue.";
 
           toast({
-            title: "📧 Email Belum Diverifikasi",
+            title: "📧 Email Not Verified",
             description: errorMessage,
           });
 
@@ -207,8 +207,8 @@ export const LoginForm = () => {
         // If it's EMAIL_NOT_VERIFIED error from NextAuth handler
         if (error.message === "EMAIL_NOT_VERIFIED") {
           toast({
-            title: "📧 Email Belum Diverifikasi",
-            description: "OTP telah dikirim ke email Anda. Silakan verifikasi email untuk melanjutkan.",
+            title: "📧 Email Not Verified",
+            description: "OTP has been sent to your email. Please verify your email to continue.",
           });
 
           sessionStorage.setItem("registration_email", error.user_email || formData.email);
@@ -225,13 +225,13 @@ export const LoginForm = () => {
 
         if (result?.ok) {
           toast({
-            title: "✅ Login Berhasil!",
-            description: "Selamat datang kembali di Lost Media!",
+            title: "✅ Login Successful!",
+            description: "Welcome back to Lost Media!",
           });
           router.push(callbackUrl);
         } else {
-          let errorMessage = "Email atau password salah. Silakan coba lagi.";
-          let errorTitle = "❌ Login Gagal";
+          let errorMessage = "Invalid email or password. Please try again.";
+          let errorTitle = "❌ Login Failed";
 
           // Handle specific error messages
           if (result?.error) {
@@ -244,29 +244,29 @@ export const LoginForm = () => {
               errorStr.includes("Account type mismatch")
             ) {
               errorMessage =
-                "Email ini sudah terdaftar dengan Google. Silakan gunakan tombol 'Masuk dengan Google' untuk login.";
-              errorTitle = "⚠️ Tipe Akun Tidak Cocok";
+                "This email is already registered with Google. Please use the 'Sign in with Google' button to log in.";
+              errorTitle = "⚠️ Account Type Mismatch";
             } else if (
               errorStr.includes("Password yang Anda masukkan salah") ||
               errorStr.includes("Invalid password") ||
               errorStr.includes("invalid email or password")
             ) {
               errorMessage =
-                "Email atau password salah. Silakan coba lagi.";
-              errorTitle = "🔒 Login Gagal";
+                "Invalid email or password. Please try again.";
+              errorTitle = "🔒 Login Failed";
             } else if (errorStr.includes("Email tidak terdaftar") ||
                        errorStr.includes("User not found") ||
                        errorStr.includes("user not found")) {
               errorMessage =
-                "Email tidak terdaftar. Silakan periksa kembali email Anda atau daftar akun baru.";
-              errorTitle = "👤 Email Tidak Ditemukan";
+                "Email is not registered. Please check your email or register a new account.";
+              errorTitle = "👤 Email Not Found";
             } else if (errorStr.includes("Invalid credentials") ||
                        errorStr === "CredentialsSignin") {
-              errorMessage = "Email atau password salah. Silakan coba lagi.";
-              errorTitle = "❌ Login Gagal";
+              errorMessage = "Invalid email or password. Please try again.";
+              errorTitle = "❌ Login Failed";
             } else if (errorStr.includes("account is banned")) {
-              errorMessage = "Akun Anda telah dinonaktifkan. Silakan hubungi admin.";
-              errorTitle = "🚫 Akun Dinonaktifkan";
+              errorMessage = "Your account has been deactivated. Please contact the administrator.";
+              errorTitle = "🚫 Account Deactivated";
             } else if (typeof result.error === 'string' && result.error.trim() !== '') {
               // Use the error message directly if it's a valid string
               errorMessage = result.error;
@@ -283,8 +283,8 @@ export const LoginForm = () => {
     } catch (error) {
       console.error("Login error:", error);
       toast({
-        title: "❌ Login Gagal",
-        description: "Terjadi kesalahan saat login. Silakan coba lagi.",
+        title: "❌ Login Failed",
+        description: "An error occurred while signing in. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -301,23 +301,23 @@ export const LoginForm = () => {
       });
 
       if (result?.error) {
-        let errorMessage = "Terjadi kesalahan saat autentikasi Google. Silakan coba lagi.";
-        let errorTitle = "❌ Google Sign-In Gagal";
+        let errorMessage = "An error occurred during Google authentication. Please try again.";
+        let errorTitle = "❌ Google Sign-In Failed";
 
         const errorStr = typeof result.error === 'string' ? result.error : JSON.stringify(result.error);
 
         // Check for specific error messages
         if (errorStr.includes("already registered with password") || 
             errorStr === "AccessDenied") {
-          errorMessage = "Email ini sudah terdaftar dengan password. Silakan login dengan email dan password.";
-          errorTitle = "⚠️ Email Sudah Terdaftar";
+          errorMessage = "This email is already registered with password. Please sign in with email and password.";
+          errorTitle = "⚠️ Email Already Registered";
         } else if (errorStr.includes("different Google account")) {
-          errorMessage = "Email ini sudah terdaftar dengan akun Google yang berbeda.";
-          errorTitle = "⚠️ Email Sudah Terdaftar";
+          errorMessage = "This email is already registered with a different Google account.";
+          errorTitle = "⚠️ Email Already Registered";
         } else if (errorStr === "Configuration") {
-          errorMessage = "Terjadi masalah pada konfigurasi server. Silakan hubungi admin.";
+          errorMessage = "A server configuration issue occurred. Please contact the administrator.";
         } else if (errorStr === "Verification") {
-          errorMessage = "Token verifikasi sudah kedaluwarsa atau sudah digunakan.";
+          errorMessage = "Verification token has expired or has already been used.";
         } else if (typeof result.error === 'string' && result.error.trim() !== '') {
           errorMessage = result.error;
         }
@@ -334,7 +334,7 @@ export const LoginForm = () => {
     } catch (error) {
       console.error("Google sign-in error:", error);
       
-      let errorMessage = "Terjadi kesalahan saat autentikasi Google. Silakan coba lagi.";
+      let errorMessage = "An error occurred during Google authentication. Please try again.";
       
       // Handle error object
       if (error instanceof Error && error.message) {
@@ -347,7 +347,7 @@ export const LoginForm = () => {
       }
       
       toast({
-        title: "❌ Google Sign-In Gagal",
+        title: "❌ Google Sign-In Failed",
         description: errorMessage,
         variant: "destructive",
       });
@@ -363,7 +363,7 @@ export const LoginForm = () => {
           Lost Media
         </CardTitle>
         <CardDescription className="text-gray-600 dark:text-gray-400">
-          Masuk ke akun Anda
+          Sign in to your account
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -375,7 +375,7 @@ export const LoginForm = () => {
                 id="email"
                 name="email"
                 type="email"
-                placeholder="Masukkan email"
+                placeholder="Enter email"
                 value={formData.email}
                 onChange={handleInputChange}
                 required
@@ -389,7 +389,7 @@ export const LoginForm = () => {
                   id="password"
                   name="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Masukkan password"
+                  placeholder="Enter password"
                   value={formData.password}
                   onChange={handleInputChange}
                   required
@@ -418,13 +418,13 @@ export const LoginForm = () => {
                 className="p-0 h-auto text-sm text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400"
                 onClick={() => router.push("/auth/reset-password")}
               >
-                Lupa password?
+                Forgot password?
               </Button>
             </div>
 
             <div className="flex flex-col gap-3">
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Masuk..." : "Masuk"}
+                {loading ? "Signing in..." : "Sign in"}
               </Button>
             </div>
           </div>
@@ -437,7 +437,7 @@ export const LoginForm = () => {
           </div>
           <div className="relative flex justify-center text-xs uppercase">
             <span className="bg-white dark:bg-gray-800 px-2 text-muted-foreground">
-              Atau lanjutkan dengan
+              Or continue with
             </span>
           </div>
         </div>
@@ -472,25 +472,25 @@ export const LoginForm = () => {
               fill="#EA4335"
             />
           </svg>
-          {googleLoading ? "Memproses..." : "Masuk dengan Google"}
+          {googleLoading ? "Processing..." : "Sign in with Google"}
         </Button>
 
         {/* Register Link */}
         <div className="text-center mt-6">
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Belum punya akun?{" "}
+            Don't have an account?{" "}
             <Button
               type="button"
               variant="link"
               className="p-0 h-auto text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
               onClick={() => router.push("/auth/register")}
             >
-              Daftar di sini
+              Sign up here
             </Button>
           </p>
         </div>
 
-        {/* Emergency: reset session jika masih looping */}
+        {/* Emergency: reset session if still looping */}
         <div className="text-center mt-3">
           <Button
             type="button"

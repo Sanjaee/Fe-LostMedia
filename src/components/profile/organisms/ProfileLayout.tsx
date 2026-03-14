@@ -104,7 +104,7 @@ export const ProfileLayout: React.FC<ProfileLayoutProps> = ({
                     onClick={() => setIsPostDialogOpen(true)}
                     className="flex-1 w-full h-10 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center px-4 text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer text-left"
                   >
-                    Apa yang Anda pikirkan, {userName.split(' ')[0]}?
+                    What's on your mind, {userName.split(' ')[0]}?
                   </button>
                 </div>
                 <div className="flex justify-between px-4">

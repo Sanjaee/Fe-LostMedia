@@ -20,7 +20,7 @@ export default function OnlineUsersPage() {
   if (status === "loading") {
     return (
       <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 flex items-center justify-center">
-        <div className="animate-pulse text-zinc-500">Memuat...</div>
+        <div className="animate-pulse text-zinc-500">Loading...</div>
       </div>
     );
   }
@@ -35,7 +35,7 @@ export default function OnlineUsersPage() {
             size="icon"
             onClick={() => router.push("/")}
             className="shrink-0 rounded-full"
-            title="Kembali ke Beranda"
+            title="Back to Home"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -53,7 +53,7 @@ export default function OnlineUsersPage() {
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800">
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              Daftar user yang sedang online
+              List of users currently online
             </p>
           </div>
           <div className="p-2">

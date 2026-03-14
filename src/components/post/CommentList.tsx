@@ -102,7 +102,7 @@ export const CommentList: React.FC<CommentListProps> = ({
       setDeleting(true);
       await api.deleteComment(commentToDelete);
       toast({
-        title: "Berhasil",
+        title: "Success",
         description: "Komentar berhasil dihapus",
       });
       loadComments();
@@ -125,7 +125,7 @@ export const CommentList: React.FC<CommentListProps> = ({
     try {
       await api.updateComment(commentID, { content: editContent });
       toast({
-        title: "Berhasil",
+        title: "Success",
         description: "Komentar berhasil diupdate",
       });
       setEditingId(null);
@@ -385,7 +385,7 @@ export const CommentList: React.FC<CommentListProps> = ({
                   Menghapus...
                 </>
               ) : (
-                "Hapus"
+                "Delete"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -64,8 +64,8 @@ export function RoleUpdateWebSocketListener() {
           ? payload.payment.target_role.charAt(0).toUpperCase() + payload.payment.target_role.slice(1)
           : "Role";
         toast({
-          title: "Pembayaran berhasil",
-          description: `${roleLabel} Anda telah aktif. Session diperbarui.`,
+          title: "Payment successful",
+          description: `${roleLabel} is now active. Session updated.`,
         });
       }
     }

@@ -75,19 +75,19 @@ export default function VerifyOtpReset() {
     if (totalSeconds >= 86400) {
       const d = Math.floor(totalSeconds / 86400);
       const h = Math.floor((totalSeconds % 86400) / 3600);
-      return `${d} hari ${h} jam`;
+      return `${d} day(s) ${h} hour(s)`;
     }
     if (totalSeconds >= 3600) {
       const h = Math.floor(totalSeconds / 3600);
       const m = Math.floor((totalSeconds % 3600) / 60);
-      return `${h} jam ${m} menit`;
+      return `${h} hr ${m} min`;
     }
     if (totalSeconds >= 60) {
       const m = Math.floor(totalSeconds / 60);
       const s = totalSeconds % 60;
-      return `${m} menit ${s} detik`;
+      return `${m} min ${s} sec`;
     }
-    return `${totalSeconds} detik`;
+    return `${totalSeconds} sec`;
   };
 
   const handleOtpChange = (index: number, value: string) => {
@@ -163,8 +163,8 @@ export default function VerifyOtpReset() {
   const verifyOtp = async (otpString: string) => {
     if (!email) {
       toast({
-        title: "❌ Email Tidak Ditemukan",
-        description: "Silakan mulai ulang proses reset password",
+        title: "❌ Email Not Found",
+        description: "Please restart the password reset process",
         variant: "destructive",
       });
       return;
@@ -179,9 +179,9 @@ export default function VerifyOtpReset() {
       sessionStorage.setItem("verified_otp", otpString);
 
       toast({
-        title: "✅ Kode OTP Disimpan!",
+        title: "✅ OTP Code Saved!",
         description:
-          "Kode OTP telah disimpan. Lanjutkan ke halaman reset password.",
+          "OTP code has been saved. Continue to the reset password page.",
       });
 
       // Redirect to reset password page
@@ -189,11 +189,11 @@ export default function VerifyOtpReset() {
     } catch (error) {
       console.error("Verify OTP error:", error);
       toast({
-        title: "❌ Verifikasi Gagal",
+        title: "❌ Verification Failed",
         description:
           error instanceof Error
             ? error.message
-            : "Terjadi kesalahan saat verifikasi. Silakan coba lagi atau hubungi support.",
+            : "An error occurred during verification. Please try again or contact support.",
         variant: "destructive",
       });
       // Clear OTP on error and reset verification state
@@ -215,8 +215,8 @@ export default function VerifyOtpReset() {
     const otpString = otp.join("");
     if (otpString.length !== 6) {
       toast({
-        title: "❌ Kode Tidak Valid",
-        description: "Silakan masukkan 6 digit kode yang valid",
+        title: "❌ Invalid Code",
+        description: "Please enter a valid 6-digit code",
         variant: "destructive",
       });
       return;
@@ -233,8 +233,8 @@ export default function VerifyOtpReset() {
     try {
       const res = await api.requestResetPassword({ email, is_resend: true }) as { next_resend_at?: number };
       toast({
-        title: "✅ Kode Reset Terkirim!",
-        description: "Kode OTP baru telah dikirim ke email Anda.",
+        title: "✅ Reset Code Sent!",
+        description: "New OTP code has been sent to your email.",
       });
       setOtp(["", "", "", "", "", ""]);
       setLastVerificationTime(0);
@@ -251,8 +251,8 @@ export default function VerifyOtpReset() {
         setCanResend(false);
       }
       toast({
-        title: "❌ Gagal Mengirim",
-        description: err instanceof Error ? err.message : "Gagal mengirim ulang kode reset.",
+        title: "❌ Send Failed",
+        description: err instanceof Error ? err.message : "Failed to resend reset code.",
         variant: "destructive",
       });
     } finally {
@@ -277,16 +277,16 @@ export default function VerifyOtpReset() {
               <Mail className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
             <CardTitle className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-50">
-              Verifikasi OTP
+              Verify OTP
             </CardTitle>
             <CardDescription className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-              Kode reset telah dikirim ke{" "}
+              Reset code has been sent to{" "}
               <span className="font-semibold text-blue-600 dark:text-blue-400 break-all">
                 {email}
               </span>
               <br />
               <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-2 block">
-                Masukkan kode verifikasi untuk melanjutkan
+                Enter the verification code to continue
               </span>
             </CardDescription>
           </CardHeader>
@@ -294,7 +294,7 @@ export default function VerifyOtpReset() {
             <form onSubmit={handleSubmit}>
               <div className="flex flex-col gap-6">
                 <div className="grid gap-3">
-                  <Label>Kode Verifikasi</Label>
+                  <Label>Verification Code</Label>
                   <div
                     className="flex gap-2 items-center justify-center"
                     onPaste={handlePaste}
@@ -323,18 +323,18 @@ export default function VerifyOtpReset() {
                     )}
                     <span className="text-center">
                       {isVerifying
-                        ? "Memverifikasi kode..."
-                        : "Masukkan 6 digit kode yang dikirim ke email Anda"}
+                        ? "Verifying code..."
+                        : "Enter the 6-digit code sent to your email"}
                     </span>
                   </div>
                   {otp.join("").length === 6 && !isVerifying && (
                     <p className="text-xs text-blue-600 dark:text-blue-400 text-center">
-                      ✨ Kode akan diverifikasi secara otomatis
+                      ✨ Code will be verified automatically
                     </p>
                   )}
                   {email && (
                     <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2 px-2">
-                      Periksa folder spam jika email tidak ditemukan
+                      Check spam folder if email is not found
                     </p>
                   )}
                 </div>
@@ -352,7 +352,7 @@ export default function VerifyOtpReset() {
                     )}
                     {loading || isVerifying
                       ? "Memverifikasi..."
-                      : "Verifikasi OTP"}
+                      : "Verify OTP"}
                   </Button>
                 </div>
 
@@ -360,13 +360,13 @@ export default function VerifyOtpReset() {
                   {!canResend ? (
                     <div className="space-y-2">
                       <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                        Kirim ulang kode dalam {formatTime(timeLeft)}
+                        Resend code in {formatTime(timeLeft)}
                       </p>
                     </div>
                   ) : (
                     <div className="space-y-2">
                       <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                        Tidak menerima email?
+                        Didn't receive the email?
                       </p>
                       <Button
                         type="button"
@@ -375,7 +375,7 @@ export default function VerifyOtpReset() {
                         disabled={resendLoading}
                         className="text-xs sm:text-sm w-full sm:w-auto bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
                       >
-                        {resendLoading ? "Mengirim..." : "Kirim Ulang Kode"}
+                        {resendLoading ? "Sending..." : "Resend Code"}
                       </Button>
                     </div>
                   )}
@@ -388,7 +388,7 @@ export default function VerifyOtpReset() {
                     onClick={() => router.push("/auth/reset-password")}
                     className="text-xs sm:text-sm text-gray-600 hover:text-gray-500 dark:text-gray-400 dark:hover:text-gray-300 w-full sm:w-auto"
                   >
-                    ← Kembali ke request reset
+                    ← Back to reset request
                   </Button>
                 </div>
               </div>

@@ -51,8 +51,8 @@ export default function ResetPassword() {
     e.preventDefault();
     if (!email) {
       toast({
-        title: "❌ Email Diperlukan",
-        description: "Silakan masukkan email Anda",
+        title: "❌ Email Required",
+        description: "Please enter your email",
         variant: "destructive",
       });
       return;
@@ -64,8 +64,8 @@ export default function ResetPassword() {
       const response = await api.requestResetPassword({ email });
 
       toast({
-        title: "✅ Kode OTP Terkirim!",
-        description: "Silakan cek email Anda untuk kode OTP reset password. Kode akan expired dalam 10 menit.",
+        title: "✅ OTP Code Sent!",
+        description: "Please check your email for the password reset OTP code. The code will expire in 10 minutes.",
       });
 
       // Store email in session storage
@@ -76,11 +76,11 @@ export default function ResetPassword() {
     } catch (error) {
       console.error("Request reset password error:", error);
       toast({
-        title: "❌ Gagal Mengirim OTP",
+        title: "❌ Failed to Send OTP",
         description:
           error instanceof Error
             ? error.message
-            : "Gagal mengirim kode OTP reset. Silakan coba lagi atau hubungi support.",
+            : "Failed to send password reset OTP code. Please try again or contact support.",
         variant: "destructive",
       });
     } finally {
@@ -93,8 +93,8 @@ export default function ResetPassword() {
     
     if (!newPassword || !confirmPassword) {
       toast({
-        title: "❌ Password Diperlukan",
-        description: "Silakan masukkan password baru dan konfirmasi password",
+        title: "❌ Password Required",
+        description: "Please enter your new password and confirm password",
         variant: "destructive",
       });
       return;
@@ -102,8 +102,8 @@ export default function ResetPassword() {
 
     if (newPassword !== confirmPassword) {
       toast({
-        title: "❌ Password Tidak Cocok",
-        description: "Password baru dan konfirmasi password tidak sama",
+        title: "❌ Passwords Do Not Match",
+        description: "New password and confirm password do not match",
         variant: "destructive",
       });
       return;
@@ -111,8 +111,8 @@ export default function ResetPassword() {
 
     if (newPassword.length < 8) {
       toast({
-        title: "❌ Password Terlalu Pendek",
-        description: "Password minimal 8 karakter",
+        title: "❌ Password Too Short",
+        description: "Password must be at least 8 characters",
         variant: "destructive",
       });
       return;
@@ -120,8 +120,8 @@ export default function ResetPassword() {
 
     if (!token || typeof token !== "string") {
       toast({
-        title: "❌ Token Tidak Valid",
-        description: "Token reset password tidak ditemukan. Silakan request ulang.",
+        title: "❌ Invalid Token",
+        description: "Password reset token not found. Please request again.",
         variant: "destructive",
       });
       return;
@@ -137,8 +137,8 @@ export default function ResetPassword() {
       });
 
       toast({
-        title: "🎉 Password Berhasil Direset!",
-        description: "Password Anda telah direset. Mengarahkan...",
+        title: "🎉 Password Reset Successfully!",
+        description: "Your password has been reset. Redirecting...",
       });
 
       // Auto-login using JWT tokens from response
@@ -157,19 +157,19 @@ export default function ResetPassword() {
         router.push("/");
       } else {
         toast({
-          title: "⚠️ Reset Berhasil",
-          description: "Password berhasil direset. Silakan login untuk melanjutkan.",
+          title: "⚠️ Reset Successful",
+          description: "Password has been reset. Please sign in to continue.",
         });
         router.push("/auth/login");
       }
     } catch (error) {
       console.error("Reset password error:", error);
       toast({
-        title: "❌ Reset Gagal",
+        title: "❌ Reset Failed",
         description:
           error instanceof Error
             ? error.message
-            : "Terjadi kesalahan saat reset password. Silakan coba lagi.",
+            : "An error occurred while resetting password. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -190,15 +190,15 @@ export default function ResetPassword() {
               )}
             </div>
             <CardTitle className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-50">
-              {isRequesting ? "Reset Password" : "Set Password Baru"}
+              {isRequesting ? "Reset Password" : "Set New Password"}
             </CardTitle>
             <CardDescription className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
               {isRequesting ? (
                 <>
-                  Masukkan email Anda untuk menerima kode OTP reset password
+                  Enter your email to receive the password reset OTP code
                   <br />
                   <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-2 block">
-                    Kami akan mengirim kode OTP ke email Anda
+                    We will send the OTP code to your email
                   </span>
                 </>
               ) : (
@@ -209,7 +209,7 @@ export default function ResetPassword() {
                   </span>
                   <br />
                   <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-2 block">
-                    Masukkan password baru Anda
+                    Enter your new password
                   </span>
                 </>
               )}
@@ -227,7 +227,7 @@ export default function ResetPassword() {
                         <Input
                           id="email"
                           type="email"
-                          placeholder="Masukkan email Anda"
+                          placeholder="Enter your email"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           className="pl-10"
@@ -241,20 +241,20 @@ export default function ResetPassword() {
                         {loading && (
                           <Skeleton className="mr-2 h-4 w-4 shrink-0" />
                         )}
-                        {loading ? "Mengirim..." : "Kirim Kode OTP"}
+                        {loading ? "Sending..." : "Send OTP Code"}
                       </Button>
                     </div>
                   </>
                 ) : (
                   <>
                     <div className="grid gap-3">
-                      <Label htmlFor="newPassword">Password Baru</Label>
+                      <Label htmlFor="newPassword">New Password</Label>
                       <div className="relative">
                         <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
                         <Input
                           id="newPassword"
                           type={showPassword ? "text" : "password"}
-                          placeholder="Masukkan password baru"
+                          placeholder="Enter new password"
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
                           className="pl-10 pr-10"
@@ -277,13 +277,13 @@ export default function ResetPassword() {
                     </div>
 
                     <div className="grid gap-3">
-                      <Label htmlFor="confirmPassword">Konfirmasi Password</Label>
+                      <Label htmlFor="confirmPassword">Confirm Password</Label>
                       <div className="relative">
                         <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
                         <Input
                           id="confirmPassword"
                           type={showConfirmPassword ? "text" : "password"}
-                          placeholder="Konfirmasi password baru"
+                          placeholder="Confirm new password"
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
                           className="pl-10 pr-10"
@@ -323,7 +323,7 @@ export default function ResetPassword() {
                     onClick={() => router.push("/auth/login")}
                     className="text-xs sm:text-sm text-gray-600 hover:text-gray-500 dark:text-gray-400 dark:hover:text-gray-300 w-full sm:w-auto"
                   >
-                    ← Kembali ke login
+                    ← Back to login
                   </Button>
                 </div>
               </div>

@@ -78,7 +78,7 @@ export default function ZoomRoomsPage() {
     } catch (err: any) {
       toast({
         title: "Error",
-        description: err.message || "Gagal memuat rooms",
+        description: err.message || "Failed to load rooms",
         variant: "destructive",
       });
     } finally {
@@ -90,7 +90,7 @@ export default function ZoomRoomsPage() {
     if (!roomName.trim()) {
       toast({
         title: "Error",
-        description: "Nama room harus diisi",
+        description: "Room name is required",
         variant: "destructive",
       });
       return;
@@ -115,7 +115,7 @@ export default function ZoomRoomsPage() {
     } catch (err: any) {
       toast({
         title: "Error",
-        description: err.message || "Gagal membuat room",
+        description: err.message || "Failed to create room",
         variant: "destructive",
       });
     } finally {
@@ -139,7 +139,7 @@ export default function ZoomRoomsPage() {
     } catch (err: any) {
       toast({
         title: "Error",
-        description: err.message || "Gagal menghapus room",
+        description: err.message || "Failed to delete room",
         variant: "destructive",
       });
     } finally {
@@ -156,36 +156,36 @@ export default function ZoomRoomsPage() {
               Video Call Rooms
             </h1>
             <p className="text-zinc-600 dark:text-zinc-400 text-sm">
-              Buat atau bergabung ke room video call
+              Create or join a video call room
             </p>
           </div>
           <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-blue-600 hover:bg-blue-700">
                 <Plus className="mr-2 h-4 w-4" />
-                Buat Room
+                Create Room
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
-                <DialogTitle>Buat Room Baru</DialogTitle>
+                <DialogTitle>Create New Room</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div>
-                  <Label htmlFor="name">Nama Room *</Label>
+                  <Label htmlFor="name">Room Name *</Label>
                   <Input
                     id="name"
-                    placeholder="Masukkan nama room"
+                    placeholder="Enter room name"
                     value={roomName}
                     onChange={(e) => setRoomName(e.target.value)}
                     className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="description">Deskripsi</Label>
+                  <Label htmlFor="description">Description</Label>
                   <Textarea
                     id="description"
-                    placeholder="Opsional"
+                    placeholder="Optional"
                     value={roomDescription}
                     onChange={(e) => setRoomDescription(e.target.value)}
                     className="mt-1"
@@ -193,11 +193,11 @@ export default function ZoomRoomsPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="maxParticipants">Max Peserta</Label>
+                  <Label htmlFor="maxParticipants">Max Participants</Label>
                   <Input
                     id="maxParticipants"
                     type="number"
-                    placeholder="Tidak terbatas"
+                    placeholder="Unlimited"
                     value={maxParticipants ?? ""}
                     onChange={(e) =>
                       setMaxParticipants(
@@ -216,10 +216,10 @@ export default function ZoomRoomsPage() {
                   {creating ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Membuat...
+                      Creating...
                     </>
                   ) : (
-                    "Buat Room"
+                    "Create Room"
                   )}
                 </Button>
               </div>
@@ -230,18 +230,18 @@ export default function ZoomRoomsPage() {
         {loading ? (
           <div className="text-center py-12">
             <div className="inline-block h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
-            <p className="mt-4 text-zinc-600 dark:text-zinc-400">Memuat rooms...</p>
+            <p className="mt-4 text-zinc-600 dark:text-zinc-400">Loading rooms...</p>
           </div>
         ) : rooms.length === 0 ? (
           <Card className="p-12 text-center border border-zinc-200 dark:border-zinc-800">
             <Video className="h-16 w-16 mx-auto text-zinc-400 mb-4" />
             <h3 className="text-xl font-semibold text-zinc-900 dark:text-white mb-2">
-              Belum ada room
+              No rooms yet
             </h3>
             <p className="text-zinc-600 dark:text-zinc-400 mb-4">
-              Buat room pertama Anda untuk memulai video call
+              Create your first room to start a video call
             </p>
-            <Button onClick={() => setCreateDialogOpen(true)}>Buat Room</Button>
+            <Button onClick={() => setCreateDialogOpen(true)}>Create Room</Button>
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

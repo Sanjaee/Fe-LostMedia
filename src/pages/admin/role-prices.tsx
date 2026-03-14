@@ -40,7 +40,7 @@ export default function AdminRolePricesPage() {
           <Button variant="ghost" size="sm" asChild>
             <Link href="/admin">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Kembali ke Admin
+              Back to Admin
             </Link>
           </Button>
         </div>
@@ -49,7 +49,7 @@ export default function AdminRolePricesPage() {
             Kelola Role Prices
           </h1>
           <p className="text-zinc-600 dark:text-zinc-400">
-            Tambah, edit, dan hapus harga role untuk upgrade
+            Add, edit, and delete role prices for upgrade
           </p>
         </div>
 

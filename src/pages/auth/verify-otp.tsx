@@ -110,26 +110,26 @@ export default function VerifyOtp() {
 
       if (loginResult?.ok) {
         toast({
-          title: "🎉 Email Berhasil Diverifikasi!",
-          description: "Akun Anda telah diverifikasi. Mengarahkan ke halaman utama...",
+          title: "🎉 Email Verified Successfully!",
+          description: "Your account has been verified. Redirecting to home...",
         });
         sessionStorage.removeItem("registration_email");
         router.push(callbackUrl);
       } else {
         toast({
-          title: "⚠️ Verifikasi Berhasil",
-          description: "Email berhasil diverifikasi. Silakan login untuk melanjutkan.",
+          title: "⚠️ Verification Successful",
+          description: "Email verified successfully. Please sign in to continue.",
         });
         router.push(`/auth/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
       }
     } catch (error) {
       console.error("Email verification error:", error);
       toast({
-        title: "❌ Verifikasi Gagal",
+        title: "❌ Verification Failed",
         description:
           error instanceof Error
             ? error.message
-            : "Token tidak valid atau sudah kedaluwarsa. Silakan request ulang.",
+            : "Invalid or expired token. Please request again.",
         variant: "destructive",
       });
       router.push("/auth/register");
@@ -143,19 +143,19 @@ export default function VerifyOtp() {
     if (totalSeconds >= 86400) {
       const d = Math.floor(totalSeconds / 86400);
       const h = Math.floor((totalSeconds % 86400) / 3600);
-      return `${d} hari ${h} jam`;
+      return `${d} day(s) ${h} hour(s)`;
     }
     if (totalSeconds >= 3600) {
       const h = Math.floor(totalSeconds / 3600);
       const m = Math.floor((totalSeconds % 3600) / 60);
-      return `${h} jam ${m} menit`;
+      return `${h} hr ${m} min`;
     }
     if (totalSeconds >= 60) {
       const m = Math.floor(totalSeconds / 60);
       const s = totalSeconds % 60;
-      return `${m} menit ${s} detik`;
+      return `${m} min ${s} sec`;
     }
-    return `${totalSeconds} detik`;
+    return `${totalSeconds} sec`;
   };
 
   const handleOtpChange = (index: number, value: string) => {
@@ -249,18 +249,18 @@ export default function VerifyOtp() {
 
         if (loginResult?.ok) {
           toast({
-            title: "🎉 Berhasil!",
+            title: "🎉 Success!",
             description:
-              "Email berhasil diverifikasi! Selamat datang di template zacode. Mengalihkan...",
+              "Email verified successfully! Welcome. Redirecting...",
           });
           // Clear session storage
           sessionStorage.removeItem("registration_email");
           router.push("/");
         } else {
           toast({
-            title: "⚠️ Verifikasi Berhasil",
-            description:
-              "Email berhasil diverifikasi. Silakan login untuk melanjutkan.",
+title: "⚠️ Verification Successful",
+          description:
+              "Email verified successfully. Please sign in to continue.",
           });
           router.push("/auth/login");
         }
@@ -284,9 +284,9 @@ export default function VerifyOtp() {
 
           if (loginResult?.ok) {
             toast({
-              title: "🎉 Berhasil!",
+              title: "🎉 Success!",
               description:
-                "Email berhasil diverifikasi! Selamat datang di template zacode. Mengalihkan...",
+                "Email verified successfully! Welcome. Redirecting...",
             });
             // Clear session storage
             sessionStorage.removeItem("registration_email");
@@ -294,17 +294,17 @@ export default function VerifyOtp() {
             router.push(callbackUrl);
           } else {
             toast({
-              title: "⚠️ Verifikasi Berhasil",
-              description:
-                "Email berhasil diverifikasi. Silakan login untuk melanjutkan.",
+title: "⚠️ Verification Successful",
+          description:
+              "Email verified successfully. Please sign in to continue.",
             });
             router.push("/auth/login");
           }
         } else {
           toast({
-            title: "⚠️ Verifikasi Berhasil",
-            description:
-              "Email berhasil diverifikasi. Silakan login untuk melanjutkan.",
+title: "⚠️ Verification Successful",
+          description:
+              "Email verified successfully. Please sign in to continue.",
           });
           router.push("/auth/login");
         }
@@ -312,11 +312,11 @@ export default function VerifyOtp() {
     } catch (error) {
       console.error("Verification error:", error);
       toast({
-        title: "❌ Verifikasi Gagal",
+        title: "❌ Verification Failed",
         description:
           error instanceof Error
             ? error.message
-            : "Terjadi kesalahan saat verifikasi. Silakan coba lagi atau hubungi support.",
+            : "An error occurred during verification. Please try again or contact support.",
         variant: "destructive",
       });
       // Clear OTP on error and reset verification state
@@ -338,8 +338,8 @@ export default function VerifyOtp() {
     const otpString = otp.join("");
     if (otpString.length !== 6) {
       toast({
-        title: "❌ OTP Tidak Valid",
-        description: "Silakan masukkan 6 digit kode OTP yang valid",
+        title: "❌ Invalid OTP",
+        description: "Please enter a valid 6-digit OTP code",
         variant: "destructive",
       });
       return;
@@ -356,8 +356,8 @@ export default function VerifyOtp() {
     try {
       const res = await api.resendOTP({ email: userEmail }) as { next_resend_at?: number };
       toast({
-        title: "✅ OTP Terkirim!",
-        description: `Kode OTP baru sedang dikirim ke ${userEmail}. Silakan periksa email Anda.`,
+        title: "✅ OTP Sent!",
+        description: `New OTP code is being sent to ${userEmail}. Please check your email.`,
       });
       setOtp(["", "", "", "", "", ""]);
       setLastVerificationTime(0);
@@ -374,8 +374,8 @@ export default function VerifyOtp() {
         setCanResend(false);
       }
       toast({
-        title: "❌ Gagal Mengirim",
-        description: err instanceof Error ? err.message : "Gagal mengirim ulang OTP.",
+        title: "❌ Send Failed",
+        description: err instanceof Error ? err.message : "Failed to resend OTP.",
         variant: "destructive",
       });
     } finally {
@@ -405,17 +405,17 @@ export default function VerifyOtp() {
             <CardDescription className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
               {userEmail ? (
                 <>
-                  OTP sudah dikirim ke{" "}
+                  OTP has been sent to{" "}
                   <span className="font-semibold text-blue-600 dark:text-blue-400 break-all">
                     {userEmail}
                   </span>
                 </>
               ) : (
-                "Kode verifikasi telah dikirim ke email Anda"
+                "Verification code has been sent to your email"
               )}
               <br />
               <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-2 block">
-                Verifikasi email diperlukan untuk mengakses akun Anda
+                Email verification is required to access your account
               </span>
             </CardDescription>
           </CardHeader>
@@ -451,18 +451,18 @@ export default function VerifyOtp() {
                     )}
                     <span className="text-center">
                       {isVerifying
-                        ? "Memverifikasi kode..."
-                        : "Masukkan 6 digit kode yang dikirim ke email Anda"}
+                        ? "Verifying code..."
+                        : "Enter the 6-digit code sent to your email"}
                     </span>
                   </div>
                   {otp.join("").length === 6 && !isVerifying && (
                     <p className="text-xs text-blue-600 dark:text-blue-400 text-center">
-                      ✨ Kode akan diverifikasi secara otomatis
+                      ✨ Code will be verified automatically
                     </p>
                   )}
                   {userEmail && (
                     <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2 px-2">
-                      Periksa folder spam jika email tidak ditemukan
+                      Check spam folder if email is not found
                     </p>
                   )}
                 </div>
@@ -488,13 +488,13 @@ export default function VerifyOtp() {
                   {!canResend ? (
                     <div className="space-y-2">
                       <p className="text-xs sm:text-sm  dark:text-gray-400">
-                        Kirim ulang kode dalam {formatTime(timeLeft)}
+                        Resend code in {formatTime(timeLeft)}
                       </p>
                     </div>
                   ) : (
                     <div className="space-y-2">
                       <p className="text-xs sm:text-sm  dark:text-gray-400">
-                        Tidak menerima email?
+                        Didn't receive the email?
                       </p>
                       <Button
                         type="button"
@@ -503,7 +503,7 @@ export default function VerifyOtp() {
                         disabled={resendLoading}
                         className="text-xs sm:text-sm w-full sm:w-auto"
                       >
-                        {resendLoading ? "Mengirim..." : "Kirim Ulang OTP"}
+                        {resendLoading ? "Sending..." : "Resend OTP"}
                       </Button>
                     </div>
                   )}
@@ -516,7 +516,7 @@ export default function VerifyOtp() {
                     onClick={() => router.push("/auth/register")}
                     className="text-xs sm:text-sm text-gray-600 hover:text-gray-500 dark:text-gray-400 dark:hover:text-gray-300 w-full sm:w-auto"
                   >
-                    ← Kembali ke pendaftaran
+                    ← Back to registration
                   </Button>
                 </div>
               </div>

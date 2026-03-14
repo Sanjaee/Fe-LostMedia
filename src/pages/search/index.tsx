@@ -107,7 +107,7 @@ const SearchPage: React.FC = () => {
 
           {/* Desktop: Title */}
           <h1 className="hidden md:block text-2xl font-bold text-gray-900 dark:text-white mb-6">
-            Hasil Pencarian: {query || "Semua"}
+            Search results: {query || "All"}
           </h1>
 
         {/* Tabs - Mobile: pill style, Desktop: underline */}

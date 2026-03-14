@@ -20,7 +20,7 @@ export default function PaymentFailedPage() {
             <CardTitle>Pembayaran belum selesai</CardTitle>
           </div>
           <CardDescription>
-            Faktur belum dibayar atau telah kedaluwarsa. Jika Anda sudah membayar, klik &quot;Ke situs&quot; dari halaman sukses Plisio atau buka halaman Role untuk memeriksa status.
+            Invoice has not been paid or has expired. If you have already paid, click &quot;To site&quot; from the Plisio success page or open the Role page to check status.
           </CardDescription>
         </CardHeader>
         <CardContent>

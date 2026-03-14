@@ -63,8 +63,8 @@ export default function VerifyEmail() {
   const handleVerifyEmail = async (verificationToken: string, isReset: boolean) => {
     if (!verificationToken) {
       toast({
-        title: "❌ Token Tidak Valid",
-        description: "Token verifikasi tidak ditemukan.",
+        title: "❌ Invalid Token",
+        description: "Verification token not found.",
         variant: "destructive",
       });
       return;
@@ -82,7 +82,7 @@ export default function VerifyEmail() {
         
         toast({
           title: "✅ Token Valid!",
-          description: "Silakan masukkan password baru Anda.",
+          description: "Please enter your new password.",
         });
 
         // Redirect to reset password page
@@ -102,7 +102,7 @@ export default function VerifyEmail() {
           if (loginResult?.ok) {
             setVerified(true);
             toast({
-              title: "🎉 Email Berhasil Diverifikasi!",
+              title: "🎉 Email Verified Successfully!",
               description: "Akun Anda telah diverifikasi. Anda akan diarahkan ke halaman utama...",
             });
 
@@ -116,9 +116,9 @@ export default function VerifyEmail() {
             }, 1500);
           } else {
             toast({
-              title: "⚠️ Verifikasi Berhasil",
+              title: "⚠️ Verification Successful",
               description:
-                "Email berhasil diverifikasi. Silakan login untuk melanjutkan.",
+                "Email verified successfully. Please sign in to continue.",
             });
             router.push("/auth/login");
           }
@@ -127,7 +127,7 @@ export default function VerifyEmail() {
     } catch (error) {
       console.error("Verification error:", error);
 
-      let errorMessage = "Token tidak valid atau sudah kedaluwarsa. Silakan request ulang.";
+      let errorMessage = "Invalid or expired token. Please request again.";
 
       if (error instanceof Error) {
         const errorObj = error as unknown as { 
@@ -145,7 +145,7 @@ export default function VerifyEmail() {
       }
 
       toast({
-        title: "❌ Verifikasi Gagal",
+        title: "❌ Verification Failed",
         description: errorMessage,
         variant: "destructive",
       });
@@ -174,7 +174,7 @@ export default function VerifyEmail() {
                 Email Terverifikasi!
               </CardTitle>
               <CardDescription className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-                Email Anda telah berhasil diverifikasi. Mengarahkan ke halaman utama...
+                Your email has been successfully verified. Redirecting to home...
               </CardDescription>
             </CardHeader>
           </Card>
@@ -202,7 +202,7 @@ export default function VerifyEmail() {
             </CardTitle>
             <CardDescription className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
               {loading ? (
-                "Memverifikasi email Anda..."
+                "Verifying your email..."
               ) : userEmail ? (
                 <>
                   Memverifikasi email{" "}
@@ -211,7 +211,7 @@ export default function VerifyEmail() {
                   </span>
                 </>
               ) : (
-                "Memverifikasi email Anda"
+                "Verifying your email"
               )}
             </CardDescription>
           </CardHeader>
@@ -219,7 +219,7 @@ export default function VerifyEmail() {
             {!token && (
               <div className="text-center">
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  Token verifikasi tidak ditemukan.
+                  Verification token not found.
                 </p>
                 <Button
                   onClick={() => {
@@ -230,7 +230,7 @@ export default function VerifyEmail() {
                     }
                   }}
                 >
-                  Kembali
+                  Back
                 </Button>
               </div>
             )}

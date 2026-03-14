@@ -46,8 +46,8 @@ export default function VerifyResetPassword() {
   const verifyResetPassword = async () => {
     if (!email) {
       toast({
-        title: "❌ Email Tidak Ditemukan",
-        description: "Silakan mulai ulang proses reset password",
+        title: "❌ Email Not Found",
+        description: "Please restart the password reset process",
         variant: "destructive",
       });
       return;
@@ -55,8 +55,8 @@ export default function VerifyResetPassword() {
 
     if (!newPassword || !confirmPassword) {
       toast({
-        title: "❌ Password Diperlukan",
-        description: "Silakan masukkan password baru dan konfirmasi password",
+        title: "❌ Password Required",
+        description: "Please enter your new password and confirm password",
         variant: "destructive",
       });
       return;
@@ -64,8 +64,8 @@ export default function VerifyResetPassword() {
 
     if (newPassword !== confirmPassword) {
       toast({
-        title: "❌ Password Tidak Cocok",
-        description: "Password baru dan konfirmasi password tidak sama",
+        title: "❌ Passwords Do Not Match",
+        description: "New password and confirm password do not match",
         variant: "destructive",
       });
       return;
@@ -73,8 +73,8 @@ export default function VerifyResetPassword() {
 
     if (newPassword.length < 8) {
       toast({
-        title: "❌ Password Terlalu Pendek",
-        description: "Password minimal 8 karakter",
+        title: "❌ Password Too Short",
+        description: "Password must be at least 8 characters",
         variant: "destructive",
       });
       return;
@@ -82,8 +82,8 @@ export default function VerifyResetPassword() {
 
     if (newPassword.length > 128) {
       toast({
-        title: "❌ Password Terlalu Panjang",
-        description: "Password maksimal 128 karakter",
+        title: "❌ Password Too Long",
+        description: "Password must be at most 128 characters",
         variant: "destructive",
       });
       return;
@@ -92,8 +92,8 @@ export default function VerifyResetPassword() {
     const verifiedOtp = sessionStorage.getItem("verified_otp");
     if (!verifiedOtp) {
       toast({
-        title: "❌ OTP Belum Diverifikasi",
-        description: "Silakan verifikasi OTP terlebih dahulu",
+        title: "❌ OTP Not Verified",
+        description: "Please verify OTP first",
         variant: "destructive",
       });
       router.push("/auth/verify-otp-reset");
@@ -111,8 +111,8 @@ export default function VerifyResetPassword() {
       });
 
       toast({
-        title: "🎉 Password Berhasil Direset!",
-        description: "Password Anda telah berhasil direset. Silakan login dengan password baru Anda.",
+        title: "🎉 Password Reset Successfully!",
+        description: "Your password has been reset successfully. Please sign in with your new password.",
       });
 
       // Clear session storage
@@ -125,7 +125,7 @@ export default function VerifyResetPassword() {
       console.error("Verify reset password error:", error);
       
       // Parse error message from backend
-      let errorMessage = "Terjadi kesalahan saat verifikasi. Silakan coba lagi atau hubungi support.";
+      let errorMessage = "An error occurred during verification. Please try again or contact support.";
       let shouldRedirectToOTP = false;
       
       if (error instanceof Error) {
@@ -134,19 +134,21 @@ export default function VerifyResetPassword() {
         // Check if error is validation error (password too short/long)
         if (errorMessage.includes("minimal 8 karakter") || 
             errorMessage.includes("Password minimal") ||
+            errorMessage.includes("at least 8 characters") ||
             (errorMessage.includes("min") && errorMessage.includes("NewPassword"))) {
-          errorMessage = "Password minimal 8 karakter. Silakan masukkan password yang lebih panjang.";
+          errorMessage = "Password must be at least 8 characters. Please enter a longer password.";
           // Don't redirect to OTP page for validation errors
           shouldRedirectToOTP = false;
         } else if (errorMessage.includes("maksimal 128 karakter") || 
-                   errorMessage.includes("Password maksimal")) {
-          errorMessage = "Password maksimal 128 karakter. Silakan masukkan password yang lebih pendek.";
+                   errorMessage.includes("Password maksimal") ||
+                   errorMessage.includes("at most 128 characters")) {
+          errorMessage = "Password must be at most 128 characters. Please enter a shorter password.";
           // Don't redirect to OTP page for validation errors
           shouldRedirectToOTP = false;
         } else if (errorMessage.includes("invalid or expired OTP") ||
                    errorMessage.includes("OTP tidak valid")) {
           // Only clear OTP and redirect if OTP is invalid/expired
-          errorMessage = "Kode OTP tidak valid atau sudah expired. Silakan verifikasi ulang OTP.";
+          errorMessage = "OTP code is invalid or expired. Please verify OTP again.";
           shouldRedirectToOTP = true;
         }
       }
@@ -155,7 +157,7 @@ export default function VerifyResetPassword() {
       if (shouldRedirectToOTP) {
         sessionStorage.removeItem("verified_otp");
         toast({
-          title: "❌ OTP Tidak Valid atau Expired",
+          title: "❌ Invalid or Expired OTP",
           description: errorMessage,
           variant: "destructive",
         });
@@ -164,7 +166,7 @@ export default function VerifyResetPassword() {
       }
       
       toast({
-        title: "❌ Reset Password Gagal",
+        title: "❌ Reset Password Failed",
         description: errorMessage,
         variant: "destructive",
       });
@@ -203,13 +205,13 @@ export default function VerifyResetPassword() {
               Set Password Baru
             </CardTitle>
             <CardDescription className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-              OTP telah diverifikasi untuk <br />
+              OTP has been verified for <br />
               <span className="font-semibold text-blue-600 dark:text-blue-400 break-all">
                 {email}
               </span>
               <br />
               <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-2 block">
-                Masukkan password baru Anda
+                Enter your new password
               </span>
             </CardDescription>
           </CardHeader>
@@ -219,13 +221,13 @@ export default function VerifyResetPassword() {
                
 
                 <div className="grid gap-3">
-                  <Label htmlFor="newPassword">Password Baru</Label>
+                  <Label htmlFor="newPassword">New Password</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
                     <Input
                       id="newPassword"
                       type={showPassword ? "text" : "password"}
-                      placeholder="Masukkan password baru (min 8 karakter)"
+                      placeholder="Enter new password (min 8 characters)"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       className="pl-10 pr-10"
@@ -256,7 +258,7 @@ export default function VerifyResetPassword() {
                     <Input
                       id="confirmPassword"
                       type={showConfirmPassword ? "text" : "password"}
-                      placeholder="Konfirmasi password baru"
+                      placeholder="Confirm new password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       className="pl-10 pr-10"
@@ -304,7 +306,7 @@ export default function VerifyResetPassword() {
                     onClick={() => router.push("/auth/verify-otp-reset")}
                     className="text-xs sm:text-sm text-gray-600 hover:text-gray-500 dark:text-gray-400 dark:hover:text-gray-300 w-full sm:w-auto"
                   >
-                    ← Kembali ke verifikasi OTP
+                    ← Back to OTP verification
                   </Button>
                 </div>
               </div>

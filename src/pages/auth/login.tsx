@@ -10,13 +10,13 @@ const LoginPage = () => {
   const router = useRouter();
   const sessionCheckedRef = useRef(false);
 
-  // Pesan saat redirect karena session/cookie tidak cocok (mis. BE di-update)
+  // Message when redirect due to session/cookie mismatch (e.g. after BE update)
   useEffect(() => {
     const { reason } = router.query;
     if (reason === "session_expired") {
       toast({
-        title: "Sesi berakhir",
-        description: "Silakan masuk kembali. Ini bisa terjadi setelah pembaruan sistem.",
+        title: "Session expired",
+        description: "Please sign in again. This may happen after a system update.",
         variant: "default",
       });
       router.replace("/auth/login", undefined, { shallow: true });
@@ -33,21 +33,21 @@ const LoginPage = () => {
       switch (error) {
         case "AccessDenied":
           errorMessage =
-            "Email ini sudah terdaftar dengan password. Silakan login dengan email dan password.";
+            "This email is already registered with password. Please sign in with email and password.";
           break;
         case "Configuration":
-          errorMessage = "Terjadi masalah pada konfigurasi server. Silakan hubungi admin.";
+          errorMessage = "A server configuration issue occurred. Please contact the administrator.";
           break;
         case "Verification":
           errorMessage =
-            "Token verifikasi sudah kedaluwarsa atau sudah digunakan.";
+            "Verification token has expired or has already been used.";
           break;
         case "CredentialsSignin":
           errorMessage =
-            "Email ini sudah terdaftar dengan Google. Silakan gunakan Google Sign In.";
+            "This email is already registered with Google. Please use Google Sign In.";
           break;
         default:
-          errorMessage = typeof error === 'string' ? error : "Terjadi kesalahan saat autentikasi. Silakan coba lagi.";
+          errorMessage = typeof error === 'string' ? error : "An error occurred during authentication. Please try again.";
       }
 
       toast({
@@ -108,7 +108,7 @@ const LoginPage = () => {
           className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Kembali
+          Back
         </Button>
       </div>
       <LoginForm />

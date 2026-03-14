@@ -67,7 +67,7 @@ export default function RoleIdPage() {
       setPreviousStatus(p.status);
       setPayment(p);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal memuat pembayaran");
+      setError(err instanceof Error ? err.message : "Failed to load payment");
     } finally {
       setLoading(false);
     }
@@ -79,7 +79,7 @@ export default function RoleIdPage() {
       const { role_price } = await api.getRolePrice(id);
       setRolePrice(role_price);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal memuat role");
+      setError(err instanceof Error ? err.message : "Failed to load role");
     } finally {
       setLoading(false);
     }
@@ -263,11 +263,11 @@ export default function RoleIdPage() {
 
   const getStatusText = (status: string) => {
     const map: Record<string, string> = {
-      success: "Berhasil",
-      pending: "Menunggu Pembayaran",
-      failed: "Gagal",
-      cancelled: "Dibatalkan",
-      expired: "Kedaluwarsa",
+      success: "Success",
+      pending: "Waiting for Payment",
+      failed: "Failed",
+      cancelled: "Cancelled",
+      expired: "Expired",
     };
     return map[status] || status;
   };
@@ -275,7 +275,7 @@ export default function RoleIdPage() {
   if (!id || typeof id !== "string") {
     return (
       <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 flex items-center justify-center px-4">
-        <p className="text-muted-foreground text-center">ID tidak valid</p>
+        <p className="text-muted-foreground text-center">Invalid ID</p>
       </div>
     );
   }
@@ -310,7 +310,7 @@ export default function RoleIdPage() {
               <div className="bg-black text-white dark:bg-zinc-900 px-4 py-3 mb-4 rounded-xl">
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-sm text-gray-300">Selesaikan sebelum </span>
+                    <span className="text-sm text-gray-300">Complete before </span>
                     <span className="text-sm font-medium">{formatExpiryDate(payment.expiry_time)}</span>
                   </div>
                   {countdown && (
@@ -369,10 +369,10 @@ export default function RoleIdPage() {
                 {payment.payment_method === "credit_card" && payment.redirect_url && (
                   <div className="px-6 pb-4">
                     <div className="bg-gray-50 dark:bg-zinc-800 py-6 rounded-xl text-center">
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Selesaikan verifikasi 3D Secure</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Complete 3D Secure verification</p>
                       {payment.masked_card && <p className="text-black dark:text-white font-mono text-sm mb-3">{payment.masked_card}</p>}
                       <a href={payment.redirect_url} target="_blank" rel="noopener noreferrer">
-                        <Button>Lanjutkan ke 3D Secure →</Button>
+                        <Button>Continue to 3D Secure →</Button>
                       </a>
                     </div>
                   </div>
@@ -382,7 +382,7 @@ export default function RoleIdPage() {
                 {payment.payment_method === "crypto" && payment.redirect_url && (
                   <div className="px-6 pb-4">
                     <div className="bg-amber-50 dark:bg-amber-950/30 py-6 rounded-xl text-center border border-amber-200 dark:border-amber-800">
-                      <p className="text-sm text-amber-800 dark:text-amber-200 mb-2">Selesaikan pembayaran di halaman Plisio</p>
+                      <p className="text-sm text-amber-800 dark:text-amber-200 mb-2">Complete payment on the Plisio page</p>
                       <Button
                         onClick={() => { window.location.href = payment.redirect_url!; }}
                         className="bg-amber-600 hover:bg-amber-700"
@@ -401,7 +401,7 @@ export default function RoleIdPage() {
                   {(payment.payment_method === "qris" || payment.payment_method === "gopay") && payment.qr_code_url && (
                     <div className="flex gap-3">
                       <Button variant="outline" className="flex-1" onClick={() => copyToClipboard(payment.qr_code_url!, "qr")}>
-                        {copied === "qr" ? "✓ Disalin" : "Salin URL QR"}
+                        {copied === "qr" ? "✓ Copied" : "Copy QR URL"}
                       </Button>
                       <Button className="flex-1" onClick={downloadQRCode}>
                         Download QR
@@ -425,7 +425,7 @@ export default function RoleIdPage() {
                 <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border p-6 mb-4">
                   <div className="space-y-4">
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-500">Tanggal</span>
+                      <span className="text-sm text-gray-500">Date</span>
                       <span className="text-sm font-medium">{new Date(payment.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}</span>
                     </div>
                     <div className="flex justify-between">
@@ -439,7 +439,7 @@ export default function RoleIdPage() {
                   </div>
                 </div>
                 <Button className="w-full" onClick={() => router.push("/role")}>
-                  Selesai
+                  Done
                 </Button>
               </div>
             )}
@@ -454,9 +454,9 @@ export default function RoleIdPage() {
                   </div>
                   <h2 className="text-xl font-bold">Pembayaran {getStatusText(payment.status)}</h2>
                 </div>
-                <p className="text-center text-gray-600 dark:text-gray-400 mb-6">Silakan coba lagi atau hubungi support.</p>
+                <p className="text-center text-gray-600 dark:text-gray-400 mb-6">Please try again or contact support.</p>
                 <Button className="w-full" onClick={() => router.push("/role")}>
-                  Kembali
+                  Back
                 </Button>
               </div>
             )}
@@ -480,9 +480,9 @@ export default function RoleIdPage() {
   if (!rolePrice) {
     return (
       <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 flex flex-col items-center justify-center px-4">
-        <p className="text-destructive mb-4 text-center">{error || "Role tidak ditemukan"}</p>
+        <p className="text-destructive mb-4 text-center">{error || "Role not found"}</p>
         <Button asChild variant="outline">
-          <Link href="/role">Kembali ke Daftar Role</Link>
+          <Link href="/role">Back to Role List</Link>
         </Button>
       </div>
     );

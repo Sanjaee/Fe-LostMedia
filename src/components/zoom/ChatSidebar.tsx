@@ -83,7 +83,7 @@ export default function ChatSidebar({ roomId, userId, isOpen }: ChatSidebarProps
       <div className="flex-1 overflow-y-auto p-2 scrollbar-hide min-h-0" ref={scrollRef}>
         <div className="space-y-2">
           {messages.length === 0 ? (
-            <p className="text-center text-gray-500 text-sm py-4">Belum ada pesan</p>
+            <p className="text-center text-gray-500 text-sm py-4">No messages yet</p>
           ) : (
             messages.map((m) => (
               <div
@@ -116,7 +116,7 @@ export default function ChatSidebar({ roomId, userId, isOpen }: ChatSidebarProps
           className="bg-gray-800 border-gray-600 text-white placeholder:text-gray-400"
         />
         <Button size="sm" onClick={handleSend} disabled={!input.trim()}>
-          Kirim
+          Send
         </Button>
       </div>
     </div>

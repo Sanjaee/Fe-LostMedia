@@ -567,20 +567,20 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
             const imageCount = post.image_urls?.length ?? 0;
             const videoCount = post.video_urls?.length ?? 0;
             const mediaParts: string[] = [];
-            if (imageCount > 0) mediaParts.push(`${imageCount} gambar`);
+            if (imageCount > 0) mediaParts.push(`${imageCount} image(s)`);
             if (videoCount > 0) mediaParts.push(`${videoCount} video`);
             toast({
-              title: "Upload Selesai",
+              title: "Upload complete",
               description: mediaParts.length > 0
-                ? `Post berhasil diupload dengan ${mediaParts.join(" dan ")}`
-                : "Post berhasil diupload",
+                ? `Post uploaded successfully with ${mediaParts.join(" and ")}`
+                : "Post uploaded successfully",
               action: (
                 <ToastAction
-                  altText="Lihat Post"
+                  altText="View Post"
                   onClick={() => router.push(`/?fbid=${post.id}&set=pcb.${post.id}.0`)}
                 >
                   <Eye className="h-4 w-4 mr-1" />
-                  Lihat Post
+                  View Post
                 </ToastAction>
               ),
             });
@@ -613,12 +613,12 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
         null;
       const imageCount = typeof dataObj?.image_count === "number" ? dataObj.image_count : 0;
       toast({
-        title: messageData.title || "Upload Selesai",
-        description: messageData.message || `Post berhasil diupload dengan ${imageCount} gambar`,
+        title: messageData.title || "Upload complete",
+        description: messageData.message || `Post uploaded successfully with ${imageCount} image(s)`,
         action: postID ? (
-          <ToastAction altText="Lihat Post" onClick={() => router.push(`/?fbid=${postID}&set=pcb.${postID}.0`)}>
+          <ToastAction altText="View Post" onClick={() => router.push(`/?fbid=${postID}&set=pcb.${postID}.0`)}>
             <Eye className="h-4 w-4 mr-1" />
-            Lihat Post
+            View Post
           </ToastAction>
         ) : undefined,
       });
@@ -689,7 +689,7 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
                 onClick={() => setIsPostDialogOpen(true)}
                 className="flex-1 w-full h-10 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center px-4 text-sm md:text-base text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer text-left"
               >
-                Apa yang Anda pikirkan, {session.user?.name?.split(' ')[0]}?
+                {`What's on your mind, ${session.user?.name?.split(' ')[0] || ''}?`}
               </button>
             </div>
             <Separator className="mb-4" />
@@ -748,14 +748,14 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
                 className="h-20 flex items-center justify-center"
               >
                 {loadingMore && (
-                  <div className="text-zinc-500 text-sm">Memuat post lainnya...</div>
+                  <div className="text-zinc-500 text-sm">Loading more posts...</div>
                 )}
               </div>
             )}
             
             {!hasMore && posts.length > 0 && (
               <div className="text-center py-8 text-zinc-500 text-sm">
-                <p>Semua post telah dimuat</p>
+                <p>All posts loaded</p>
               </div>
             )}
           </>

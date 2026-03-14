@@ -237,7 +237,7 @@ class ApiClient {
               new CustomEvent("user-banned", {
                 detail: {
                   banned_until: errorData.banned_until,
-                  ban_reason: errorData.ban_reason || "Melanggar ketentuan layanan",
+                  ban_reason: errorData.ban_reason || "Violation of terms of service",
                 },
               })
             );

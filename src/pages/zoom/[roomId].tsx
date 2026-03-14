@@ -132,7 +132,7 @@ export default function ZoomCallPage() {
 
         const token: string | null = (session?.accessToken as string) || TokenManager.getAccessToken();
         if (session?.refreshToken) TokenManager.setTokens(session.accessToken as string, session.refreshToken as string);
-        if (!token) throw new Error("Silakan login kembali.");
+        if (!token) throw new Error("Please sign in again.");
         api.setAccessToken(token);
 
         const data = await api.joinRoom(id) as JoinRoomResponse;
@@ -244,7 +244,7 @@ export default function ZoomCallPage() {
           }
         }
       } catch (err: any) {
-        const msg = err.message || err.response?.data?.message || "Gagal bergabung";
+        const msg = err.message || err.response?.data?.message || "Failed to join";
         setError(msg);
         setLoading(false);
         hasJoinedRef.current = false;
@@ -329,7 +329,7 @@ export default function ZoomCallPage() {
           variant: "destructive",
         });
       } else {
-        toast({ title: "Gagal mengaktifkan mikrofon", description: e?.message, variant: "destructive" });
+        toast({ title: "Failed to enable microphone", description: e?.message, variant: "destructive" });
       }
       setEnableDeviceDialog(null);
     }
@@ -374,7 +374,7 @@ export default function ZoomCallPage() {
           variant: "destructive",
         });
       } else {
-        toast({ title: "Gagal mengaktifkan kamera", description: e?.message, variant: "destructive" });
+        toast({ title: "Failed to enable camera", description: e?.message, variant: "destructive" });
       }
       setEnableDeviceDialog(null);
     }
@@ -417,7 +417,7 @@ export default function ZoomCallPage() {
       setFacingMode(newMode);
       setIsCameraOff(false);
     } catch {
-      toast({ title: "Gagal mengganti kamera", variant: "destructive" });
+      toast({ title: "Failed to switch camera", variant: "destructive" });
     } finally {
       setIsSwitchingCamera(false);
     }
@@ -538,7 +538,7 @@ export default function ZoomCallPage() {
             <h2 className="text-xl font-bold text-white mb-3">Error</h2>
             <p className="text-gray-400 mb-4">{error}</p>
             <div className="space-y-2">
-              <Button onClick={() => router.push("/zoom")} className="w-full">Kembali ke Rooms</Button>
+              <Button onClick={() => router.push("/zoom")} className="w-full">Back to Rooms</Button>
               <Button
                 variant="outline"
                 className="w-full"
@@ -757,7 +757,7 @@ export default function ZoomCallPage() {
             <DialogDescription className="text-gray-400">
               Browser akan memunculkan popup izin akses{" "}
               {enableDeviceDialog === "mic" ? "mikrofon" : "kamera"}. Klik{" "}
-              <strong className="text-white">&quot;Allow&quot; / &quot;Izinkan&quot;</strong> untuk
+              <strong className="text-white">&quot;Allow&quot;</strong> to
               melanjutkan.
               <br />
               <span className="text-yellow-400 text-xs mt-1 block">
@@ -768,7 +768,7 @@ export default function ZoomCallPage() {
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="outline" className="border-gray-600 text-gray-300" onClick={() => setEnableDeviceDialog(null)}>
-              Batal
+              Cancel
             </Button>
             <Button onClick={enableDeviceDialog === "mic" ? doEnableMic : doEnableCamera} className="bg-green-600 hover:bg-green-700">
               {enableDeviceDialog === "mic" ? "Aktifkan Mikrofon" : "Aktifkan Kamera"}

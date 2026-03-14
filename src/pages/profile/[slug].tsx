@@ -126,7 +126,7 @@ const ProfilePage: React.FC = () => {
       await loadFriendshipStatus(profile.user_id);
       await loadFriendsCount(profile.user_id);
     } catch (err: any) {
-      const errorMessage = err.message || "Gagal mengirim permintaan pertemanan";
+      const errorMessage = err.message || "Failed to send friend request";
       toast({
         title: "Error",
         description: errorMessage,

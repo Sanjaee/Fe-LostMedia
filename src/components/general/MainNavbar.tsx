@@ -274,7 +274,7 @@ export default function MainNavbar() {
 
   const navItems = [
     { icon: Home, label: "Home", path: "/" },
-    { icon: Users, label: "Grup", path: "/groups" },
+    { icon: Users, label: "Groups", path: "/groups" },
     { icon: Clapperboard, label: "Reels", path: "/reels" },
     { icon: Video, label: "Zoom", path: "/zoom" },
     { icon: Crown, label: "Role", path: "/role" },
@@ -375,7 +375,7 @@ export default function MainNavbar() {
             >
               <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
                 <h3 className="font-semibold text-sm text-gray-900 dark:text-white">Messenger</h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Pilih teman untuk chat</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Select a friend to chat</p>
               </div>
               <div className="max-h-[320px] overflow-y-auto">
                 <ContactsList
@@ -563,7 +563,7 @@ export default function MainNavbar() {
                 ? "bg-gray-600 dark:bg-gray-700"
                 : "bg-gray-700 dark:bg-gray-800 hover:bg-gray-600 dark:hover:bg-gray-700"
             )}
-            title="Grup"
+            title="Groups"
           >
             <Users className="h-5 w-5 text-gray-300" />
           </button>
@@ -855,7 +855,7 @@ export default function MainNavbar() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari post atau orang..."
+                placeholder="Search posts or people..."
                 autoFocus
                 className="w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
               />
@@ -869,9 +869,9 @@ export default function MainNavbar() {
                   </h3>
                 </div>
                 {searchLoading ? (
-                  <div className="text-sm text-gray-500">Memuat...</div>
+                  <div className="text-sm text-gray-500">Loading...</div>
                 ) : postResults.length === 0 ? (
-                  <div className="text-sm text-gray-500">Tidak ada post</div>
+                  <div className="text-sm text-gray-500">No posts</div>
                 ) : (
                   <div className="space-y-2">
                     {postResults.map((post) => (
@@ -924,9 +924,9 @@ export default function MainNavbar() {
                   </h3>
                 </div>
                 {searchLoading ? (
-                  <div className="text-sm text-gray-500">Memuat...</div>
+                  <div className="text-sm text-gray-500">Loading...</div>
                 ) : peopleResults.length === 0 ? (
-                  <div className="text-sm text-gray-500">Tidak ada orang</div>
+                  <div className="text-sm text-gray-500">No people</div>
                 ) : (
                   <div className="space-y-2">
                     {peopleResults.map((user) => (
@@ -968,10 +968,10 @@ export default function MainNavbar() {
                 variant="ghost"
                 onClick={() => setSearchDialogOpen(false)}
               >
-                Tutup
+                Close
               </Button>
               <Button type="submit" disabled={!searchQuery.trim()}>
-                Lihat semua hasil
+                View all results
               </Button>
             </div>
           </form>

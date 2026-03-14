@@ -402,7 +402,7 @@ export function AllRolePricesTable({ refreshTrigger = 0 }: AllRolePricesTablePro
               Batal
             </Button>
             <Button onClick={handleCreate} disabled={submitting || !form.role || !form.name || form.price === ""}>
-              {submitting ? "Memproses..." : "Tambah"}
+              {submitting ? "Processing..." : "Add"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -420,7 +420,7 @@ export function AllRolePricesTable({ refreshTrigger = 0 }: AllRolePricesTablePro
               Batal
             </Button>
             <Button onClick={handleEdit} disabled={submitting || !form.name}>
-              {submitting ? "Memproses..." : "Simpan"}
+              {submitting ? "Processing..." : "Save"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -438,7 +438,7 @@ export function AllRolePricesTable({ refreshTrigger = 0 }: AllRolePricesTablePro
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleting}>Batal</AlertDialogCancel>
             <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
-              {deleting ? "Menghapus..." : "Hapus"}
+              {deleting ? "Deleting..." : "Delete"}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

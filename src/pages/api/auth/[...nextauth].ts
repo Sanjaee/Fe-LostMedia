@@ -157,10 +157,10 @@ export const authOptions: NextAuthOptions = {
             // Map error messages for toast display
             if (error.message.includes("already registered with password") || 
                 error.message.includes("already registered with credentials")) {
-              throw new Error("Email sudah terdaftar dengan password. Silakan login dengan email dan password.");
+              throw new Error("Email is already registered with password. Please sign in with email and password.");
             }
             if (error.message.includes("different Google account")) {
-              throw new Error("Email sudah terdaftar dengan akun Google yang berbeda.");
+              throw new Error("Email is already registered with a different Google account.");
             }
             // Re-throw with original message for toast display
             throw error;

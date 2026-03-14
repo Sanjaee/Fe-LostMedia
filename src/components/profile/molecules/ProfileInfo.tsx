@@ -73,7 +73,7 @@ export const ProfileInfo: React.FC<ProfileInfoProps> = ({
           <div className="flex items-center gap-3">
             <Star className="h-5 w-5 text-gray-500 dark:text-gray-400" />
             <span className="text-sm text-gray-600 dark:text-gray-400">
-              Belum dinilai (0 Ulasan)
+              Not rated yet (0 Reviews)
             </span>
           </div>
         </div>

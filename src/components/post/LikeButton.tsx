@@ -126,7 +126,7 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
         } catch (error: any) {
           toast({
             title: "Error",
-            description: error.message || "Gagal menghapus like",
+            description: error.message || "Failed to remove like",
             variant: "destructive",
           });
           // Rollback UI on error

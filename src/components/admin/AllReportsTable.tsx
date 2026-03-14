@@ -81,10 +81,10 @@ export function AllReportsTable({ refreshTrigger = 0 }: AllReportsTableProps) {
     } catch (err: unknown) {
       const e = err as { response?: { status?: number }; message?: string };
       if (e?.response?.status === 403) {
-        setError("Akses ditolak: Admin diperlukan");
+        setError("Access denied: Admin required");
         router.push("/");
       } else {
-        setError((e?.message as string) || "Gagal memuat report");
+        setError((e?.message as string) || "Failed to load reports");
       }
     } finally {
       setLoading(false);
@@ -99,10 +99,10 @@ export function AllReportsTable({ refreshTrigger = 0 }: AllReportsTableProps) {
       const response = await api.getReports(limit, offset);
       setReports(response.reports || []);
       setTotal(response.total || 0);
-      toast({ title: "Tabel diperbarui", description: "Daftar report berhasil di-refresh." });
+      toast({ title: "Table updated", description: "Report list refreshed successfully." });
     } catch (err: unknown) {
       const e = err as { message?: string };
-      toast({ title: "Gagal refresh", description: e?.message || "Error", variant: "destructive" });
+      toast({ title: "Refresh failed", description: e?.message || "Error", variant: "destructive" });
     } finally {
       setRefreshing(false);
     }
@@ -118,7 +118,7 @@ export function AllReportsTable({ refreshTrigger = 0 }: AllReportsTableProps) {
     if (!replyTarget) return;
     const text = replyText.trim();
     if (!text) {
-      toast({ title: "Balasan wajib diisi", variant: "destructive" });
+      toast({ title: "Reply is required", variant: "destructive" });
       return;
     }
 
@@ -137,8 +137,8 @@ export function AllReportsTable({ refreshTrigger = 0 }: AllReportsTableProps) {
         )
       );
       toast({
-        title: "Balasan terkirim",
-        description: "User yang melaporkan akan menerima notifikasi realtime.",
+        title: "Reply sent",
+        description: "The reporting user will receive a real-time notification.",
       });
       setReplyDialogOpen(false);
       setReplyTarget(null);
@@ -146,7 +146,7 @@ export function AllReportsTable({ refreshTrigger = 0 }: AllReportsTableProps) {
       loadReports();
     } catch (err: unknown) {
       const e = err as { message?: string };
-      toast({ title: "Gagal mengirim balasan", description: e?.message || "Error", variant: "destructive" });
+      toast({ title: "Failed to send reply", description: e?.message || "Error", variant: "destructive" });
     } finally {
       setReplying(false);
     }
@@ -171,7 +171,7 @@ export function AllReportsTable({ refreshTrigger = 0 }: AllReportsTableProps) {
               <AlertCircle className="h-5 w-5 text-amber-500" />
               Reports
             </CardTitle>
-            <CardDescription>Daftar report dari pengguna - Admin dapat membalas report</CardDescription>
+            <CardDescription>List of user reports - Admin can reply to reports</CardDescription>
           </div>
           <Button
             variant="outline"
@@ -180,7 +180,7 @@ export function AllReportsTable({ refreshTrigger = 0 }: AllReportsTableProps) {
             disabled={refreshing || loading}
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
-            {refreshing ? "Memuat..." : "Refresh"}
+            {refreshing ? "Loading..." : "Refresh"}
           </Button>
         </div>
       </CardHeader>
@@ -198,7 +198,7 @@ export function AllReportsTable({ refreshTrigger = 0 }: AllReportsTableProps) {
             ))}
           </div>
         ) : reports.length === 0 ? (
-          <p className="text-center text-zinc-500 dark:text-zinc-400 py-8">Belum ada report</p>
+          <p className="text-center text-zinc-500 dark:text-zinc-400 py-8">No reports yet</p>
         ) : (
           <>
             <div className="rounded-md border">
@@ -208,9 +208,9 @@ export function AllReportsTable({ refreshTrigger = 0 }: AllReportsTableProps) {
                     <TableHead>User</TableHead>
                     <TableHead>Deskripsi</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Balasan Admin</TableHead>
+                    <TableHead>Admin Reply</TableHead>
                     <TableHead className="w-32">Waktu</TableHead>
-                    <TableHead className="text-right w-28">Aksi</TableHead>
+                    <TableHead className="text-right w-28">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -256,7 +256,7 @@ export function AllReportsTable({ refreshTrigger = 0 }: AllReportsTableProps) {
                           </Badge>
                         ) : (
                           <Badge variant="secondary" className="text-xs">
-                            Belum dibalas
+                            Unreplied
                           </Badge>
                         )}
                       </TableCell>
@@ -290,7 +290,7 @@ export function AllReportsTable({ refreshTrigger = 0 }: AllReportsTableProps) {
                           className="h-8"
                         >
                           <MessageSquare className="h-3.5 w-3.5 mr-1" />
-                          {r.admin_reply ? "Edit Balasan" : "Balas"}
+                          {r.admin_reply ? "Edit Reply" : "Reply"}
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -302,7 +302,7 @@ export function AllReportsTable({ refreshTrigger = 0 }: AllReportsTableProps) {
             {totalPages > 1 && (
               <div className="flex items-center justify-between mt-4">
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  Halaman {currentPage} dari {totalPages} ({total} total)
+                  Page {currentPage} of {totalPages} ({total} total)
                 </p>
                 <div className="flex gap-2">
                   <Button
@@ -333,33 +333,33 @@ export function AllReportsTable({ refreshTrigger = 0 }: AllReportsTableProps) {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <MessageSquare className="h-5 w-5 text-blue-500" />
-              Balas Report
+              Reply to Report
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Balasan akan dikirim ke user yang melaporkan dan mereka akan menerima notifikasi realtime.
+              Your reply will be sent to the reporting user and they will receive a real-time notification.
             </AlertDialogDescription>
           </AlertDialogHeader>
           {replyTarget && (
             <div className="space-y-4 py-2">
               <div>
-                <Label className="text-xs text-zinc-500">Report dari: {replyTarget.user?.full_name || "—"}</Label>
+                <Label className="text-xs text-zinc-500">Report from: {replyTarget.user?.full_name || "—"}</Label>
                 <p className="text-sm mt-1 p-2 bg-zinc-100 dark:bg-zinc-800 rounded text-zinc-700 dark:text-zinc-300">
                   {replyTarget.description}
                 </p>
               </div>
               <div className="space-y-2">
-                <Label>Balasan Admin</Label>
+                <Label>Admin Reply</Label>
                 <Textarea
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
-                  placeholder="Tulis balasan untuk user yang melaporkan..."
+                  placeholder="Write a reply for the reporting user..."
                   rows={4}
                 />
               </div>
             </div>
           )}
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={replying}>Batal</AlertDialogCancel>
+            <AlertDialogCancel disabled={replying}>Cancel</AlertDialogCancel>
             <Button onClick={handleReply} disabled={replying || !replyText.trim()}>
               {replying ? (
                 <>
@@ -369,7 +369,7 @@ export function AllReportsTable({ refreshTrigger = 0 }: AllReportsTableProps) {
               ) : (
                 <>
                   <MessageSquare className="h-4 w-4 mr-2" />
-                  Kirim Balasan
+                  Send Reply
                 </>
               )}
             </Button>

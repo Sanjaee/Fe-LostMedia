@@ -18,10 +18,10 @@ import { id } from "date-fns/locale";
 
 const ALL_STATUS_VALUE = "__all__";
 const STATUS_OPTIONS = [
-  { value: ALL_STATUS_VALUE, label: "Semua status" },
+  { value: ALL_STATUS_VALUE, label: "All statuses" },
   { value: "pending", label: "Pending" },
   { value: "success", label: "Sukses" },
-  { value: "failed", label: "Gagal" },
+  { value: "failed", label: "Failed" },
   { value: "cancelled", label: "Dibatalkan" },
   { value: "expired", label: "Kadaluarsa" },
 ];
@@ -39,15 +39,15 @@ function StatusBadge({ status }: { status: string }) {
   const variant = isSuccess ? "default" : isError ? "destructive" : v === "pending" ? "secondary" : "outline";
   const label =
     v === "success"
-      ? "Sukses"
+      ? "Success"
       : v === "pending"
         ? "Pending"
         : v === "failed"
-          ? "Gagal"
+          ? "Failed"
           : v === "cancelled"
-            ? "Dibatalkan"
+            ? "Cancelled"
             : v === "expired"
-              ? "Kadaluarsa"
+              ? "Expired"
               : status;
   return (
     <Badge
@@ -123,7 +123,7 @@ export default function AdminTransactionsPage() {
             <Button variant="ghost" size="sm" asChild>
               <Link href="/admin">
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Kembali ke Admin
+                Back to Admin
               </Link>
             </Button>
           </div>
@@ -131,10 +131,10 @@ export default function AdminTransactionsPage() {
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 mb-2 flex items-center gap-2">
             <Receipt className="h-8 w-8" />
-            Semua Transaksi
+            All Transactions
           </h1>
           <CardDescription>
-            Daftar pembayaran dari semua user (role upgrade, dll). Hanya owner yang dapat mengakses.
+            List of payments from all users (role upgrade, etc.). Only owners can access.
           </CardDescription>
         </div>
 
@@ -163,7 +163,7 @@ export default function AdminTransactionsPage() {
                 ))}
               </div>
             ) : payments.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">Belum ada transaksi.</p>
+              <p className="text-muted-foreground text-center py-8">No transactions yet.</p>
             ) : (
               <>
                 <div className="overflow-x-auto rounded-md border">

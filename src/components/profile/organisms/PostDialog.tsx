@@ -115,8 +115,8 @@ export const PostDialog: React.FC<PostDialogProps> = ({
     const hasMedia = hasImages || hasVideos;
     if (!hasMedia && !(formData.content?.trim())) {
       toast({
-        title: "Isi konten atau media",
-        description: "Tambahkan teks atau gambar/video.",
+        title: "Content or media required",
+        description: "Add text or image/video.",
         variant: "destructive",
       });
       return;
@@ -148,7 +148,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
           );
           toast({
             title: "Diproses",
-            description: "Post dibuat. Gambar & video sedang diupload...",
+            description: "Post created. Images & video are uploading...",
             variant: "pending",
           });
         } else if (hasVideos) {
@@ -159,7 +159,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
           );
           toast({
             title: "Diproses",
-            description: "Post dibuat. Video sedang diproses...",
+            description: "Post created. Video is being processed...",
             variant: "pending",
           });
         } else if (hasImages) {
@@ -170,7 +170,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
           );
           toast({
             title: "Diproses",
-            description: "Post dibuat. Gambar sedang diproses...",
+            description: "Post created. Images are being processed...",
             variant: "pending",
           });
         } else {
@@ -285,7 +285,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
     if (imageFilesFromInput.length === 0 && videoFilesFromInput.length === 0) {
       toast({
         title: "Error",
-        description: "Pilih file gambar atau video",
+        description: "Select image or video file",
         variant: "destructive",
       });
       return;
@@ -301,7 +301,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
     if (remainingSlots <= 0) {
       toast({
         title: "Error",
-        description: `Maksimal ${MAX_IMAGES} gambar.`,
+        description: `Maximum ${MAX_IMAGES} images.`,
         variant: "destructive",
       });
       return;
@@ -311,7 +311,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
     if (filesToAdd.length < files.length) {
       toast({
         title: "Limit reached",
-        description: `Hanya ${remainingSlots} gambar lagi. Maksimal ${MAX_IMAGES} per post.`,
+        description: `Only ${remainingSlots} more image(s). Maximum ${MAX_IMAGES} per post.`,
         variant: "destructive",
       });
     }
@@ -321,7 +321,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
     if (invalidFiles.length > 0) {
       toast({
         title: "Error",
-        description: "Beberapa gambar melebihi 10MB. Maksimal 10MB per gambar.",
+        description: "Some images exceed 10MB. Maximum 10MB per image.",
         variant: "destructive",
       });
       return;
@@ -330,7 +330,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
     setImageFiles((prev) => [...prev, ...filesToAdd]);
     const newPreviews = filesToAdd.map((file) => URL.createObjectURL(file));
     setImagePreviews((prev) => [...prev, ...newPreviews]);
-    toast({ title: "Berhasil", description: `${filesToAdd.length} gambar ditambahkan.` });
+    toast({ title: "Success", description: `${filesToAdd.length} image(s) added.` });
   };
 
   const handleMediaSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -367,7 +367,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
     if (remainingSlots <= 0) {
       toast({
         title: "Error",
-        description: `Maksimal ${MAX_VIDEOS} video per post.`,
+        description: `Maximum ${MAX_VIDEOS} videos per post.`,
         variant: "destructive",
       });
       return;
@@ -386,7 +386,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
     if (invalidFiles.length > 0) {
       toast({
         title: "Error",
-        description: "Beberapa video melebihi 20MB. Maksimal 20MB per video.",
+        description: "Some videos exceed 20MB. Maximum 20MB per video.",
         variant: "destructive",
       });
       return;
@@ -395,7 +395,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
     setVideoFiles((prev) => [...prev, ...filesToAdd]);
     const newPreviews = filesToAdd.map((file) => URL.createObjectURL(file));
     setVideoPreviews((prev) => [...prev, ...newPreviews]);
-    toast({ title: "Berhasil", description: `${filesToAdd.length} video ditambahkan.` });
+    toast({ title: "Success", description: `${filesToAdd.length} video(s) added.` });
   };
 
   const handleRemoveVideo = (index: number) => {
@@ -525,13 +525,13 @@ export const PostDialog: React.FC<PostDialogProps> = ({
                     Drag and drop images or video here, or click to browse
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-500">
-                    Maks {MAX_IMAGES} gambar (10MB/pc) + {MAX_VIDEOS} video (20MB/pc). Bisa digabung dalam satu post.
+                    Max {MAX_IMAGES} images (10MB each) + {MAX_VIDEOS} videos (20MB each). Can be combined in one post.
                   </p>
                 </div>
               ) : (
                 imagePreviews.length > 0 || videoPreviews.length > 0 ? (
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Drop untuk tambah lagi, atau klik untuk browse
+                    Drop to add more, or click to browse
                   </p>
                 ) : null
               )}
@@ -539,7 +539,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
 
             {(imagePreviews.length > 0 || videoPreviews.length > 0) && (
               <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
-                {imagePreviews.length > 0 && `${imagePreviews.length}/${MAX_IMAGES} gambar`}
+                {imagePreviews.length > 0 && `${imagePreviews.length}/${MAX_IMAGES} images`}
                 {imagePreviews.length > 0 && videoPreviews.length > 0 && " · "}
                 {videoPreviews.length > 0 && `${videoPreviews.length}/${MAX_VIDEOS} video`}
               </p>
@@ -569,7 +569,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
             {(imagePreviews.length > 0 || videoPreviews.length > 0) && (
               <div className="mt-4 space-y-3">
                 <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                  Dipilih: {imagePreviews.length} gambar, {videoPreviews.length} video
+                  Selected: {imagePreviews.length} image(s), {videoPreviews.length} video(s)
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {imagePreviews.map((preview, index) => {

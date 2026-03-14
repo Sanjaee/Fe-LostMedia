@@ -318,7 +318,7 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
     try {
       await api.rejectFriendRequest(id);
       toast({
-        title: "Berhasil",
+        title: "Success",
         description: "Permintaan pertemanan ditolak",
       });
       // Update friendship status for rejected request
@@ -401,7 +401,7 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Gagal menghapus notifikasi",
+        description: error.message || "Failed to delete notification",
         variant: "destructive",
       });
     }
@@ -460,7 +460,7 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
       const senderId = notification.sender_id || (notification.sender?.id);
       const friendshipStatus = friendshipStatuses[notification.id];
       
-      // If friendship is already accepted, show "Lihat Profile" button
+      // If friendship is already accepted, show "View Profile" button
       if (friendshipStatus === "accepted" && senderId) {
         return (
           <div className="flex gap-2 mt-2">
@@ -475,7 +475,7 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
               className="h-8"
             >
               <UserIcon className="h-4 w-4 mr-1" />
-              Lihat Profile
+              View Profile
             </Button>
           </div>
         );
@@ -560,7 +560,7 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
               className="h-8"
             >
               <MessageCircle className="h-4 w-4 mr-1" />
-              Lihat Komentar
+              View Comment
             </Button>
           </div>
         );
@@ -600,7 +600,7 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
               className="h-8"
             >
               <EyeIcon className="h-4 w-4 mr-1" />
-              Lihat Post
+              View Post
             </Button>
           </div>
         );
@@ -622,7 +622,7 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
             className="h-8"
           >
             <Crown className="h-4 w-4 mr-1" />
-            Lihat Role
+            View Role
           </Button>
         </div>
       );
@@ -643,7 +643,7 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
             className="h-8"
           >
             <AlertCircle className="h-4 w-4 mr-1" />
-            Lihat Report
+            View Report
           </Button>
         </div>
       );
@@ -664,7 +664,7 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
             className="h-8"
           >
             <MessageCircle className="h-4 w-4 mr-1" />
-            Lihat Balasan
+            View Reply
           </Button>
         </div>
       );
@@ -703,7 +703,7 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
               className="h-8"
             >
               <EyeIcon className="h-4 w-4 mr-1" />
-              Lihat Post
+              View Post
             </Button>
           </div>
         );
@@ -730,7 +730,7 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
           ) : notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <Bell className="h-12 w-12 text-gray-400 mb-4" />
-              <p className="text-gray-500">Tidak ada notifikasi</p>
+              <p className="text-gray-500">No notifications</p>
             </div>
           ) : (
             <div className="py-4 space-y-4">
