@@ -118,7 +118,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           <div className="hidden lg:block lg:col-span-1 space-y-4">
             <div className="sticky top-20">
               <div className="mb-4">
-                <h3 className="text-zinc-500 font-semibold mb-2 px-2">Disponsori</h3>
+                <h3 className="text-zinc-500 font-semibold mb-2 px-2">Sponsored</h3>
                 {/* Ads placeholder */}
                 <div className="flex items-center gap-3 p-2 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg cursor-pointer">
                   <div className="w-24 h-24 bg-zinc-300 rounded-lg shrink-0"></div>

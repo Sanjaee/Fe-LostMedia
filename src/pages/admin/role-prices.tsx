@@ -46,10 +46,10 @@ export default function AdminRolePricesPage() {
         </div>
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 mb-2">
-            Kelola Role Prices
+            Manage Role Prices
           </h1>
           <p className="text-zinc-600 dark:text-zinc-400">
-            Add, edit, and delete role prices for upgrade
+            Add, edit, and delete role prices for upgrade. Prices are in USD.
           </p>
         </div>
 

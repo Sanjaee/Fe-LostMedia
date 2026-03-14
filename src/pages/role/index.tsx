@@ -115,6 +115,15 @@ function formatPriceUsd(value: string): string {
   }).format(n);
 }
 
+function formatUsd(amount: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
 const CARD_MONTHS = Array.from({ length: 12 }, (_, i) => {
   const mm = String(i + 1).padStart(2, "0");
   const names = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
@@ -419,7 +428,7 @@ export default function RolePage() {
                         </p>
                       )}
                       <p className="text-xl font-bold text-blue-600 dark:text-blue-400">
-                        Rp {rp.price.toLocaleString("id-ID")}
+                        {formatUsd(rp.price)}
                       </p>
                     </button>
                   ))}
@@ -433,7 +442,7 @@ export default function RolePage() {
                         <span className={`font-semibold ${getRoleNameClass(selectedRole.role)}`}>{selectedRole.name}</span>
                       </div>
                       <p className="text-lg font-bold text-blue-600 mt-1">
-                        Rp {selectedRole.price.toLocaleString("id-ID")}
+                        {formatUsd(selectedRole.price)}
                       </p>
                     </div>
                     <Button variant="outline" size="sm" onClick={() => setSelectedRole(null)}>
@@ -620,7 +629,7 @@ export default function RolePage() {
                       disabled={loadingPayment}
                       className="flex-1"
                     >
-                      {loadingPayment ? "Processing..." : "Pay Rp " + selectedRole.price.toLocaleString("id-ID")}
+                      {loadingPayment ? "Processing..." : "Pay " + formatUsd(selectedRole.price)}
                     </Button>
                     <Button variant="outline" onClick={() => setSelectedRole(null)}>
                       Cancel
@@ -696,8 +705,7 @@ export default function RolePage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirm Payment</AlertDialogTitle>
             <AlertDialogDescription>
-              Upgrade to <strong>{selectedRole?.name}</strong> for Rp{" "}
-              {selectedRole?.price.toLocaleString("id-ID")}?
+              Upgrade to <strong>{selectedRole?.name}</strong> for {selectedRole ? formatUsd(selectedRole.price) : ""}?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

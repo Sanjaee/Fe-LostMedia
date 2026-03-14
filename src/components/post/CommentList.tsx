@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useApi } from "@/components/contex/ApiProvider";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
-import { id } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import { Reply, MoreHorizontal, Trash2, Edit, MessageCircle } from "lucide-react";
 import { CommentSkeletonList } from "./CommentSkeleton";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -219,7 +219,7 @@ export const CommentList: React.FC<CommentListProps> = ({
                   <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
                     {formatDistanceToNow(new Date(comment.created_at), {
                       addSuffix: true,
-                      locale: id,
+                      locale: enUS,
                     })}
                   </span>
                 </div>

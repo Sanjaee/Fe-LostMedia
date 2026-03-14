@@ -182,7 +182,8 @@ export default function RoleIdPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, payment?.status, session?.accessToken]);
 
-  const formatAmount = (amount: number) => `Rp${amount.toLocaleString("id-ID")}`;
+  const formatAmount = (amount: number) =>
+    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount);
   const formatTime = (dateString: string) => {
     const d = new Date(dateString);
     return [d.getHours(), d.getMinutes(), d.getSeconds()]
@@ -497,7 +498,7 @@ export default function RoleIdPage() {
               <h1 className="text-2xl font-bold">{rolePrice.name}</h1>
             </div>
             {rolePrice.description && <p className="text-muted-foreground mb-6">{rolePrice.description}</p>}
-            <p className="text-3xl font-bold text-blue-600 mb-6">Rp {rolePrice.price.toLocaleString("id-ID")}</p>
+            <p className="text-3xl font-bold text-blue-600 mb-6">{formatAmount(rolePrice.price)}</p>
             <Button asChild>
               <Link href={`/role?select=${rolePrice.id}`}>Upgrade Sekarang</Link>
             </Button>

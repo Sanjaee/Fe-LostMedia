@@ -11,7 +11,7 @@ import { ThumbsUp, MessageCircle, Eye } from "lucide-react";
 import { PostSkeletonList } from "@/components/post/PostSkeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
-import { id } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import type { Post } from "@/types/post";
 
 interface PostSearchListProps {
@@ -269,7 +269,7 @@ export const PostSearchList: React.FC<PostSearchListProps> = ({
                     />
                   </div>
                   <div className="text-xs text-zinc-500 flex items-center gap-1">
-                    {formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: id })}
+                    {formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: enUS })}
                   </div>
                 </div>
               </Link>

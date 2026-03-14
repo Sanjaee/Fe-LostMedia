@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
-import { id } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import { 
   ThumbsUp, 
   MessageCircle, 
@@ -202,7 +202,7 @@ export function PostCard({
                 )}
               </div>
               <div className="text-xs text-zinc-500 flex items-center gap-1">
-                {formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: id })}
+                {formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: enUS })}
                 <span>•</span>
                 <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" className="text-zinc-500">
                   <title>Public</title>

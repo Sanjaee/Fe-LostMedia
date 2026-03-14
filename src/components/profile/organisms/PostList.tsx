@@ -28,7 +28,7 @@ import { MoreHorizontal, Edit, Trash2, Pin, Image, MessageCircle, Share2, Eye } 
 import { PostSkeletonList } from "@/components/post/PostSkeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
-import { id } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import type { Post } from "@/types/post";
 import { PostDialog } from "./PostDialog";
 import { parseTextWithLinks } from "@/utils/textUtils";
@@ -362,7 +362,7 @@ export const PostList: React.FC<PostListProps> = ({
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     {formatDistanceToNow(new Date(post.created_at), {
                       addSuffix: true,
-                      locale: id,
+                      locale: enUS,
                     })}
                   </p>
                 </div>
@@ -404,7 +404,7 @@ export const PostList: React.FC<PostListProps> = ({
                   size="icon"
                   className="h-8 w-8 rounded-full hover:bg-red-100 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400"
                   onClick={() => handleDeleteClick(post)}
-                  title="Hapus Post (Admin)"
+                  title="Delete Post (Admin)"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>

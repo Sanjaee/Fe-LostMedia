@@ -696,7 +696,7 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
             <div className="flex justify-between px-4">
               <Button variant="ghost" className="flex-1 gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">
                 <Video className="w-6 h-6" />
-                <span className="hidden sm:inline">Video Langsung</span>
+                <span className="hidden sm:inline">Live Video</span>
               </Button>
               <Button 
                 variant="ghost" 
@@ -704,11 +704,11 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
                 onClick={() => setIsPostDialogOpen(true)}
               >
                 <ImageIcon className="w-6 h-6" />
-                <span className="hidden sm:inline">Foto/Video</span>
+                <span className="hidden sm:inline">Photo/Video</span>
               </Button>
               <Button variant="ghost" className="flex-1 gap-2 text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20">
                 <Smile className="w-6 h-6" />
-                <span className="hidden sm:inline">Perasaan/Aktivitas</span>
+                <span className="hidden sm:inline">Feeling/Activity</span>
               </Button>
             </div>
           </CardContent>

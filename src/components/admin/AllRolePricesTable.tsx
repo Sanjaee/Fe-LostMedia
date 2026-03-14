@@ -260,7 +260,7 @@ export function AllRolePricesTable({ refreshTrigger = 0 }: AllRolePricesTablePro
         />
       </div>
       <div className="space-y-2">
-        <Label>Harga (Rp)</Label>
+        <Label>Price (USD)</Label>
         <Input
           type="number"
           min={0}
@@ -361,7 +361,7 @@ export function AllRolePricesTable({ refreshTrigger = 0 }: AllRolePricesTablePro
                       <TableCell className="max-w-[200px] truncate text-zinc-500">
                         {rp.description || "-"}
                       </TableCell>
-                      <TableCell>Rp {rp.price.toLocaleString("id-ID")}</TableCell>
+                      <TableCell>{new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rp.price)}</TableCell>
                       <TableCell>{rp.sort_order}</TableCell>
                       <TableCell>
                         <Badge variant={rp.is_active ? "default" : "secondary"}>
@@ -429,10 +429,10 @@ export function AllRolePricesTable({ refreshTrigger = 0 }: AllRolePricesTablePro
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Hapus Role Price</AlertDialogTitle>
+            <AlertDialogTitle>Delete Role Price</AlertDialogTitle>
             <AlertDialogDescription>
-              Apakah Anda yakin ingin menghapus <span className="font-semibold">{deleteTarget?.name}</span>? Tindakan
-              ini tidak dapat dibatalkan.
+              Are you sure you want to delete <span className="font-semibold">{deleteTarget?.name}</span>? This action
+              cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
