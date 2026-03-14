@@ -75,7 +75,7 @@ export const ReelsCommentSidebar: React.FC<ReelsCommentSidebarProps> = ({
       <div className="shrink-0 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-3">
         <CommentInput
           postID={post.id}
-          placeholder="Tulis komentar..."
+          placeholder="Write a comment..."
           onCommentAdded={handleCommentAdded}
           compact
         />

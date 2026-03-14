@@ -206,7 +206,7 @@ export default function PhotoViewer({ post, imageIndex }: PhotoViewerProps) {
             <div className="flex-1 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center px-3 py-2">
               <input 
                 type="text" 
-                placeholder="Tulis komentar..." 
+                placeholder="Write a comment..." 
                 className="bg-transparent border-none outline-none text-sm w-full"
               />
               <Button variant="ghost" size="icon" className="h-6 w-6 text-blue-500 hover:bg-blue-50 hover:text-blue-600 rounded-full">

@@ -303,7 +303,7 @@ export default function MainNavbar() {
                 value={searchQuery}
                 onClick={() => setSearchDialogOpen(true)}
                 readOnly
-                placeholder="Cari di Lost Media"
+                placeholder="Search Lost Media"
                 className="w-full min-h-[2.5rem] pl-10 pr-4 py-2 bg-gray-700 dark:bg-gray-800 text-left text-white placeholder-gray-400 rounded-full overflow-hidden focus:outline-none focus:ring-2 focus:ring-gray-500 focus:bg-gray-600 dark:focus:bg-gray-700"
               />
             </div>
@@ -489,12 +489,12 @@ export default function MainNavbar() {
                   {isDark ? (
                     <>
                       <Sun className="mr-2 h-4 w-4" />
-                      Tema terang
+                      Light theme
                     </>
                   ) : (
                     <>
                       <Moon className="mr-2 h-4 w-4" />
-                      Tema gelap
+                      Dark theme
                     </>
                   )}
                 </DropdownMenuItem>
@@ -666,7 +666,7 @@ export default function MainNavbar() {
                     </SheetTitle>
                   </SheetHeader>
                   <div className="flex items-center justify-between px-2 py-2 border-b border-gray-700">
-                    <span className="text-sm text-gray-400">Tema</span>
+                    <span className="text-sm text-gray-400">Theme</span>
                     <DarkModeToggle variant="switch" />
                   </div>
                   <div className="mt-6 space-y-2 overflow-y-auto pr-1 -mr-1 flex-1 min-h-0">
@@ -843,7 +843,7 @@ export default function MainNavbar() {
         <DialogContent className="max-w-2xl w-[95vw] bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
           <DialogHeader>
             <DialogTitle className="text-zinc-900 dark:text-white">
-              Cari
+              Search
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSearch} className="space-y-4">
@@ -886,7 +886,7 @@ export default function MainNavbar() {
                       >
                         <div className="min-w-0 flex-1">
                           <div className="text-sm text-gray-900 dark:text-white line-clamp-2">
-                            {post.content || "Post tanpa teks"}
+                            {post.content || "Post with no text"}
                           </div>
                           <div className="text-xs text-gray-500">
                             {post.user?.full_name || post.user?.username || "User"}

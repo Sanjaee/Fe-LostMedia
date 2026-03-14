@@ -274,7 +274,7 @@ export default function PhotoModal({ isOpen, onClose, post, imageIndex, onNaviga
           <div className="p-3 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
              <CommentInput
                postID={post.id}
-               placeholder="Tulis komentar..."
+               placeholder="Write a comment..."
                onCommentAdded={handleCommentAdded}
                compact
              />

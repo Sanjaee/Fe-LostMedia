@@ -310,7 +310,7 @@ export const CommentList: React.FC<CommentListProps> = ({
                   postID={postID}
                   parentID={comment.id}
                   parentUserName={comment.user?.full_name}
-                  placeholder="Tulis balasan..."
+                  placeholder="Write a reply..."
                   onCommentAdded={() => {
                     setReplyingTo(null);
                     loadComments();

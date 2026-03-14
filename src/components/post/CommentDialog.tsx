@@ -102,7 +102,7 @@ export const CommentDialog: React.FC<CommentDialogProps> = ({
         <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
           <CommentInput
             postID={post.id}
-            placeholder="Tulis komentar..."
+            placeholder="Write a comment..."
             onCommentAdded={handleCommentAdded}
           />
         </div>

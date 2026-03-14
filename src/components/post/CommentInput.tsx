@@ -31,8 +31,8 @@ export const CommentInput: React.FC<CommentInputProps> = ({
   const defaultPlaceholder = parentID && parentUserName 
     ? `Balas kepada ${parentUserName}...`
     : parentID 
-    ? "Tulis balasan..."
-    : "Tulis komentar...";
+    ? "Write a reply..."
+    : "Write a comment...";
   
   const finalPlaceholder = placeholder || defaultPlaceholder;
   const { data: session } = useSession();
