@@ -44,8 +44,8 @@ export const ProfileDetails: React.FC<ProfileDetailsProps> = ({
         </div>
         <p className="text-sm text-gray-500 dark:text-gray-400">
           {isOwnProfile
-            ? "Tambahkan sorotan untuk menampilkan informasi penting tentang Anda"
-            : "Tidak ada sorotan"}
+            ? "Add highlights to show important information about you"
+            : "No highlights"}
         </p>
       </div>
 

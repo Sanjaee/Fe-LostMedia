@@ -132,11 +132,11 @@ export const ProfileLayout: React.FC<ProfileLayoutProps> = ({
             <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm p-4">
               <div className="flex items-center justify-between">
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Orang tidak akan melihat ini kecuali Anda menyematkan sesuatu.
+                  People won&apos;t see this unless you pin something.
                 </p>
                 {isOwnProfile && (
                   <Button variant="ghost" size="sm">
-                    Manage
+                    Managee
                   </Button>
                 )}
               </div>

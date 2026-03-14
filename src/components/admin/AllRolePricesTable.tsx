@@ -243,15 +243,15 @@ export function AllRolePricesTable({ refreshTrigger = 0 }: AllRolePricesTablePro
         <p className="text-xs text-zinc-500">Role owner tidak bisa memiliki harga.</p>
       </div>
       <div className="space-y-2">
-        <Label>Nama</Label>
+        <Label>Name</Label>
         <Input
           value={form.name}
           onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-          placeholder="Contoh: VIP Premium"
+          placeholder="Example: VIP Premium"
         />
       </div>
       <div className="space-y-2">
-        <Label>Deskripsi (opsional)</Label>
+        <Label>Description (optional)</Label>
         <Textarea
           value={form.description}
           onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}

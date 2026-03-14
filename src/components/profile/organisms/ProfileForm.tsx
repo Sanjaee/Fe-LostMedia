@@ -116,12 +116,12 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
     <form onSubmit={handleSubmit} className="space-y-4">
           {/* Nama - dari session */}
           <div>
-            <Label htmlFor="name">Nama</Label>
+            <Label htmlFor="name">Name</Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Nama Anda"
+              placeholder="Your name"
             />
           </div>
 

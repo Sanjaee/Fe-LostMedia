@@ -56,7 +56,7 @@ export const ProfileInfo: React.FC<ProfileInfoProps> = ({
   return (
     <div className={cn("bg-white dark:bg-gray-900 rounded-lg shadow-sm p-4", className)}>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Rincian</h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Details</h2>
         {isOwnProfile && onEditClick && (
           <button
             onClick={onEditClick}
@@ -91,7 +91,7 @@ export const ProfileInfo: React.FC<ProfileInfoProps> = ({
         {profile.location && (
           <InfoItem
             icon={<MapPin className="h-5 w-5" />}
-            label="Lokasi"
+            label="Location"
             value={profile.location}
             onEdit={onEditClick}
             isOwnProfile={isOwnProfile}
@@ -113,7 +113,7 @@ export const ProfileInfo: React.FC<ProfileInfoProps> = ({
         {profile.hometown && (
           <InfoItem
             icon={<Home className="h-5 w-5" />}
-            label="Kampung Halaman"
+            label="Hometown"
             value={profile.hometown}
             onEdit={onEditClick}
             isOwnProfile={isOwnProfile}
@@ -146,7 +146,7 @@ export const ProfileInfo: React.FC<ProfileInfoProps> = ({
         {profile.education && (
           <InfoItem
             icon={<GraduationCap className="h-5 w-5" />}
-            label="Pendidikan"
+            label="Education"
             value={profile.education}
             onEdit={onEditClick}
             isOwnProfile={isOwnProfile}
@@ -157,7 +157,7 @@ export const ProfileInfo: React.FC<ProfileInfoProps> = ({
         {profile.relationship_status && (
           <InfoItem
             icon={<Heart className="h-5 w-5" />}
-            label="Status Hubungan"
+            label="Relationship Status"
             value={profile.relationship_status}
             onEdit={onEditClick}
             isOwnProfile={isOwnProfile}
