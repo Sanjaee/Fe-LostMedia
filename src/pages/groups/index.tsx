@@ -212,9 +212,9 @@ const GroupsListPage: React.FC = () => {
         {/* Search */}
         <div className="relative mb-6">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder="Cari grup..."
-            value={searchQuery}
+            <Input
+              placeholder="Search groups..."
+              value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9 bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800"
           />
@@ -269,7 +269,7 @@ const GroupsListPage: React.FC = () => {
             {/* Discover Groups */}
             <div>
               <h2 className="font-semibold text-gray-900 dark:text-white mb-3">
-                Temukan Grup
+                Discover Groups
               </h2>
               {discoverGroups.length === 0 ? (
                 <div className="text-center py-8">

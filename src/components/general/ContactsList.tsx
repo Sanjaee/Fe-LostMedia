@@ -206,7 +206,7 @@ export const ContactsList: React.FC<ContactsListProps> = ({ friends, loading = f
   if (loading) {
     return (
       <div className="text-center py-4 text-zinc-500 text-sm">
-        Memuat kontak...
+        Loading contacts...
       </div>
     );
   }
@@ -214,7 +214,7 @@ export const ContactsList: React.FC<ContactsListProps> = ({ friends, loading = f
   if (processedFriends.length === 0) {
     return (
       <div className="text-center py-4 text-zinc-500 text-sm">
-        Belum ada kontak
+        No contacts yet
       </div>
     );
   }

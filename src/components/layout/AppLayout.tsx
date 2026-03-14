@@ -30,7 +30,7 @@ interface AppLayoutProps {
   onCreatePostClick?: () => void;
   onChatClick?: (user: ChatUser) => void;
   chatUnreadRefreshTrigger?: number; // bump when chat dialog closes to refresh per-contact unread counts
-  /** Sembunyikan sidebar kanan (Disponsori, Kontak) - untuk halaman reels */
+  /** Hide right sidebar (Sponsored, Contacts) - for reels page */
   hideRightSidebar?: boolean;
   /** Fullscreen tanpa grid - untuk halaman reels agar video tidak tertutup */
   fullScreen?: boolean;
@@ -123,7 +123,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                 <div className="flex items-center gap-3 p-2 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg cursor-pointer">
                   <div className="w-24 h-24 bg-zinc-300 rounded-lg shrink-0"></div>
                   <div>
-                    <div className="font-semibold text-sm">Iklan Menarik</div>
+                    <div className="font-semibold text-sm">Contact Us For Ads</div>
                     <div className="text-xs text-zinc-500">website.com</div>
                   </div>
                 </div>
@@ -137,7 +137,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                   role="button"
                   tabIndex={0}
                 >
-                  <h3 className="text-zinc-500 font-semibold mb-2 px-2">Kontak</h3>
+                  <h3 className="text-zinc-500 font-semibold mb-2 px-2">Contacts</h3>
                   {process.env.NODE_ENV === "development" && (
                     <div className="text-xs text-zinc-400 mb-2 px-2">
                       Friends count: {friends.length} | Loading: {loadingFriends ? "Yes" : "No"}
