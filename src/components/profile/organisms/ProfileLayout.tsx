@@ -146,7 +146,7 @@ export const ProfileLayout: React.FC<ProfileLayoutProps> = ({
             <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm p-4">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Postingan
+                  Posts
                 </h2>
                 {isOwnProfile && (
                   <Button
@@ -155,7 +155,7 @@ export const ProfileLayout: React.FC<ProfileLayoutProps> = ({
                     onClick={() => setIsPostDialogOpen(true)}
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    Buat Postingan
+                    Create Post
                   </Button>
                 )}
               </div>

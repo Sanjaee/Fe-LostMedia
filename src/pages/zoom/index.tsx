@@ -106,7 +106,7 @@ export default function ZoomRoomsPage() {
         description: roomDescription || undefined,
         max_participants: maxParticipants || undefined,
       });
-      toast({ title: "Sukses", description: "Room berhasil dibuat" });
+      toast({ title: "Success", description: "Room created successfully" });
       setCreateDialogOpen(false);
       setRoomName("");
       setRoomDescription("");
@@ -134,7 +134,7 @@ export default function ZoomRoomsPage() {
     try {
       setDeletingRoomId(roomId);
       await api.deleteRoom(roomId);
-      toast({ title: "Sukses", description: "Room berhasil dihapus" });
+      toast({ title: "Success", description: "Room deleted successfully" });
       fetchRooms();
     } catch (err: any) {
       toast({
@@ -281,12 +281,12 @@ export default function ZoomRoomsPage() {
                 <div className="space-y-2 mb-4">
                   <div className="flex items-center text-sm text-zinc-600 dark:text-zinc-400">
                     <Users className="h-4 w-4 mr-2 shrink-0" />
-                    {room.participant_count} peserta
+                    {room.participant_count} participants
                     {room.max_participants != null && ` / ${room.max_participants}`}
                   </div>
                   <div className="flex items-center text-sm text-zinc-600 dark:text-zinc-400">
                     <Calendar className="h-4 w-4 mr-2 shrink-0" />
-                    {new Date(room.created_at).toLocaleDateString("id-ID")}
+                    {new Date(room.created_at).toLocaleDateString("en-US")}
                   </div>
                   <div className="text-sm text-zinc-600 dark:text-zinc-400">
                     Dibuat oleh: {room.created_by_name}
@@ -300,7 +300,7 @@ export default function ZoomRoomsPage() {
                   }}
                 >
                   <Video className="mr-2 h-4 w-4" />
-                  Gabung Room
+                  Join Room
                 </Button>
               </Card>
             ))}

@@ -237,7 +237,7 @@ export default function PhotoModal({ isOpen, onClose, post, imageIndex, onNaviga
                     )}
                     <div className="flex gap-2 ml-auto">
                       {commentCount > 0 && (
-                        <span>{commentCount} komentar</span>
+                        <span>{commentCount} {commentCount === 1 ? "comment" : "comments"}</span>
                       )}
                     </div>
                   </>

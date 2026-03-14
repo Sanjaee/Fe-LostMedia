@@ -996,7 +996,7 @@ const TentangTab: React.FC<TentangTabProps> = ({ group, membersTotal }) => {
 
       <div className="border-t border-gray-200 dark:border-zinc-800 pt-4">
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Dibuat oleh{" "}
+          Created by{" "}
           <Link
             href={`/profile/${group.creator?.username || group.created_by}`}
             className="font-semibold text-gray-900 dark:text-white hover:underline"

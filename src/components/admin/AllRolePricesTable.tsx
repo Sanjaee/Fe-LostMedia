@@ -102,10 +102,10 @@ export function AllRolePricesTable({ refreshTrigger = 0 }: AllRolePricesTablePro
       setError(null);
       const response = await api.getRolePrices(true);
       setRolePrices(response.role_prices || []);
-      toast({ title: "Tabel diperbarui", description: "Daftar role price berhasil di-refresh." });
+      toast({ title: "Table updated", description: "Role price list refreshed successfully." });
     } catch (err: unknown) {
       const e = err as { message?: string };
-      toast({ title: "Gagal refresh", description: e?.message || "Error", variant: "destructive" });
+      toast({ title: "Refresh failed", description: e?.message || "Error", variant: "destructive" });
     } finally {
       setRefreshing(false);
     }
@@ -149,7 +149,7 @@ export function AllRolePricesTable({ refreshTrigger = 0 }: AllRolePricesTablePro
   const handleCreate = async () => {
     const priceNum = parseInt(form.price, 10);
     if (!form.role.trim() || !form.name.trim() || isNaN(priceNum) || priceNum < 0) {
-      toast({ title: "Validasi gagal", description: "Role, nama, dan harga harus diisi.", variant: "destructive" });
+      toast({ title: "Validation failed", description: "Role, name, and price are required.", variant: "destructive" });
       return;
     }
     setSubmitting(true);
@@ -163,12 +163,12 @@ export function AllRolePricesTable({ refreshTrigger = 0 }: AllRolePricesTablePro
         sort_order: form.sort_order,
       });
       setRolePrices((prev) => [...prev, res.role_price]);
-      toast({ title: "Role price ditambahkan", description: `${res.role_price.name} berhasil ditambahkan.` });
+      toast({ title: "Role price added", description: `${res.role_price.name} was added successfully.` });
       setCreateDialogOpen(false);
       resetForm();
     } catch (err: unknown) {
       const e = err as { message?: string };
-      toast({ title: "Gagal menambah", description: e?.message || "Error", variant: "destructive" });
+      toast({ title: "Failed to add", description: e?.message || "Error", variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
@@ -178,11 +178,11 @@ export function AllRolePricesTable({ refreshTrigger = 0 }: AllRolePricesTablePro
     if (!editTarget) return;
     const priceNum = form.price.trim() ? parseInt(form.price, 10) : undefined;
     if (priceNum !== undefined && (isNaN(priceNum) || priceNum < 0)) {
-      toast({ title: "Validasi gagal", description: "Harga tidak valid.", variant: "destructive" });
+      toast({ title: "Validation failed", description: "Invalid price.", variant: "destructive" });
       return;
     }
     if (!form.name.trim()) {
-      toast({ title: "Validasi gagal", description: "Nama harus diisi.", variant: "destructive" });
+      toast({ title: "Validation failed", description: "Name is required.", variant: "destructive" });
       return;
     }
     setSubmitting(true);
@@ -196,12 +196,12 @@ export function AllRolePricesTable({ refreshTrigger = 0 }: AllRolePricesTablePro
         sort_order: form.sort_order,
       });
       setRolePrices((prev) => prev.map((rp) => (rp.id === editTarget.id ? res.role_price : rp)));
-      toast({ title: "Role price diperbarui", description: `${res.role_price.name} berhasil diperbarui.` });
+      toast({ title: "Role price updated", description: `${res.role_price.name} was updated successfully.` });
       setEditDialogOpen(false);
       setEditTarget(null);
     } catch (err: unknown) {
       const e = err as { message?: string };
-      toast({ title: "Gagal memperbarui", description: e?.message || "Error", variant: "destructive" });
+      toast({ title: "Failed to update", description: e?.message || "Error", variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
@@ -213,12 +213,12 @@ export function AllRolePricesTable({ refreshTrigger = 0 }: AllRolePricesTablePro
     try {
       await api.deleteRolePrice(deleteTarget.id);
       setRolePrices((prev) => prev.filter((rp) => rp.id !== deleteTarget.id));
-      toast({ title: "Role price dihapus", description: `${deleteTarget.name} berhasil dihapus.` });
+      toast({ title: "Role price deleted", description: `${deleteTarget.name} was deleted successfully.` });
       setDeleteDialogOpen(false);
       setDeleteTarget(null);
     } catch (err: unknown) {
       const e = err as { message?: string };
-      toast({ title: "Gagal menghapus", description: e?.message || "Error", variant: "destructive" });
+      toast({ title: "Failed to delete", description: e?.message || "Error", variant: "destructive" });
     } finally {
       setDeleting(false);
     }
@@ -240,7 +240,7 @@ export function AllRolePricesTable({ refreshTrigger = 0 }: AllRolePricesTablePro
             ))}
           </SelectContent>
         </Select>
-        <p className="text-xs text-zinc-500">Role owner tidak bisa memiliki harga.</p>
+        <p className="text-xs text-zinc-500">Role owner cannot have a price.</p>
       </div>
       <div className="space-y-2">
         <Label>Name</Label>
@@ -255,7 +255,7 @@ export function AllRolePricesTable({ refreshTrigger = 0 }: AllRolePricesTablePro
         <Textarea
           value={form.description}
           onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-          placeholder="Deskripsi singkat role"
+          placeholder="Short role description"
           rows={3}
         />
       </div>
@@ -270,7 +270,7 @@ export function AllRolePricesTable({ refreshTrigger = 0 }: AllRolePricesTablePro
         />
       </div>
       <div className="space-y-2">
-        <Label>Urutan (sort_order)</Label>
+        <Label>Order (sort_order)</Label>
         <Input
           type="number"
           min={0}
@@ -286,7 +286,7 @@ export function AllRolePricesTable({ refreshTrigger = 0 }: AllRolePricesTablePro
           onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))}
           className="h-4 w-4 rounded border-zinc-300"
         />
-        <Label htmlFor="is_active">Aktif</Label>
+        <Label htmlFor="is_active">Active</Label>
       </div>
     </div>
   );
@@ -298,17 +298,17 @@ export function AllRolePricesTable({ refreshTrigger = 0 }: AllRolePricesTablePro
           <div>
             <CardTitle>Role Prices</CardTitle>
             <CardDescription>
-              Kelola harga role untuk upgrade ({rolePrices.length} total)
+              Manage role prices for upgrade ({rolePrices.length} total)
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={handleRefresh} disabled={loading || refreshing}>
               <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
-              {refreshing ? "Memuat..." : "Refresh"}
+              {refreshing ? "Loading..." : "Refresh"}
             </Button>
             <Button size="sm" onClick={openCreateDialog} disabled={loading}>
               <Plus className="h-4 w-4 mr-2" />
-              Tambah
+              Add
             </Button>
           </div>
         </div>
@@ -322,7 +322,7 @@ export function AllRolePricesTable({ refreshTrigger = 0 }: AllRolePricesTablePro
 
         {rolePrices.length === 0 && !loading ? (
           <div className="text-center py-8 text-zinc-500">
-            <p>Belum ada role price. Klik Tambah untuk menambah.</p>
+            <p>No role prices yet. Click Add to create one.</p>
           </div>
         ) : (
           <div className="rounded-md border">
@@ -330,13 +330,13 @@ export function AllRolePricesTable({ refreshTrigger = 0 }: AllRolePricesTablePro
               <TableHeader>
                 <TableRow>
                   <TableHead>Role</TableHead>
-                  <TableHead>Nama</TableHead>
-                  <TableHead>Deskripsi</TableHead>
-                  <TableHead>Harga</TableHead>
-                  <TableHead>Urutan</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Price</TableHead>
+                  <TableHead>Order</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Dibuat</TableHead>
-                  <TableHead className="text-right">Aksi</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -365,7 +365,7 @@ export function AllRolePricesTable({ refreshTrigger = 0 }: AllRolePricesTablePro
                       <TableCell>{rp.sort_order}</TableCell>
                       <TableCell>
                         <Badge variant={rp.is_active ? "default" : "secondary"}>
-                          {rp.is_active ? "Aktif" : "Nonaktif"}
+                          {rp.is_active ? "Active" : "Inactive"}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm text-zinc-500">
@@ -377,7 +377,7 @@ export function AllRolePricesTable({ refreshTrigger = 0 }: AllRolePricesTablePro
                             <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
                           </Button>
                           <Button size="sm" variant="outline" className="text-red-600" onClick={() => openDeleteDialog(rp)}>
-                            <Trash2 className="h-3.5 w-3.5 mr-1" /> Hapus
+                            <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
                           </Button>
                         </div>
                       </TableCell>
@@ -393,13 +393,13 @@ export function AllRolePricesTable({ refreshTrigger = 0 }: AllRolePricesTablePro
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Tambah Role Price</DialogTitle>
-            <DialogDescription>Tambahkan role baru dengan harga untuk upgrade.</DialogDescription>
+            <DialogTitle>Add Role Price</DialogTitle>
+            <DialogDescription>Add a new role with price for upgrade.</DialogDescription>
           </DialogHeader>
           {formFields}
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateDialogOpen(false)} disabled={submitting}>
-              Batal
+              Cancel
             </Button>
             <Button onClick={handleCreate} disabled={submitting || !form.role || !form.name || form.price === ""}>
               {submitting ? "Processing..." : "Add"}
@@ -412,12 +412,12 @@ export function AllRolePricesTable({ refreshTrigger = 0 }: AllRolePricesTablePro
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Role Price</DialogTitle>
-            <DialogDescription>Ubah data role price.</DialogDescription>
+            <DialogDescription>Update role price data.</DialogDescription>
           </DialogHeader>
           {formFields}
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditDialogOpen(false)} disabled={submitting}>
-              Batal
+              Cancel
             </Button>
             <Button onClick={handleEdit} disabled={submitting || !form.name}>
               {submitting ? "Processing..." : "Save"}
@@ -436,7 +436,7 @@ export function AllRolePricesTable({ refreshTrigger = 0 }: AllRolePricesTablePro
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Batal</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
             <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
               {deleting ? "Deleting..." : "Delete"}
             </Button>
