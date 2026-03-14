@@ -247,19 +247,19 @@ export default function PhotoModal({ isOpen, onClose, post, imageIndex, onNaviga
              {/* Action Buttons */}
              <div className="flex border-y border-zinc-200 dark:border-zinc-800 py-1 mb-4">
                 <Button variant="ghost" className="flex-1 h-8 text-xs gap-2 text-zinc-600 dark:text-zinc-400">
-                  <ThumbsUp className="w-4 h-4" /> Suka
+                  <ThumbsUp className="w-4 h-4" /> Like
                 </Button>
                 <Button variant="ghost" className="flex-1 h-8 text-xs gap-2 text-zinc-600 dark:text-zinc-400">
-                  <MessageCircle className="w-4 h-4" /> Komentar
+                  <MessageCircle className="w-4 h-4" /> Comment
                 </Button>
                 <Button variant="ghost" className="flex-1 h-8 text-xs gap-2 text-zinc-600 dark:text-zinc-400">
-                  <Share2 className="w-4 h-4" /> Bagikan
+                  <Share2 className="w-4 h-4" /> Share
                 </Button>
              </div>
 
              {/* Comments */}
              <div className="space-y-4">
-               <p className="text-sm font-semibold text-zinc-500">Komentar Terbaru</p>
+               <p className="text-sm font-semibold text-zinc-500">Latest Comments</p>
                <CommentList
                  postID={post.id}
                  refreshTrigger={refreshTrigger}

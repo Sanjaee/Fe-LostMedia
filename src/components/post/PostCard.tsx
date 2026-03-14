@@ -97,7 +97,7 @@ export function PostCard({
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
-      toast({ title: "Tersalin", description: "Link post disalin ke clipboard" });
+      toast({ title: "Copied", description: "Post link copied to clipboard" });
       setTimeout(() => setCopied(false), 2000);
     } catch {
       toast({ title: "Failed", description: "Could not copy link", variant: "destructive" });
@@ -114,7 +114,7 @@ export function PostCard({
       await api.deletePost(post.id);
       toast({
         title: "Success",
-        description: "Post berhasil dihapus",
+        description: "Post deleted successfully",
       });
       if (onPostDeleted) {
         onPostDeleted(post.id);
@@ -123,7 +123,7 @@ export function PostCard({
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Gagal menghapus post",
+        description: error.message || "Failed to delete post",
         variant: "destructive",
       });
     } finally {
@@ -241,7 +241,7 @@ export function PostCard({
                     className="text-red-600 dark:text-red-400 cursor-pointer"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
-                    Hapus (Admin)
+                    Delete (Admin)
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -367,7 +367,7 @@ export function PostCard({
               </div>
               <div className="flex items-center gap-4">
                 {commentCount > 0 && (
-                  <span>{commentCount} komentar</span>
+                  <span>{commentCount} {commentCount === 1 ? "comment" : "comments"}</span>
                 )}
               </div>
             </div>
@@ -397,7 +397,7 @@ export function PostCard({
             onClick={() => handleOpenCommentDialog(post)}
           >
             <MessageCircle className="w-5 h-5" />
-            <span>Komentari</span>
+            <span>Comment</span>
           </Button>
           <Button
             variant="ghost"
@@ -405,7 +405,7 @@ export function PostCard({
             onClick={() => setShareDialogOpen(true)}
           >
             <Share2 className="w-5 h-5" />
-            <span>Bagikan</span>
+            <span>Share</span>
           </Button>
         </div>
       </CardContent>
@@ -420,10 +420,10 @@ export function PostCard({
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Bagikan post</DialogTitle>
+            <DialogTitle>Share post</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Salin link di bawah untuk membagikan post ini.
+            Copy the link below to share this post.
           </p>
           <div className="flex items-center gap-2 rounded-lg border bg-zinc-50 dark:bg-zinc-900 p-3">
             <input
@@ -441,12 +441,12 @@ export function PostCard({
               {copied ? (
                 <>
                   <Check className="w-4 h-4 mr-1" />
-                  Tersalin
+                  Copied
                 </>
               ) : (
                 <>
                   <Copy className="w-4 h-4 mr-1" />
-                  Salin
+                  Copy
                 </>
               )}
             </Button>
@@ -458,14 +458,14 @@ export function PostCard({
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Hapus Post (Admin)?</AlertDialogTitle>
+            <AlertDialogTitle>Delete Post (Admin)?</AlertDialogTitle>
             <AlertDialogDescription>
-              Sebagai admin, Anda akan menghapus post ini. Tindakan ini tidak dapat dibatalkan.
+              As admin, you will delete this post. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setDeleteDialogOpen(false)}>
-              Batal
+              Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
@@ -475,7 +475,7 @@ export function PostCard({
               {deleting ? (
                 <>
                   <Skeleton className="h-4 w-4 mr-2 shrink-0" />
-                  Menghapus...
+                  Deleting...
                 </>
               ) : (
                 "Delete"

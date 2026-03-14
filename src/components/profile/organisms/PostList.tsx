@@ -191,7 +191,7 @@ export const PostList: React.FC<PostListProps> = ({
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Gagal menghapus post",
+        description: error.message || "Failed to delete post",
         variant: "destructive",
       });
     } finally {
@@ -391,7 +391,7 @@ export const PostList: React.FC<PostListProps> = ({
                       className="text-red-600 dark:text-red-400"
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
-                      Hapus
+                      Delete
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -604,7 +604,7 @@ export const PostList: React.FC<PostListProps> = ({
                     className="flex-1 h-9 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
                   >
                     <MessageCircle className="h-4 w-4 mr-2" />
-                    Komentar
+                    Comment
                     {postCommentCounts[post.id] > 0 && (
                       <span className="ml-2">({postCommentCounts[post.id]})</span>
                     )}
@@ -615,7 +615,7 @@ export const PostList: React.FC<PostListProps> = ({
                     className="flex-1 h-9 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
                   >
                     <Share2 className="h-4 w-4 mr-2" />
-                    Bagikan
+                    Share
                   </Button>
                 </div>
               </div>
@@ -638,17 +638,17 @@ export const PostList: React.FC<PostListProps> = ({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {isAdmin && !isOwnProfile ? "Hapus Post (Admin)?" : "Hapus Post?"}
+              {isAdmin && !isOwnProfile ? "Delete Post (Admin)?" : "Delete Post?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {isAdmin && !isOwnProfile 
-                ? "Sebagai admin, Anda akan menghapus post ini. Tindakan ini tidak dapat dibatalkan."
-                : "Apakah Anda yakin ingin menghapus post ini? Tindakan ini tidak dapat dibatalkan."}
+                ? "As admin, you will delete this post. This action cannot be undone."
+                : "Are you sure you want to delete this post? This action cannot be undone."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setPostToDelete(null)}>
-              Batal
+              Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
@@ -658,7 +658,7 @@ export const PostList: React.FC<PostListProps> = ({
               {deletingId ? (
                 <>
                   <Skeleton className="h-4 w-4 mr-2 shrink-0" />
-                  Menghapus...
+                  Deleting...
                 </>
               ) : (
                 "Delete"

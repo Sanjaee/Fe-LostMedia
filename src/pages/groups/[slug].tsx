@@ -374,7 +374,7 @@ const GroupPage: React.FC = () => {
                 className="gap-1.5 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-zinc-700"
               >
                 <Share2 className="h-4 w-4" />
-                <span className="hidden sm:inline">Bagikan</span>
+                <span className="hidden sm:inline">Share</span>
               </Button>
 
               {isMember ? (

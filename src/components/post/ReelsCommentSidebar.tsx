@@ -45,7 +45,7 @@ export const ReelsCommentSidebar: React.FC<ReelsCommentSidebarProps> = ({
     >
       {/* Header - sama seperti PhotoModal */}
       <div className="flex shrink-0 items-center justify-between border-b border-zinc-200 dark:border-zinc-800 px-4 py-3">
-        <h3 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400">Komentar Terbaru</h3>
+        <h3 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400">Latest Comments</h3>
         {onClose && (
           <Button
             variant="ghost"
@@ -58,7 +58,7 @@ export const ReelsCommentSidebar: React.FC<ReelsCommentSidebarProps> = ({
         )}
       </div>
 
-      {/* Daftar komentar - pakai CommentList seperti feed-client & PhotoModal, hanya saat panel terbuka */}
+      {/* Comment list - uses CommentList like feed-client & PhotoModal, only when panel is open */}
       <div className="scrollbar-hide flex-1 overflow-y-auto px-4 py-3">
         {isOpen && (
           <div className="space-y-4">

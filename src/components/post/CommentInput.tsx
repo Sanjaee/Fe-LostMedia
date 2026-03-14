@@ -29,7 +29,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
 }) => {
   // Set default placeholder based on whether it's a reply or new comment
   const defaultPlaceholder = parentID && parentUserName 
-    ? `Balas kepada ${parentUserName}...`
+    ? `Reply to ${parentUserName}...`
     : parentID 
     ? "Write a reply..."
     : "Write a comment...";
@@ -59,7 +59,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Gagal menambahkan komentar",
+        description: error.message || "Failed to add comment",
         variant: "destructive",
       });
     } finally {
@@ -162,7 +162,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
               ) : (
                 <>
                   <Send className="h-4 w-4 mr-2" />
-                  Kirim
+                  Send
                 </>
               )}
             </Button>

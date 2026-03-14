@@ -66,7 +66,7 @@ export const CommentDialog: React.FC<CommentDialogProps> = ({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col" showCloseButton={false}>
         <DialogHeader className="flex-shrink-0">
           <div className="flex items-center justify-between">
-            <DialogTitle>Komentar</DialogTitle>
+            <DialogTitle>Comments</DialogTitle>
             <Button
               variant="ghost"
               size="icon"
@@ -83,7 +83,7 @@ export const CommentDialog: React.FC<CommentDialogProps> = ({
             </div>
           ) : (
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              {commentCount} {commentCount === 1 ? "komentar" : "komentar"}
+              {commentCount} {commentCount === 1 ? "comment" : "comments"}
             </p>
           )}
         </DialogHeader>

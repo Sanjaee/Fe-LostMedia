@@ -103,7 +103,7 @@ export const CommentList: React.FC<CommentListProps> = ({
       await api.deleteComment(commentToDelete);
       toast({
         title: "Success",
-        description: "Komentar berhasil dihapus",
+        description: "Comment deleted successfully",
       });
       loadComments();
       setDeleteDialogOpen(false);
@@ -111,7 +111,7 @@ export const CommentList: React.FC<CommentListProps> = ({
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Gagal menghapus komentar",
+        description: error.message || "Failed to delete comment",
         variant: "destructive",
       });
     } finally {
@@ -126,7 +126,7 @@ export const CommentList: React.FC<CommentListProps> = ({
       await api.updateComment(commentID, { content: editContent });
       toast({
         title: "Success",
-        description: "Komentar berhasil diupdate",
+        description: "Comment updated successfully",
       });
       setEditingId(null);
       setEditContent("");
@@ -134,7 +134,7 @@ export const CommentList: React.FC<CommentListProps> = ({
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Gagal mengupdate komentar",
+        description: error.message || "Failed to update comment",
         variant: "destructive",
       });
     }
@@ -197,7 +197,7 @@ export const CommentList: React.FC<CommentListProps> = ({
                         />
                       </span>
                       <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
-                        balas
+                        Reply
                       </span>
                       <span className="font-semibold text-sm text-blue-600 dark:text-blue-400 truncate inline-flex items-center">
                         <UserNameWithRole
@@ -244,7 +244,7 @@ export const CommentList: React.FC<CommentListProps> = ({
                         className="text-red-600 dark:text-red-400 cursor-pointer"
                       >
                         <Trash2 className="h-4 w-4 mr-2" />
-                        Hapus
+                        Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -275,7 +275,7 @@ export const CommentList: React.FC<CommentListProps> = ({
                         setEditContent("");
                       }}
                     >
-                      Batal
+                      Cancel
                     </Button>
                   </div>
                 </div>
@@ -300,7 +300,7 @@ export const CommentList: React.FC<CommentListProps> = ({
                 className="h-8 px-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
               >
                 <Reply className="h-4 w-4 mr-1" />
-                Balas
+                Reply
               </Button>
             </div>
             
@@ -342,10 +342,10 @@ export const CommentList: React.FC<CommentListProps> = ({
         <div className="flex flex-col items-center justify-center">
           <MessageCircle className="h-12 w-12 text-gray-300 dark:text-gray-600 mb-3" />
           <p className="text-gray-500 dark:text-gray-400 text-sm">
-            Belum ada komentar
+            No comments yet
           </p>
           <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">
-            Jadilah yang pertama berkomentar!
+            Be the first to comment!
           </p>
         </div>
       </div>
@@ -362,9 +362,9 @@ export const CommentList: React.FC<CommentListProps> = ({
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Hapus Komentar?</AlertDialogTitle>
+            <AlertDialogTitle>Delete Comment?</AlertDialogTitle>
             <AlertDialogDescription>
-              Apakah Anda yakin ingin menghapus komentar ini? Tindakan ini tidak dapat dibatalkan.
+              Are you sure you want to delete this comment? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -372,7 +372,7 @@ export const CommentList: React.FC<CommentListProps> = ({
               setDeleteDialogOpen(false);
               setCommentToDelete(null);
             }}>
-              Batal
+              Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
@@ -382,7 +382,7 @@ export const CommentList: React.FC<CommentListProps> = ({
               {deleting ? (
                 <>
                   <Skeleton className="h-4 w-4 mr-2 shrink-0" />
-                  Menghapus...
+                  Deleting...
                 </>
               ) : (
                 "Delete"
