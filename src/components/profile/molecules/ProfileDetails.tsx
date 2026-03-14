@@ -30,7 +30,7 @@ export const ProfileDetails: React.FC<ProfileDetailsProps> = ({
       {/* Highlights Section */}
       <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm p-4">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Sorotan</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Highlights</h2>
           {isOwnProfile && (
             <Button
               variant="ghost"
@@ -38,7 +38,7 @@ export const ProfileDetails: React.FC<ProfileDetailsProps> = ({
               className="text-blue-600 hover:text-blue-700 dark:text-blue-400"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Tambahkan sorotan
+              Add highlight
             </Button>
           )}
         </div>
@@ -52,13 +52,13 @@ export const ProfileDetails: React.FC<ProfileDetailsProps> = ({
       {/* Photos Section */}
       <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm p-4">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Foto</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Photos</h2>
           <Button
             variant="ghost"
             size="sm"
             className="text-blue-600 hover:text-blue-700 dark:text-blue-400"
           >
-            Lihat Semua Foto
+            View all photos
           </Button>
         </div>
         <div className="grid grid-cols-3 gap-2">

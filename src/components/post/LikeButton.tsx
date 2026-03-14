@@ -250,7 +250,7 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
         ) : (
           <ReactionIcon className={`h-4 w-4 mr-2 ${liked ? reactionColor : ""}`} />
         )}
-        <span>Suka</span>
+        <span>Like</span>
       </Button>
 
       {showReactions && (
