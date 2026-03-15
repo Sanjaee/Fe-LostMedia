@@ -55,7 +55,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-type TabType = "diskusi" | "tentang" | "orang" | "media";
+type TabType = "discussion" | "about" | "members" | "media";
 
 const GroupPage: React.FC = () => {
   const router = useRouter();
@@ -73,7 +73,7 @@ const GroupPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [postsLoading, setPostsLoading] = useState(false);
   const [joining, setJoining] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabType>("diskusi");
+  const [activeTab, setActiveTab] = useState<TabType>("discussion");
   const [deleteGroupDialogOpen, setDeleteGroupDialogOpen] = useState(false);
   const [deletingGroup, setDeletingGroup] = useState(false);
 
@@ -445,9 +445,9 @@ const GroupPage: React.FC = () => {
           <div className="flex items-center gap-1 mt-4 border-t border-gray-200 dark:border-zinc-800 pt-2 -mb-4 overflow-x-auto">
             {(
               [
-                { key: "tentang", label: "About" },
-                { key: "diskusi", label: "Discussion" },
-                { key: "orang", label: "Members" },
+                { key: "about", label: "About" },
+                { key: "discussion", label: "Discussion" },
+                { key: "members", label: "Members" },
                 { key: "media", label: "Media" },
               ] as { key: TabType; label: string }[]
             ).map((tab) => (
@@ -477,8 +477,8 @@ const GroupPage: React.FC = () => {
 
         {/* Content Area */}
         <div className="py-4">
-          {activeTab === "diskusi" && (
-            <DiskusiTab
+          {activeTab === "discussion" && (
+            <DiscussionTab
               group={group}
               posts={posts}
               postsLoading={postsLoading}
@@ -497,11 +497,11 @@ const GroupPage: React.FC = () => {
               }}
             />
           )}
-          {activeTab === "tentang" && (
+          {activeTab === "about" && (
             <TentangTab group={group} membersTotal={membersTotal} />
           )}
-          {activeTab === "orang" && (
-            <OrangTab members={members} membersTotal={membersTotal} />
+          {activeTab === "members" && (
+            <MembersTab members={members} membersTotal={membersTotal} />
           )}
           {activeTab === "media" && <MediaTab posts={posts} />}
         </div>
@@ -544,7 +544,7 @@ const GroupPage: React.FC = () => {
 
 // ==================== Tab Components ====================
 
-interface DiskusiTabProps {
+interface DiscussionTabProps {
   group: Group;
   posts: Post[];
   postsLoading: boolean;
@@ -555,7 +555,7 @@ interface DiskusiTabProps {
   onPostDeleted: (postId: string) => void;
 }
 
-const DiskusiTab: React.FC<DiskusiTabProps> = ({
+const DiscussionTab: React.FC<DiscussionTabProps> = ({
   group,
   posts,
   postsLoading,
@@ -931,12 +931,12 @@ const DiskusiTab: React.FC<DiskusiTabProps> = ({
   );
 };
 
-interface TentangTabProps {
+interface AboutTabProps {
   group: Group;
   membersTotal: number;
 }
 
-const TentangTab: React.FC<TentangTabProps> = ({ group, membersTotal }) => {
+const TentangTab: React.FC<AboutTabProps> = ({ group, membersTotal }) => {
   return (
     <div className="max-w-2xl mx-auto bg-white dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-800 p-6 space-y-6">
       <div>
@@ -1015,12 +1015,12 @@ const TentangTab: React.FC<TentangTabProps> = ({ group, membersTotal }) => {
   );
 };
 
-interface OrangTabProps {
+interface MembersTabProps {
   members: GroupMember[];
   membersTotal: number;
 }
 
-const OrangTab: React.FC<OrangTabProps> = ({ members, membersTotal }) => {
+const MembersTab: React.FC<MembersTabProps> = ({ members, membersTotal }) => {
   const getRoleBadge = (role: string) => {
     switch (role) {
       case "admin":

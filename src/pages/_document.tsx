@@ -6,7 +6,7 @@ const SITE_URL =
 
 export default function Document() {
   return (
-    <Html lang="id">
+    <Html lang="en">
       <Head>
         {/* Title & Favicon - sama dengan logo navbar */}
         <title>Lost Media</title>
@@ -15,7 +15,7 @@ export default function Document() {
 
         {/* Metadata */}
         <meta name="application-name" content="Lost Media" />
-        <meta name="description" content="Lost Media - Platform untuk media yang jarang orang ketahui" />
+        <meta name="description" content="Lost Media - Platform for rare and lesser-known media" />
         <meta name="theme-color" content="#0a0a0a" />
 
         {/* Open Graph */}
@@ -29,7 +29,7 @@ export default function Document() {
         {/* Twitter Card */}
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:title" content="Lost Media" />
-        <meta name="twitter:description" content="Platform untuk media yang jarang orang ketahui" />
+        <meta name="twitter:description" content="Platform for rare and lesser-known media" />
         <meta name="twitter:image" content={`${SITE_URL}/logo.png`} />
 
         {/* Font Awesome 5 Free - for role badges (god_badge, vip_badge, mvp_badge) */}

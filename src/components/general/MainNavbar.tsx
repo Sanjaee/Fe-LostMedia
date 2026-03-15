@@ -920,7 +920,7 @@ export default function MainNavbar() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    Orang
+                    People
                   </h3>
                 </div>
                 {searchLoading ? (
