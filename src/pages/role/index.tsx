@@ -654,7 +654,7 @@ export default function RolePage() {
             <CardHeader>
               <CardTitle className="text-xl">Top User</CardTitle>
               <CardDescription>
-                Daftar user yang memiliki role upgrade (tanpa member)
+                Users with upgraded roles (excluding member)
               </CardDescription>
             </CardHeader>
             <CardContent>

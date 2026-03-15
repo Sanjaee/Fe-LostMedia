@@ -57,7 +57,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
   const MAX_VIDEOS = 5;
   const MAX_VIDEO_SIZE = 20 * 1024 * 1024; // 20MB
 
-  /** Deteksi URL video dari ekstensi (untuk manual URL: tampil video vs gambar) */
+  /** Detect video URL from extension (for manual URL: show video vs image) */
   const isVideoUrl = (url: string): boolean => {
     if (!url || typeof url !== "string") return false;
     const path = url.split("?")[0].toLowerCase();
@@ -147,7 +147,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
             formData.group_id
           );
           toast({
-            title: "Diproses",
+            title: "Processing",
             description: "Post created. Images & video are uploading...",
             variant: "pending",
           });
@@ -158,7 +158,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
             formData.group_id
           );
           toast({
-            title: "Diproses",
+            title: "Processing",
             description: "Post created. Video is being processed...",
             variant: "pending",
           });
@@ -169,12 +169,12 @@ export const PostDialog: React.FC<PostDialogProps> = ({
             formData.group_id
           );
           toast({
-            title: "Diproses",
+            title: "Processing",
             description: "Post created. Images are being processed...",
             variant: "pending",
           });
         } else {
-          // No media files, use regular create endpoint (manual URLs: pisah gambar vs video)
+          // No media files, use regular create endpoint (manual URLs: separate image vs video)
           const manualUrls = formData.image_urls?.filter(url => url?.trim() && !url.startsWith("blob:")) || [];
           const imageUrls = manualUrls.filter(url => !isVideoUrl(url));
           const videoUrls = manualUrls.filter(url => isVideoUrl(url));
@@ -291,7 +291,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
       return;
     }
 
-    // Boleh gabung gambar + video dalam satu post
+    // Images and video can be combined in one post
     if (imageFilesFromInput.length > 0) processImageFiles(imageFilesFromInput);
     if (videoFilesFromInput.length > 0) processVideoFiles(videoFilesFromInput);
   };
@@ -377,7 +377,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
     if (filesToAdd.length < files.length) {
       toast({
         title: "Limit reached",
-        description: `Hanya ${remainingSlots} video lagi. Maksimal ${MAX_VIDEOS} per post.`,
+        description: `Only ${remainingSlots} more video(s). Maximum ${MAX_VIDEOS} per post.`,
         variant: "destructive",
       });
     }
@@ -475,9 +475,9 @@ export const PostDialog: React.FC<PostDialogProps> = ({
             />
           </div>
 
-          {/* Media (gambar + video) — satu kotak: klik = browse, drag = drop */}
+          {/* Media (images + video) — single box: click = browse, drag = drop */}
           <div className="space-y-2">
-            <Label>Gambar & Video</Label>
+            <Label>Images & Video</Label>
             <input
               ref={mediaInputRef}
               type="file"
@@ -565,7 +565,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
               </div>
             )}
 
-            {/* Previews: satu grid rapi untuk gambar + video */}
+            {/* Previews: single grid for images + video */}
             {(imagePreviews.length > 0 || videoPreviews.length > 0) && (
               <div className="mt-4 space-y-3">
                 <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
@@ -591,7 +591,7 @@ export const PostDialog: React.FC<PostDialogProps> = ({
                             />
                           )}
                           <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-black/60 text-white">
-                            {isVideo ? "Video" : "Gambar"}
+                            {isVideo ? "Video" : "Image"}
                           </span>
                           <Button
                             type="button"

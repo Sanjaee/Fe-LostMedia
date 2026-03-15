@@ -21,7 +21,7 @@ import { AlertCircle, CheckCircle, MessageSquare, Clock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWebSocketSubscription } from "@/contexts/WebSocketContext";
 import { format } from "date-fns";
-import { id } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 
 interface MyReport {
   id: string;
@@ -82,7 +82,7 @@ export default function ReportPage() {
 
     const desc = description.trim();
     if (!desc) {
-      toast({ title: "Deskripsi wajib", description: "Isi deskripsi report Anda", variant: "destructive" });
+      toast({ title: "Description required", description: "Please fill in your report description", variant: "destructive" });
       return;
     }
 
@@ -123,7 +123,7 @@ export default function ReportPage() {
               <CardTitle className="text-xl">Submit Report</CardTitle>
             </div>
             <CardDescription>
-              Laporkan masalah, saran, atau keluhan. Tim kami akan meninjau sesegera mungkin.
+              Report an issue, suggestion, or complaint. Our team will review it as soon as possible.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -140,10 +140,10 @@ export default function ReportPage() {
               <div className="text-center py-8">
                 <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
                 <p className="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-2">
-                  Report Anda telah kami terima
+                  We have received your report
                 </p>
                 <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
-                  Terima kasih atas kontribusi Anda. Tim kami akan meninjau sesegera mungkin.
+                  Thank you for your contribution. Our team will review it as soon as possible.
                 </p>
                 <Button onClick={() => setSubmitted(false)} variant="outline" className="mr-2">
                   Submit Another Report
@@ -155,12 +155,12 @@ export default function ReportPage() {
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <Label htmlFor="description">Deskripsi</Label>
+                  <Label htmlFor="description">Description</Label>
                   <Textarea
                     id="description"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Tuliskan masalah, saran, atau keluhan Anda..."
+                    placeholder="Describe your issue, suggestion, or complaint..."
                     rows={5}
                     className="mt-2"
                     disabled={loading}
@@ -182,7 +182,7 @@ export default function ReportPage() {
         {status === "authenticated" && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Report Saya</CardTitle>
+              <CardTitle className="text-lg">My Reports</CardTitle>
               <CardDescription>
                 List of reports you have submitted and admin replies
               </CardDescription>
@@ -208,7 +208,7 @@ export default function ReportPage() {
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
                           <Clock className="h-3.5 w-3.5" />
-                          {format(new Date(r.created_at), "dd MMM yyyy, HH:mm", { locale: id })}
+                          {format(new Date(r.created_at), "dd MMM yyyy, HH:mm", { locale: enUS })}
                         </span>
                         {r.admin_reply ? (
                           <Badge variant="default" className="text-xs bg-green-600">Dibalas</Badge>
@@ -226,7 +226,7 @@ export default function ReportPage() {
                             <span>
                               Balasan Admin
                               {r.admin?.full_name && ` (${r.admin.full_name})`}
-                              {r.admin_replied_at && ` · ${format(new Date(r.admin_replied_at), "dd MMM yyyy", { locale: id })}`}
+                              {r.admin_replied_at && ` · ${format(new Date(r.admin_replied_at), "dd MMM yyyy", { locale: enUS })}`}
                             </span>
                           </div>
                           <p className="text-sm text-zinc-800 dark:text-zinc-200 bg-white dark:bg-zinc-800 rounded p-3 whitespace-pre-wrap">
@@ -247,11 +247,11 @@ export default function ReportPage() {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <CheckCircle className="h-6 w-6 text-green-500" />
-                Terima Kasih
+                Thank You
               </DialogTitle>
             </DialogHeader>
             <p className="text-zinc-600 dark:text-zinc-400">
-              Report Anda berhasil dikirim. Tim kami akan meninjau sesegera mungkin.
+              Your report was sent successfully. Our team will review it as soon as possible.
             </p>
           </DialogContent>
         </Dialog>

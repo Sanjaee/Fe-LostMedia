@@ -190,11 +190,11 @@ export default function PaymentSuccessPage() {
                   <CardDescription className="text-base text-muted-foreground max-w-sm mx-auto leading-relaxed">
                     {roleLabel ? (
                       <>
-                        Anda sekarang resmi sebagai{" "}
-                        <UserNameWithRole displayName={roleLabel} role={targetRole} className="inline-flex font-semibold" />. Terima kasih telah mempercayakan kami—selamat menikmati manfaatnya!
+                        You are now officially{" "}
+                        <UserNameWithRole displayName={roleLabel} role={targetRole} className="inline-flex font-semibold" />. Thank you for trusting us—enjoy the benefits!
                       </>
                     ) : (
-                      "Terima kasih telah mempercayakan upgrade Anda. Selamat menikmati manfaatnya!"
+                      "Thank you for trusting us with your upgrade. Enjoy the benefits!"
                     )}
                   </CardDescription>
                 </div>

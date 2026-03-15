@@ -500,7 +500,7 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
             ) : (
               <>
                 <Check className="h-4 w-4 mr-1" />
-                Terima
+                Accept
               </>
             )}
           </Button>
@@ -519,7 +519,7 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
             ) : (
               <>
                 <X className="h-4 w-4 mr-1" />
-                Tolak
+                Reject
               </>
             )}
           </Button>
