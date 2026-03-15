@@ -6,7 +6,7 @@ import { useApi } from "@/components/contex/ApiProvider";
 import { useWebSocketSubscription } from "@/contexts/WebSocketContext";
 import { Ban, LogOut, Clock } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
-import { id as idLocale } from "date-fns/locale";
+import { enUS as enLocale } from "date-fns/locale";
 
 interface BanInfo {
   is_banned: boolean;
@@ -32,7 +32,7 @@ export default function BanDialog() {
         setBanInfo({
           is_banned: true,
           banned_until: inner.banned_until,
-          ban_reason: inner.ban_reason || "Melanggar ketentuan layanan",
+          ban_reason: inner.ban_reason || "Violating the terms of service",
         });
       }
     }, [])
@@ -46,7 +46,7 @@ export default function BanDialog() {
         setBanInfo({
           is_banned: true,
           banned_until: detail.banned_until,
-          ban_reason: detail.ban_reason || "Melanggar ketentuan layanan",
+          ban_reason: detail.ban_reason || "Violating the terms of service",
         });
       }
     };
@@ -69,7 +69,7 @@ export default function BanDialog() {
             setBanInfo({
               is_banned: true,
               banned_until: user.banned_until,
-              ban_reason: user.ban_reason || "Melanggar ketentuan layanan",
+              ban_reason: user.ban_reason || "Violating the terms of service",
             });
           }
         }
@@ -80,7 +80,7 @@ export default function BanDialog() {
           setBanInfo({
             is_banned: true,
             banned_until: d.banned_until,
-            ban_reason: d.ban_reason || "Melanggar ketentuan layanan",
+            ban_reason: d.ban_reason || "Violating the terms of service",
           });
         }
       }
@@ -112,10 +112,10 @@ export default function BanDialog() {
       const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
       const parts: string[] = [];
-      if (days > 0) parts.push(`${days} hari`);
-      if (hours > 0) parts.push(`${hours} jam`);
-      if (minutes > 0) parts.push(`${minutes} menit`);
-      parts.push(`${seconds} detik`);
+      if (days > 0) parts.push(`${days} day${days > 1 ? "s" : ""}`);
+      if (hours > 0) parts.push(`${hours} hour${hours > 1 ? "s" : ""}`);
+      if (minutes > 0) parts.push(`${minutes} minute${minutes > 1 ? "s" : ""}`);
+      parts.push(`${seconds} second${seconds !== 1 ? "s" : ""}`);
       setTimeLeft(parts.join(" "));
     };
 
@@ -141,18 +141,18 @@ export default function BanDialog() {
 
         {/* Title */}
         <h2 className="mb-2 text-center text-2xl font-bold text-red-600 dark:text-red-400">
-          Akun Anda Dibanned
+          Your Account is Banned
         </h2>
 
         <p className="mb-6 text-center text-sm text-zinc-500 dark:text-zinc-400">
-          Akun Anda telah dibatasi aksesnya oleh administrator.
+          Your account access has been restricted by an administrator.
         </p>
 
         {/* Ban Details */}
         <div className="mb-6 space-y-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50">
           <div>
             <span className="text-xs font-medium uppercase tracking-wider text-zinc-400">
-              Alasan
+              Reason
             </span>
             <p className="mt-1 text-sm font-medium text-zinc-700 dark:text-zinc-200">
               {banInfo.ban_reason}
@@ -161,13 +161,13 @@ export default function BanDialog() {
 
           <div>
             <span className="text-xs font-medium uppercase tracking-wider text-zinc-400">
-              Berakhir pada
+              Ends at
             </span>
             <p className="mt-1 text-sm font-medium text-zinc-700 dark:text-zinc-200">
-              {format(bannedUntilDate, "dd MMMM yyyy, HH:mm", { locale: idLocale })}
+              {format(bannedUntilDate, "dd MMMM yyyy, HH:mm", { locale: enLocale })}
             </p>
             <p className="text-xs text-zinc-500">
-              ({formatDistanceToNow(bannedUntilDate, { addSuffix: true, locale: idLocale })})
+              ({formatDistanceToNow(bannedUntilDate, { addSuffix: true, locale: enLocale })})
             </p>
           </div>
 
@@ -175,7 +175,7 @@ export default function BanDialog() {
           {timeLeft && (
             <div>
               <span className="text-xs font-medium uppercase tracking-wider text-zinc-400">
-                Sisa Waktu
+                Time Remaining
               </span>
               <div className="mt-1 flex items-center gap-2">
                 <Clock className="h-4 w-4 text-orange-500" />
@@ -197,7 +197,7 @@ export default function BanDialog() {
         </button>
 
         <p className="mt-4 text-center text-xs text-zinc-400">
-          Jika Anda merasa ini adalah kesalahan, hubungi administrator.
+          If you believe this is a mistake, please contact the administrator.
         </p>
       </div>
     </div>
