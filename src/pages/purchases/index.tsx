@@ -13,7 +13,7 @@ import { ArrowLeft, Receipt, ChevronLeft, ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Payment } from "@/types/payment";
 import { format } from "date-fns";
-import { id } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 
 const PAGE_SIZE = 20;
 
@@ -104,7 +104,7 @@ export default function PurchasesPage() {
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 mb-2 flex items-center gap-2">
             <Receipt className="h-8 w-8" />
-            Riwayat Pembelian
+            Purchase History
           </h1>
           <CardDescription>
             Your payment history (role upgrades, etc.).
@@ -113,7 +113,7 @@ export default function PurchasesPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Transaksi Saya</CardTitle>
+            <CardTitle>My Transactions</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -136,7 +136,7 @@ export default function PurchasesPage() {
                         <TableHead>Status</TableHead>
                         <TableHead>Method</TableHead>
                         <TableHead>Item</TableHead>
-                        <TableHead>Tanggal</TableHead>
+                        <TableHead>Date</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -164,7 +164,7 @@ export default function PurchasesPage() {
                           </TableCell>
                           <TableCell className="text-muted-foreground text-sm">
                             {p.created_at
-                              ? format(new Date(p.created_at), "dd MMM yyyy, HH:mm", { locale: id })
+                              ? format(new Date(p.created_at), "dd MMM yyyy, HH:mm", { locale: enUS })
                               : "—"}
                           </TableCell>
                         </TableRow>
@@ -185,7 +185,7 @@ export default function PurchasesPage() {
                       onClick={() => setOffset((o) => Math.max(0, o - PAGE_SIZE))}
                     >
                       <ChevronLeft className="h-4 w-4 mr-1" />
-                      Sebelumnya
+                      Previous
                     </Button>
                     <Button
                       variant="outline"
