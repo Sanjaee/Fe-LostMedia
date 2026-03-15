@@ -265,7 +265,7 @@ export const CommentList: React.FC<CommentListProps> = ({
                       onClick={() => handleEdit(comment.id)}
                       disabled={!editContent.trim()}
                     >
-                      Simpan
+                      Save
                     </Button>
                     <Button
                       size="sm"

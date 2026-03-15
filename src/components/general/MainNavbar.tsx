@@ -33,7 +33,8 @@ import {
   Sun,
   AlertCircle,
   Clapperboard,
-  Video
+  Video,
+  Receipt
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationDialog } from "./NotificationDialog";
@@ -483,6 +484,13 @@ export default function MainNavbar() {
                   Report
                 </DropdownMenuItem>
                 <DropdownMenuItem
+                  onClick={() => router.push("/purchases")}
+                  className="cursor-pointer text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  <Receipt className="mr-2 h-4 w-4" />
+                  Purchase History
+                </DropdownMenuItem>
+                <DropdownMenuItem
                   onClick={() => setTheme(isDark ? "light" : "dark")}
                   className="cursor-pointer text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
@@ -729,6 +737,22 @@ export default function MainNavbar() {
                       <span className="font-medium">Settings</span>
                     </button>
                     
+                    <button
+                      onClick={() => {
+                        router.push("/purchases");
+                        setProfileSidebarOpen(false);
+                      }}
+                      className={cn(
+                        "w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
+                        router.pathname === "/purchases" || router.pathname.startsWith("/purchases/")
+                          ? "bg-blue-600 text-white"
+                          : "text-gray-300 hover:bg-gray-700 dark:hover:bg-gray-800"
+                      )}
+                    >
+                      <Receipt className="h-5 w-5" />
+                      <span className="font-medium">Purchase History</span>
+                    </button>
+                    
                     {/* Admin menu - only show if user is admin */}
                     {(() => {
                       const userType = session.userType || 
@@ -771,7 +795,7 @@ export default function MainNavbar() {
                       className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-gray-300 hover:bg-gray-700 dark:hover:bg-gray-800 text-left"
                     >
                       <Bell className="h-5 w-5" />
-                      <span className="font-medium">Notifikasi</span>
+                      <span className="font-medium">Notifications</span>
                       {unreadCount > 0 && (
                         <span className="ml-auto flex items-center justify-center w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full">
                           {unreadCount > 9 ? "9+" : unreadCount}

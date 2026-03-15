@@ -55,7 +55,7 @@ export default function PaymentSuccessPage() {
           if (payment) setSuccessPayment(payment);
           setState("success");
           update().then(() => {
-            const roleName = payment?.target_role ? getRoleDisplayName(payment.target_role) : "role baru";
+            const roleName = payment?.target_role ? getRoleDisplayName(payment.target_role) : "new role";
             toast({
               title: "Congratulations! Your upgrade was successful.",
               description: `${roleName} is now active. Thank you for choosing us!`,
@@ -71,7 +71,7 @@ export default function PaymentSuccessPage() {
         if (status === 403) {
           setErrorMessage("This payment belongs to another account. You cannot claim it.");
         } else if (status === 404) {
-          setErrorMessage("Pembayaran tidak ditemukan.");
+          setErrorMessage("Payment not found.");
         } else {
           setErrorMessage(msg);
         }
@@ -107,7 +107,7 @@ export default function PaymentSuccessPage() {
                 Verification failed
               </CardTitle>
               <CardDescription className="text-center sm:text-left">
-                Parameter order_id tidak ditemukan.
+                Order ID parameter not found.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex justify-center sm:justify-start">

@@ -311,7 +311,7 @@ export function AllReportsTable({ refreshTrigger = 0 }: AllReportsTableProps) {
                     disabled={currentPage <= 1}
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   >
-                    Sebelumnya
+                    Previous
                   </Button>
                   <Button
                     variant="outline"
@@ -319,7 +319,7 @@ export function AllReportsTable({ refreshTrigger = 0 }: AllReportsTableProps) {
                     disabled={currentPage >= totalPages}
                     onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   >
-                    Selanjutnya
+                    Next
                   </Button>
                 </div>
               </div>

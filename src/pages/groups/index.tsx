@@ -240,7 +240,7 @@ const GroupsListPage: React.FC = () => {
               </div>
             ) : displayGroups.length === 0 ? (
               <p className="text-gray-500 dark:text-gray-400 text-sm py-4 text-center">
-                Tidak ada grup ditemukan
+                No groups found
               </p>
             ) : (
               <div className="space-y-2">

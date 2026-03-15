@@ -284,7 +284,7 @@ export const PeopleSearchList: React.FC<PeopleSearchListProps> = ({
   if (!keyword?.trim()) {
     return (
       <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-        Masukkan kata kunci untuk mencari people
+        Enter keyword to search people
       </div>
     );
   }
@@ -292,7 +292,7 @@ export const PeopleSearchList: React.FC<PeopleSearchListProps> = ({
   if (users.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-        Tidak ada people yang ditemukan
+        No people found
       </div>
     );
   }
@@ -361,7 +361,7 @@ export const PeopleSearchList: React.FC<PeopleSearchListProps> = ({
       
       {!hasMore && users.length > 0 && (
         <div className="text-center py-4 text-sm text-gray-500 dark:text-gray-400">
-          Semua hasil telah dimuat
+          All results loaded
         </div>
       )}
     </div>

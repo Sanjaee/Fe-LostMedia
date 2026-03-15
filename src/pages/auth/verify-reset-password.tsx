@@ -202,7 +202,7 @@ export default function VerifyResetPassword() {
               <Lock className="w-6 h-6 text-green-600 dark:text-green-400" />
             </div>
             <CardTitle className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-50">
-              Set Password Baru
+              Set New Password
             </CardTitle>
             <CardDescription className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
               OTP has been verified for <br />

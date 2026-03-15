@@ -17,7 +17,7 @@ export default function PaymentFailedPage() {
         <CardHeader>
           <div className="flex items-center gap-2 text-destructive">
             <XCircle className="h-8 w-8" />
-            <CardTitle>Pembayaran belum selesai</CardTitle>
+            <CardTitle>Payment not completed</CardTitle>
           </div>
           <CardDescription>
             Invoice has not been paid or has expired. If you have already paid, click &quot;To site&quot; from the Plisio success page or open the Role page to check status.

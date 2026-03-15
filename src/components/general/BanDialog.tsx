@@ -193,7 +193,7 @@ export default function BanDialog() {
           className="flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
         >
           <LogOut className="h-4 w-4" />
-          Keluar
+          Leave
         </button>
 
         <p className="mt-4 text-center text-xs text-zinc-400">

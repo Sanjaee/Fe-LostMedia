@@ -577,6 +577,15 @@ class ApiClient {
     return this.request(`/api/v1/payments/order/${orderId}`, { method: "GET" });
   }
 
+  /** Current user's payment history. GET /api/v1/payments?limit=&offset= */
+  async getMyPayments(
+    limit: number = 20,
+    offset: number = 0
+  ): Promise<{ payments: Payment[]; total: number }> {
+    const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+    return this.request(`/api/v1/payments?${params.toString()}`, { method: "GET" });
+  }
+
   async checkPaymentStatus(orderId: string): Promise<{ payment: Payment }> {
     return this.request(`/api/v1/payments/${orderId}/status`, {
       method: "POST",

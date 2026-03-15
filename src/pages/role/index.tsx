@@ -452,7 +452,7 @@ export default function RolePage() {
 
                   {/* Midtrans payment method is commented out — crypto flow is shown directly when selecting a role */}
                   {/* <div className="space-y-3">
-                    <Label>Metode Pembayaran</Label>
+                    <Label>Payment Method</Label>
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                       {PAYMENT_METHODS.map((pm) => (
                         <button key={pm.id} type="button" onClick={() => setPaymentMethod(pm.id)} ... />
@@ -547,7 +547,7 @@ export default function RolePage() {
                         </>
                       ) : (
                         <p className="text-sm text-muted-foreground py-4">
-                          Tidak ada cryptocurrency tersedia. Coba lagi nanti atau periksa koneksi.
+                          No cryptocurrencies available. Try again later or check your connection.
                         </p>
                       )}
                     </div>

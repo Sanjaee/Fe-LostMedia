@@ -71,7 +71,7 @@ export default function SettingsPage() {
     try {
       await api.deleteAccount(needsPassword ? deletePassword : undefined);
       toast({
-        title: "Akun berhasil dihapus",
+        title: "Account deleted successfully",
         description: "Anda akan diarahkan ke halaman login.",
       });
       await signOut({ callbackUrl: "/auth/login" });
@@ -113,7 +113,7 @@ export default function SettingsPage() {
             Pengaturan
           </h1>
           <p className="text-zinc-500 dark:text-zinc-400 mt-1">
-            Kelola pengaturan akun dan preferensi Anda
+            Manage your account settings and preferences
           </p>
         </div>
 
@@ -141,7 +141,7 @@ export default function SettingsPage() {
                 <Shield className="h-5 w-5" />
                 Privasi & Keamanan
               </CardTitle>
-              <CardDescription>Kontrol privasi dan keamanan akun</CardDescription>
+              <CardDescription>Privacy and account security controls</CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
@@ -163,8 +163,8 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-zinc-600 dark:text-zinc-300 mb-4">
-                Menghapus akun akan menghapus permanen semua data termasuk profil, postingan,
-                dan percakapan. Tindakan ini tidak dapat dibatalkan.
+                Deleting your account will permanently remove all data including profile, posts,
+                and conversations. This action cannot be undone.
               </p>
               <Button
                 variant="destructive"
@@ -172,7 +172,7 @@ export default function SettingsPage() {
                 className="flex items-center gap-2"
               >
                 <Trash2 className="h-4 w-4" />
-                Hapus Akun
+                Delete Account
               </Button>
             </CardContent>
           </Card>
@@ -185,7 +185,7 @@ export default function SettingsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Account?</AlertDialogTitle>
             <AlertDialogDescription>
-              Tindakan ini tidak dapat dibatalkan. Semua data akun Anda akan dihapus permanen.
+              This action cannot be undone. All your account data will be permanently deleted.
               Ketik <strong>{CONFIRM_TEXT}</strong> untuk mengonfirmasi.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -228,10 +228,10 @@ export default function SettingsPage() {
               {deleting ? (
                 <>
                   <Skeleton className="mr-2 h-4 w-4 shrink-0" />
-                  Menghapus...
+                  Deleting...
                 </>
               ) : (
-                "Hapus Akun"
+                "Delete Account"
               )}
             </Button>
           </AlertDialogFooter>

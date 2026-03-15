@@ -226,7 +226,7 @@ export const PostSearchList: React.FC<PostSearchListProps> = ({
   if (!keyword?.trim()) {
     return (
       <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-        Masukkan kata kunci untuk mencari posts
+        Enter keyword to search posts
       </div>
     );
   }
@@ -234,7 +234,7 @@ export const PostSearchList: React.FC<PostSearchListProps> = ({
   if (displayedPosts.length === 0 && !loading) {
     return (
       <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-        Tidak ada posts yang ditemukan
+        No posts found
       </div>
     );
   }
@@ -374,7 +374,7 @@ export const PostSearchList: React.FC<PostSearchListProps> = ({
 
       {!hasMore && displayedPosts.length > 0 && (
         <div className="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
-          Semua hasil telah dimuat ({displayedPosts.length} dari {allPosts.length} posts)
+          All results loaded ({displayedPosts.length} of {allPosts.length} posts)
         </div>
       )}
     </div>

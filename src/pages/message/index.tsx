@@ -76,7 +76,7 @@ export default function MessagePage() {
             size="icon"
             onClick={() => router.push("/")}
             className="shrink-0 rounded-full"
-            title="Kembali ke Beranda"
+            title="Back to Home"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>

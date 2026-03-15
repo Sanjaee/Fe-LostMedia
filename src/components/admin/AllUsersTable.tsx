@@ -119,10 +119,10 @@ export function AllUsersTable({
       const response = await api.getAllUsers(limit, offset);
       setUsers(response.users || []);
       setTotal(response.total || 0);
-      toast({ title: "Tabel diperbarui", description: "Daftar user berhasil di-refresh." });
+      toast({ title: "Table updated", description: "User list refreshed successfully." });
     } catch (err: unknown) {
       const e = err as { message?: string };
-      toast({ title: "Gagal refresh", description: e?.message || "Error", variant: "destructive" });
+      toast({ title: "Refresh failed", description: e?.message || "Error", variant: "destructive" });
     } finally {
       setRefreshing(false);
     }
@@ -218,7 +218,7 @@ export function AllUsersTable({
     } catch (err: unknown) {
       const e = err as { message?: string };
       toast({
-        title: "Gagal unban user",
+        title: "Failed to unban user",
         description: e?.message || "Error",
         variant: "destructive",
       });
@@ -229,7 +229,7 @@ export function AllUsersTable({
     const currentRole = user.user_type || "member";
     if (newRole === currentRole) return;
     if (user.id === currentUserId) {
-      toast({ title: "Tidak bisa mengubah role sendiri", variant: "destructive" });
+      toast({ title: "Cannot change your own role", variant: "destructive" });
       return;
     }
     setUpdatingRole(user.id);
@@ -244,7 +244,7 @@ export function AllUsersTable({
       onStatsRefresh?.();
     } catch (err: unknown) {
       const e = err as { message?: string };
-      toast({ title: "Gagal ubah role", description: e?.message || "Error", variant: "destructive" });
+      toast({ title: "Failed to change role", description: e?.message || "Error", variant: "destructive" });
     } finally {
       setUpdatingRole(null);
     }
@@ -262,8 +262,8 @@ export function AllUsersTable({
             <CardTitle>All Users</CardTitle>
             <CardDescription>
               {isSearchMode
-                ? `Hasil pencarian: ${displayUsers.length} user ditemukan`
-                : `Daftar semua pengguna yang terdaftar (${total} total)`}
+                ? `Search results: ${displayUsers.length} user(s) found`
+                : `All registered users (${total} total)`}
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
@@ -277,7 +277,7 @@ export function AllUsersTable({
               <RefreshCw
                 className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`}
               />
-              {refreshing ? "Memuat..." : "Refresh"}
+              {refreshing ? "Loading..." : "Refresh"}
             </Button>
             <div className="relative w-full sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
@@ -308,7 +308,7 @@ export function AllUsersTable({
 
         {displayUsers.length === 0 && !loading && !searching ? (
           <div className="text-center py-8 text-zinc-500">
-            <p>{isSearchMode ? "Tidak ada user ditemukan" : "No users found"}</p>
+            <p>{isSearchMode ? "No users found" : "No users found"}</p>
           </div>
         ) : (
           <>
@@ -530,7 +530,7 @@ export function AllUsersTable({
               Ban User
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Ban <span className="font-semibold">{banTarget?.full_name}</span> dari
+              Ban <span className="font-semibold">{banTarget?.full_name}</span> from
               platform. User tidak bisa mengakses fitur apapun selama masa ban.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -572,7 +572,7 @@ export function AllUsersTable({
             </div>
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={banning}>Batal</AlertDialogCancel>
+            <AlertDialogCancel disabled={banning}>Cancel</AlertDialogCancel>
             <Button
               variant="destructive"
               onClick={handleBan}

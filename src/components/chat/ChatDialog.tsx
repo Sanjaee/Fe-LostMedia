@@ -145,7 +145,7 @@ export function ChatDialog({ open, onClose, user }: ChatDialogProps) {
             <MessageSkeletonList count={5} />
           ) : messages.length === 0 ? (
             <div className="text-center py-8 text-zinc-500 text-sm">
-              Belum ada pesan. Mulai obrolan!
+              No messages yet. Start the conversation!
             </div>
           ) : (
             messages.map((msg) => {

@@ -484,7 +484,7 @@ export default function ZoomCallPage() {
             <div className="h-12 w-12 animate-spin rounded-full border-2 border-blue-600 border-t-transparent mx-auto mb-4" />
             <p className="text-gray-400 font-medium">Menghubungkan ke room...</p>
             <p className="text-gray-500 text-sm mt-2">
-              Anda masuk tanpa mikrofon dan kamera. Nyalakan dari tombol di bawah setelah terhubung.
+              You joined without microphone and camera. Turn them on from the button below after connecting.
             </p>
           </div>
         </div>
@@ -512,7 +512,7 @@ export default function ZoomCallPage() {
                 className="border-gray-600 text-gray-300"
                 onClick={() => setLoadingDeviceDialogDismissed(true)}
               >
-                Tidak, masuk tanpa mic & kamera
+                No, join without mic & camera
               </Button>
               <Button
                 className="bg-green-600 hover:bg-green-700"
@@ -521,7 +521,7 @@ export default function ZoomCallPage() {
                   setLoadingDeviceDialogDismissed(true);
                 }}
               >
-                Ya, aktifkan setelah terhubung
+                Yes, enable after connecting
               </Button>
             </DialogFooter>
           </DialogContent>

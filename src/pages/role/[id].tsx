@@ -421,7 +421,7 @@ export default function RoleIdPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
-                  <h2 className="text-2xl font-bold">Pembayaran Berhasil</h2>
+                  <h2 className="text-2xl font-bold">Payment Successful</h2>
                 </div>
                 <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border p-6 mb-4">
                   <div className="space-y-4">
@@ -453,7 +453,7 @@ export default function RoleIdPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </div>
-                  <h2 className="text-xl font-bold">Pembayaran {getStatusText(payment.status)}</h2>
+                  <h2 className="text-xl font-bold">Payment {getStatusText(payment.status)}</h2>
                 </div>
                 <p className="text-center text-gray-600 dark:text-gray-400 mb-6">Please try again or contact support.</p>
                 <Button className="w-full" onClick={() => router.push("/role")}>
@@ -471,7 +471,7 @@ export default function RoleIdPage() {
       <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 flex flex-col items-center justify-center px-4">
         <p className="text-destructive mb-4 text-center">{error}</p>
         <Button asChild variant="outline">
-          <Link href="/role">Kembali ke Role</Link>
+          <Link href="/role">Back to Roles</Link>
         </Button>
       </div>
     );

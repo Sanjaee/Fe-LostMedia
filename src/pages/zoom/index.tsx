@@ -129,7 +129,7 @@ export default function ZoomRoomsPage() {
 
   const handleDeleteRoom = async (roomId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm("Apakah Anda yakin ingin menghapus room ini?")) return;
+    if (!confirm("Are you sure you want to delete this room?")) return;
     if (!ensureToken()) return;
     try {
       setDeletingRoomId(roomId);

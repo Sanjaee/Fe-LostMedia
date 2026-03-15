@@ -179,7 +179,7 @@ const CreateGroupPage: React.FC = () => {
                 >
                   <ImageIcon className="h-10 w-10 text-gray-400 mb-2" />
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Tambahkan foto cover
+                    Add cover photo
                   </p>
                 </div>
               )}

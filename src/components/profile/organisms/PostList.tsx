@@ -183,7 +183,7 @@ export const PostList: React.FC<PostListProps> = ({
       await api.deletePost(postToDelete.id);
       toast({
         title: "Success",
-        description: "Post berhasil dihapus",
+        description: "Post deleted successfully",
       });
       loadPosts();
       setDeleteDialogOpen(false);

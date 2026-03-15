@@ -76,7 +76,7 @@ export const OnlineUsers: React.FC = () => {
   if (onlineUsers.length === 0) {
     return (
       <p className="text-xs text-zinc-400 dark:text-zinc-500 px-2 py-2">
-        Tidak ada yang online
+        No one online
       </p>
     );
   }
