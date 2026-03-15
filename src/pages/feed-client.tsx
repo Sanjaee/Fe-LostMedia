@@ -7,6 +7,7 @@ import {
   Image as ImageIcon,
   Video,
   Smile,
+  ArrowUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -68,6 +69,8 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
   const [currentSort, setCurrentSort] = useState<"newest" | "popular">("popular"); // Current sort mode
   const loadMoreRef = useRef<HTMLDivElement>(null); // Ref for infinite scroll trigger
   const { openChat } = useChat();
+  const [pendingPosts, setPendingPosts] = useState<Post[]>([]);
+  const [showNewPostsBanner, setShowNewPostsBanner] = useState(false);
 
   // Check URL params for photo modal
   const fbid = searchParams?.get('fbid');
@@ -546,24 +549,26 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
       messageData = data;
     }
 
-    // --- new_post: broadcast when upload finishes → prepend post + toast for creator ---
+    // --- new_post: broadcast when upload finishes → banner for others, toast + prepend for creator ---
     if (messageData.type === "new_post" && messageData.post_id) {
       const postId = messageData.post_id as string;
-      // Fetch and prepend, then show toast if it's the creator's own post
+      // Fetch post, then either prepend immediately (creator) or queue in "see new posts" banner (others)
       (async () => {
         try {
           const res = await api.getPost(postId) as any;
           const post: Post = res?.data?.post ?? res?.post ?? res?.data ?? res;
           if (!post?.id) return;
-          setPosts((prev) => {
-            const idx = prev.findIndex((p) => p.id === post.id);
-            if (idx >= 0) { const next = [...prev]; next[idx] = post; return next; }
-            return [post, ...prev];
-          });
-          // Show toast for own post
           const isOwn = session?.user?.id &&
             (post.user_id === session.user.id || (post.user as any)?.id === session.user.id);
+
           if (isOwn) {
+            // Creator: prepend immediately + toast
+            setPosts((prev) => {
+              const idx = prev.findIndex((p) => p.id === post.id);
+              if (idx >= 0) { const next = [...prev]; next[idx] = post; return next; }
+              return [post, ...prev];
+            });
+
             const imageCount = post.image_urls?.length ?? 0;
             const videoCount = post.video_urls?.length ?? 0;
             const mediaParts: string[] = [];
@@ -584,6 +589,16 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
                 </ToastAction>
               ),
             });
+          } else {
+            // Other users: queue post and show "See new posts" banner
+            setPendingPosts((prev) => {
+              const exists = prev.some((p) => p.id === post.id);
+              if (exists) {
+                return prev.map((p) => (p.id === post.id ? post : p));
+              }
+              return [post, ...prev];
+            });
+            setShowNewPostsBanner(true);
           }
         } catch { /* ignore */ }
       })();
@@ -623,6 +638,20 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
         ) : undefined,
       });
       if (postID) prependNewPost(postID);
+      return;
+    }
+
+    // --- post_deleted: remove post from current feed and pending queue ---
+    if (messageData.type === "post_deleted" && messageData.post_id) {
+      const deletedId = messageData.post_id as string;
+      setPosts((prev) => prev.filter((p) => p.id !== deletedId));
+      setPendingPosts((prev) => {
+        const next = prev.filter((p) => p.id !== deletedId);
+        if (next.length === 0) {
+          setShowNewPostsBanner(false);
+        }
+        return next;
+      });
       return;
     }
   });
@@ -676,6 +705,35 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
       onCreatePostClick={() => setIsPostDialogOpen(true)}
       onChatClick={(user) => openChat(user)}
     >
+      {/* Realtime "See new posts" banner */}
+      {showNewPostsBanner && pendingPosts.length > 0 && (
+        <div className="pointer-events-none fixed inset-x-0 top-16 z-40 flex justify-center md:top-20">
+          <button
+            type="button"
+            onClick={() => {
+              setPosts((prev) => {
+                const existingIds = new Set(prev.map((p) => p.id));
+                const fresh = pendingPosts.filter((p) => !existingIds.has(p.id));
+                if (fresh.length === 0) return prev;
+                // Prepend newest first
+                return [...fresh, ...prev];
+              });
+              setPendingPosts([]);
+              setShowNewPostsBanner(false);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            className="pointer-events-auto inline-flex items-center gap-2 rounded-full bg-sky-500 px-5 py-2 text-sm font-medium text-white shadow-md hover:bg-sky-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-zinc-900"
+          >
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-sky-400/80">
+              <ArrowUp className="h-4 w-4" />
+            </span>
+            <span>
+              See {pendingPosts.length === 1 ? "new post" : `${pendingPosts.length} new posts`}
+            </span>
+          </button>
+        </div>
+      )}
+
       {/* Create Post Widget */}
       {session && (
         <Card className="border-none shadow-sm py-0">
