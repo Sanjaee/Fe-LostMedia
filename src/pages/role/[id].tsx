@@ -379,11 +379,11 @@ export default function RoleIdPage() {
                   </div>
                 )}
 
-                {/* Crypto (Plisio): redirect link — no custom checkout, user pays on Plisio */}
+                {/* Crypto: redirect link — no custom checkout, user pays on crypto payment page */}
                 {payment.payment_method === "crypto" && payment.redirect_url && (
                   <div className="px-6 pb-4">
                     <div className="bg-amber-50 dark:bg-amber-950/30 py-6 rounded-xl text-center border border-amber-200 dark:border-amber-800">
-                      <p className="text-sm text-amber-800 dark:text-amber-200 mb-2">Complete payment on the Plisio page</p>
+                      <p className="text-sm text-amber-800 dark:text-amber-200 mb-2">Complete payment on the crypto payment page</p>
                       <Button
                         onClick={() => { window.location.href = payment.redirect_url!; }}
                         className="bg-amber-600 hover:bg-amber-700"

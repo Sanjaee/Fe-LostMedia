@@ -227,7 +227,7 @@ export default function RolePage() {
     }
   }, [router.query.select, rolePrices, selectedRole]);
 
-  // Fetch Plisio currencies when user selects crypto
+  // Fetch crypto currencies when user selects crypto
   useEffect(() => {
     if (paymentMethod !== "crypto") return;
     setCryptoCurrenciesLoading(true);
@@ -542,7 +542,7 @@ export default function RolePage() {
                             })}
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            After clicking Pay, you will be redirected to the Plisio payment page.
+                            After clicking Pay, you will be redirected to the crypto payment page.
                           </p>
                         </>
                       ) : (

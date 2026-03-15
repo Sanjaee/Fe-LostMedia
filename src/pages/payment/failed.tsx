@@ -20,12 +20,12 @@ export default function PaymentFailedPage() {
             <CardTitle>Payment not completed</CardTitle>
           </div>
           <CardDescription>
-            Invoice has not been paid or has expired. If you have already paid, click &quot;To site&quot; from the Plisio success page or open the Role page to check status.
+            Invoice has not been paid or has expired. If you have already paid, click &quot;To site&quot; from the crypto payment success page or open the Role page to check status.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Button asChild variant="default">
-            <Link href="/role">Ke halaman Role</Link>
+            <Link href="/role">Go to Role page</Link>
           </Button>
         </CardContent>
       </Card>

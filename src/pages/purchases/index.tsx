@@ -155,7 +155,7 @@ export default function PurchasesPage() {
                             <span className="capitalize">{p.payment_method || "—"}</span>
                             {p.payment_type && p.payment_type !== "midtrans" && (
                               <span className="text-muted-foreground text-xs ml-1">
-                                ({p.payment_type})
+                                ({p.payment_type === "plisio" ? "crypto" : p.payment_type})
                               </span>
                             )}
                           </TableCell>

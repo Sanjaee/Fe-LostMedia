@@ -565,7 +565,7 @@ class ApiClient {
     bank?: string;
     card_token_id?: string;
     save_card?: boolean;
-    currency?: string; // optional: crypto currency (BTC, ETH, SOL, etc.) for Plisio
+    currency?: string; // optional: crypto currency (BTC, ETH, SOL, etc.)
   }): Promise<{ payment: Payment }> {
     return this.request("/api/v1/payments/role", {
       method: "POST",
@@ -600,8 +600,8 @@ class ApiClient {
   }
 
   /**
-   * Verify Plisio order when user lands on "Ke situs" success page.
-   * Validates order_id + current user (no duplicate/other user claim), syncs status from Plisio if pending, updates role if paid.
+   * Verify crypto order when user lands on success/return page.
+   * Validates order_id + current user (no duplicate/other user claim), syncs status if pending, updates role if paid.
    */
   async verifyPlisioOrder(orderId: string): Promise<{ payment: Payment; status: "success" | "pending" }> {
     return this.request(`/api/v1/payments/verify-order?order_id=${encodeURIComponent(orderId)}`, {
