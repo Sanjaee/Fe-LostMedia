@@ -92,7 +92,7 @@ const getPaymentMethodLogo = (method: string, bank?: string): string | null => {
   return null;
 };
 
-// Hanya Crypto; Metode Midtrans di-comment — saat pilih role langsung tampil flow crypto
+  // Crypto only; Midtrans method is commented out — when selecting a role, the crypto flow is shown directly
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const PAYMENT_METHODS = [
   { id: "crypto" as const, label: "Crypto" },
@@ -396,9 +396,9 @@ export default function RolePage() {
                 Choose a role and pay to upgrade your account
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 mt-4">
               {loading ? (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   {[1, 2, 3].map((i) => (
                     <Skeleton key={i} className="h-40 rounded-lg" />
                   ))}
@@ -450,7 +450,7 @@ export default function RolePage() {
                     </Button>
                   </div>
 
-                  {/* Metode Pembayaran Midtrans di-comment — langsung tampil flow Crypto saat pilih role */}
+                  {/* Midtrans payment method is commented out — crypto flow is shown directly when selecting a role */}
                   {/* <div className="space-y-3">
                     <Label>Metode Pembayaran</Label>
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">

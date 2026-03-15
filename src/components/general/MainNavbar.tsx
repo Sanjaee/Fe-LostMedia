@@ -343,7 +343,7 @@ export default function MainNavbar() {
             <Grid3x3 className="h-5 w-5 text-gray-300" />
           </button>
 
-          {/* Messenger - Dropdown dengan daftar teman */}
+          {/* Messenger - Dropdown with friend list */}
           <DropdownMenu
             open={messengerOpen}
             onOpenChange={(open) => {

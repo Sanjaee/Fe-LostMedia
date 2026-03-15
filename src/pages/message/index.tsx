@@ -87,12 +87,12 @@ export default function MessagePage() {
         </div>
       </div>
 
-      {/* Daftar teman */}
+      {/* Friends list */}
       <div className="max-w-2xl mx-auto px-4 py-4">
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800">
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              Pilih teman untuk memulai percakapan
+              Choose a friend to start a conversation
             </p>
           </div>
           <div className="p-2">

@@ -117,16 +117,16 @@ const ProfilePage: React.FC = () => {
     if (!profile?.user_id) return;
     if (friendshipStatus === "accepted" || friendshipStatus === "pending") return;
 
-    try {
-      await api.sendFriendRequest({ receiver_id: profile.user_id });
-      toast({
-        title: "Success",
-        description: "Permintaan pertemanan telah dikirim",
-      });
-      await loadFriendshipStatus(profile.user_id);
-      await loadFriendsCount(profile.user_id);
-    } catch (err: any) {
-      const errorMessage = err.message || "Failed to send friend request";
+      try {
+        await api.sendFriendRequest({ receiver_id: profile.user_id });
+        toast({
+          title: "Success",
+          description: "Friend request has been sent",
+        });
+        await loadFriendshipStatus(profile.user_id);
+        await loadFriendsCount(profile.user_id);
+      } catch (err: any) {
+        const errorMessage = err.message || "Failed to send friend request";
       toast({
         title: "Error",
         description: errorMessage,

@@ -230,7 +230,7 @@ export function AllRolePricesTable({ refreshTrigger = 0 }: AllRolePricesTablePro
         <Label>Role</Label>
         <Select value={form.role} onValueChange={(v) => setForm((f) => ({ ...f, role: v }))}>
           <SelectTrigger>
-            <SelectValue placeholder="Pilih role" />
+            <SelectValue placeholder="Select role" />
           </SelectTrigger>
           <SelectContent>
             {ROLES.map((r) => (

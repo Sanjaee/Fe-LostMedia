@@ -207,10 +207,10 @@ export default function ZoomCallPage() {
         setRoom(newRoom);
         hasJoinedRef.current = true;
         setLoading(false);
-        // Bergabung tanpa mic & kamera; user bisa nyalakan nanti lewat tombol
+        // Join without mic & camera; user can enable them later via buttons
         setIsMicMuted(true);
         setIsCameraOff(true);
-        // Jika user pilih "Aktifkan setelah terhubung" di dialog loading, nyalakan mic & kamera sekarang
+        // If the user chose "Enable after connected" in the loading dialog, turn on mic & camera now
         if (enableMicCameraOnJoinRef.current) {
           enableMicCameraOnJoinRef.current = false;
           try {
@@ -220,10 +220,10 @@ export default function ZoomCallPage() {
             const pub = newRoom.localParticipant.getTrackPublication(Track.Source.Camera);
             if (pub?.track && localVideoRef.current) pub.track.attach(localVideoRef.current);
           } catch {
-            // Izin ditolak atau error; tetap masuk tanpa mic/kamera
+            // Permission denied or other error; still join without mic/camera
           }
         } else {
-          // Publish track dummy (audio diam + video hitam) agar koneksi tetap jalan tanpa izin mic/kamera
+          // Publish dummy tracks (silent audio + black video) to keep the connection running without mic/camera permission
           try {
             await newRoom.localParticipant.publishTrack(getEmptyAudioStreamTrack(), {
               name: "microphone",

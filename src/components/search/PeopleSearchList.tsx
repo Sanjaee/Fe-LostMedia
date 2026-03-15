@@ -205,7 +205,7 @@ export const PeopleSearchList: React.FC<PeopleSearchListProps> = ({
           setFriendshipStatuses((prev) => ({ ...prev, [userId]: actualStatus }));
           toast({
             title: "Info",
-            description: "Anda sudah berteman dengan user ini",
+            description: "You are already friends with this user",
           });
         } catch {
           setFriendshipStatuses((prev) => ({ ...prev, [userId]: "accepted" }));
@@ -214,7 +214,7 @@ export const PeopleSearchList: React.FC<PeopleSearchListProps> = ({
         setFriendshipStatuses((prev) => ({ ...prev, [userId]: "pending" }));
         toast({
           title: "Info",
-          description: "Permintaan pertemanan sudah terkirim",
+          description: "Friend request has already been sent",
         });
       } else {
         toast({
@@ -245,7 +245,7 @@ export const PeopleSearchList: React.FC<PeopleSearchListProps> = ({
           className="flex items-center gap-2 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-300 dark:border-green-700"
         >
           <Check className="h-4 w-4" />
-          Berteman
+          Friends
         </Button>
       );
     }
@@ -270,7 +270,7 @@ export const PeopleSearchList: React.FC<PeopleSearchListProps> = ({
         ) : (
           <>
             <UserPlus className="h-4 w-4 mr-2" />
-            Tambah Teman
+            Add Friend
           </>
         )}
       </Button>

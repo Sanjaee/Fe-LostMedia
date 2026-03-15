@@ -67,7 +67,7 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
 
     if (!open) {
       toast({
-        title: "Notifikasi Baru",
+        title: "New notification",
         description: notification.message || notification.content || notification.title,
       });
     }
@@ -319,7 +319,7 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
       await api.rejectFriendRequest(id);
       toast({
         title: "Success",
-        description: "Permintaan pertemanan ditolak",
+        description: "Friend request rejected",
       });
       // Update friendship status for rejected request
       const senderId = notification.sender_id || notification.sender?.id;
@@ -718,7 +718,7 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
       <DialogContent className="max-w-md max-h-[80vh] p-0">
         <DialogHeader className="px-6 pt-6 pb-4 border-b">
           <DialogTitle className="flex items-center justify-between">
-            <span>Notifikasi</span>
+            <span>Notifications</span>
             {unreadCount > 0 && (
               <Badge variant="destructive">{unreadCount}</Badge>
             )}

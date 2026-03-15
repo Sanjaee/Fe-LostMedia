@@ -80,16 +80,16 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
                   @{username}
                 </p>
-              )}
-              <div className="flex items-center gap-4 mt-2 text-sm text-gray-600 dark:text-gray-400">
-                <span>{friendsCount?.followers || 0} pengikut</span>
-                <span>•</span>
-                <span>{friendsCount?.following || 0} mengikuti</span>
+                )}
+                <div className="flex items-center gap-4 mt-2 text-sm text-gray-600 dark:text-gray-400">
+                  <span>{friendsCount?.followers || 0} followers</span>
+                  <span>•</span>
+                  <span>{friendsCount?.following || 0} following</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Action Buttons */}
+            {/* Action Buttons */}
           <div className="flex gap-2 mt-4 md:mt-0 md:mb-4">
             {isOwnProfile ? (
               <>
@@ -119,7 +119,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                     className="flex items-center gap-2 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-300 dark:border-green-700"
                   >
                     <Check className="h-4 w-4" />
-                    Berteman
+                    Friends
                   </ProfileButton>
                 ) : friendshipStatus === "pending" ? (
                   <ProfileButton
