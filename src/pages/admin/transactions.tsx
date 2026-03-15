@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Receipt, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, Receipt, ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Payment } from "@/types/payment";
 import { format } from "date-fns";
@@ -171,6 +171,7 @@ export default function AdminTransactionsPage() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Order ID</TableHead>
+                        <TableHead>Invoice</TableHead>
                         <TableHead>User</TableHead>
                         <TableHead className="text-right">Amount</TableHead>
                         <TableHead>Status</TableHead>
@@ -183,18 +184,22 @@ export default function AdminTransactionsPage() {
                       {payments.map((p) => (
                         <TableRow key={p.id}>
                           <TableCell className="font-mono text-xs">
+                            <span title={p.order_id}>{p.order_id?.slice(0, 20)}…</span>
+                          </TableCell>
+                          <TableCell>
                             {p.redirect_url ? (
                               <a
                                 href={p.redirect_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-primary hover:underline"
-                                title={p.order_id}
+                                className="inline-flex items-center gap-1 text-primary hover:underline text-sm"
+                                title="Open invoice"
                               >
-                                {p.order_id?.slice(0, 20)}…
+                                <ExternalLink className="h-3.5 w-3.5" />
+                                Invoice
                               </a>
                             ) : (
-                              <span title={p.order_id}>{p.order_id?.slice(0, 20)}…</span>
+                              <span className="text-muted-foreground text-sm">—</span>
                             )}
                           </TableCell>
                           <TableCell>
