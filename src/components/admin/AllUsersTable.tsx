@@ -553,10 +553,10 @@ export function AllUsersTable({
                   <SelectTrigger className="w-32">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="minutes">Menit</SelectItem>
-                    <SelectItem value="hours">Jam</SelectItem>
-                    <SelectItem value="days">Hari</SelectItem>
+                 <SelectContent>
+                   <SelectItem value="minutes">Minutes</SelectItem>
+                   <SelectItem value="hours">Hours</SelectItem>
+                   <SelectItem value="days">Days</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -566,7 +566,7 @@ export function AllUsersTable({
               <Textarea
                 value={banReason}
                 onChange={(e) => setBanReason(e.target.value)}
-                placeholder="Contoh: Melanggar ketentuan layanan, spam, dll."
+                placeholder="Example: Violating the terms of service, spam, etc."
                 rows={3}
               />
             </div>
@@ -581,7 +581,7 @@ export function AllUsersTable({
               {banning ? (
                 <>
                   <Skeleton className="h-4 w-4 mr-2 shrink-0" />
-                  Memproses...
+                  Processing...
                 </>
               ) : (
                 <>
