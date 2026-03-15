@@ -19,7 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/router";
 import type { Notification } from "@/types/notification";
 import { formatDistanceToNow } from "date-fns";
-import { id } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import { useWebSocketSubscription } from "@/contexts/WebSocketContext";
 import { EyeIcon } from "lucide-react";
 
@@ -780,7 +780,7 @@ export const NotificationDialog: React.FC<NotificationDialogProps> = ({
                               new Date(notification.created_at),
                               {
                                 addSuffix: true,
-                                locale: id,
+                                locale: enUS,
                               }
                             )}
                           </p>

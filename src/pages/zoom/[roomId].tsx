@@ -324,8 +324,8 @@ export default function ZoomCallPage() {
     } catch (e: any) {
       if (e?.name === "NotAllowedError") {
         toast({
-          title: "Izin mikrofon ditolak",
-          description: "Klik ikon 🔒 di address bar browser, lalu izinkan akses mikrofon.",
+          title: "Microphone permission denied",
+          description: "Click the 🔒 icon in the browser address bar, then allow microphone access.",
           variant: "destructive",
         });
       } else {
@@ -369,8 +369,8 @@ export default function ZoomCallPage() {
     } catch (e: any) {
       if (e?.name === "NotAllowedError") {
         toast({
-          title: "Izin kamera ditolak",
-          description: "Klik ikon 🔒 di address bar browser, lalu izinkan akses kamera.",
+          title: "Camera permission denied",
+          description: "Click the 🔒 icon in the browser address bar, then allow camera access.",
           variant: "destructive",
         });
       } else {
