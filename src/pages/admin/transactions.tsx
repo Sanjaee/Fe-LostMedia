@@ -176,14 +176,26 @@ export default function AdminTransactionsPage() {
                         <TableHead>Status</TableHead>
                         <TableHead>Method</TableHead>
                         <TableHead>Target Role</TableHead>
-                        <TableHead>Tanggal</TableHead>
+                        <TableHead>Date</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {payments.map((p) => (
                         <TableRow key={p.id}>
                           <TableCell className="font-mono text-xs">
-                            <span title={p.order_id}>{p.order_id?.slice(0, 20)}…</span>
+                            {p.redirect_url ? (
+                              <a
+                                href={p.redirect_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary hover:underline"
+                                title={p.order_id}
+                              >
+                                {p.order_id?.slice(0, 20)}…
+                              </a>
+                            ) : (
+                              <span title={p.order_id}>{p.order_id?.slice(0, 20)}…</span>
+                            )}
                           </TableCell>
                           <TableCell>
                             <div className="flex flex-col">
@@ -195,8 +207,8 @@ export default function AdminTransactionsPage() {
                           <TableCell><StatusBadge status={p.status ?? "pending"} /></TableCell>
                           <TableCell>
                             <span className="capitalize">{p.payment_method || "—"}</span>
-                            {p.payment_type && p.payment_type !== "midtrans" && (
-                              <span className="text-muted-foreground text-xs ml-1">({p.payment_type === "plisio" ? "crypto" : p.payment_type})</span>
+                            {p.payment_type && p.payment_type !== "midtrans" && p.payment_type !== "plisio" && (
+                              <span className="text-muted-foreground text-xs ml-1">({p.payment_type})</span>
                             )}
                           </TableCell>
                           <TableCell>{p.target_role ? <Badge variant="outline">{p.target_role}</Badge> : "—"}</TableCell>

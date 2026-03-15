@@ -143,7 +143,19 @@ export default function PurchasesPage() {
                       {payments.map((p) => (
                         <TableRow key={p.id}>
                           <TableCell className="font-mono text-xs">
-                            <span title={p.order_id}>{p.order_id?.slice(0, 24)}…</span>
+                            {p.redirect_url ? (
+                              <a
+                                href={p.redirect_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary hover:underline"
+                                title={p.order_id}
+                              >
+                                {p.order_id?.slice(0, 24)}…
+                              </a>
+                            ) : (
+                              <span title={p.order_id}>{p.order_id?.slice(0, 24)}…</span>
+                            )}
                           </TableCell>
                           <TableCell className="text-right font-medium">
                             {formatUsd(p.total_amount ?? p.amount ?? 0)}
@@ -153,10 +165,8 @@ export default function PurchasesPage() {
                           </TableCell>
                           <TableCell>
                             <span className="capitalize">{p.payment_method || "—"}</span>
-                            {p.payment_type && p.payment_type !== "midtrans" && (
-                              <span className="text-muted-foreground text-xs ml-1">
-                                ({p.payment_type === "plisio" ? "crypto" : p.payment_type})
-                              </span>
+                            {p.payment_type && p.payment_type !== "midtrans" && p.payment_type !== "plisio" && (
+                              <span className="text-muted-foreground text-xs ml-1">({p.payment_type})</span>
                             )}
                           </TableCell>
                           <TableCell>
