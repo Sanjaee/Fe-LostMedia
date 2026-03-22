@@ -80,7 +80,7 @@ export default function MainNavbar() {
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const [profileSidebarOpen, setProfileSidebarOpen] = useState(false);
   const [messengerOpen, setMessengerOpen] = useState(false);
-  const { friends, friendsLoading: loadingFriends } = useSharedData();
+  const { friends, friendsLoading: loadingFriends, refetchFriends } = useSharedData();
 
   useWebSocketSubscription((data: any) => {
     let notification: any;
@@ -318,7 +318,7 @@ export default function MainNavbar() {
             open={messengerOpen}
             onOpenChange={(open) => {
               setMessengerOpen(open);
-              if (open) setLoadingFriends(true);
+              if (open) void refetchFriends();
             }}
           >
             <DropdownMenuTrigger asChild>
