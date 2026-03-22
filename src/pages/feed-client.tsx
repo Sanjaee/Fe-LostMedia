@@ -28,6 +28,7 @@ import { ToastAction } from "@/components/ui/toast";
 import { Eye } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useChat } from "@/contexts/ChatContext";
+import { useSharedData } from "@/contexts/SharedDataContext";
 
 import type { Post } from "@/types/post";
 import type { Friendship } from "@/types/friendship";
@@ -55,8 +56,7 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
   const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
   const [posts, setPosts] = useState<Post[]>(initialPosts || []);
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
-  const [friends, setFriends] = useState<Friendship[]>([]);
-  const [loadingFriends, setLoadingFriends] = useState(false);
+  const { friends, friendsLoading: loadingFriends, refetchFriends } = useSharedData();
   const [commentDialogOpen, setCommentDialogOpen] = useState(false);
   const [selectedPostForComment, setSelectedPostForComment] = useState<Post | null>(null);
   const [postLikeCounts, setPostLikeCounts] = useState<Record<string, number>>({});
@@ -188,65 +188,7 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const loadFriends = useCallback(async () => {
-    try {
-      setLoadingFriends(true);
-      const response = await api.getFriends() as any;
-      // API client unwraps data, so response is { friends: [...] } or { data: { friends: [...] } }
-      // Handle both wrapped and unwrapped responses
-      let friendsList: typeof friends = [];
-      
-      if (Array.isArray(response)) {
-        // If response is directly an array
-        friendsList = response;
-      } else if (response && typeof response === 'object') {
-        // Check for friends property
-        if ('friends' in response && Array.isArray(response.friends)) {
-          friendsList = response.friends;
-        } else if ('data' in response && response.data && typeof response.data === 'object') {
-          const data = response.data;
-          if ('friends' in data && Array.isArray(data.friends)) {
-            friendsList = data.friends;
-          } else if ('friendships' in data && Array.isArray(data.friendships)) {
-            friendsList = data.friendships;
-          }
-        } else if ('friendships' in response && Array.isArray(response.friendships)) {
-          friendsList = response.friendships;
-        }
-      }
-      
-      setFriends(friendsList);
-    } catch (error) {
-      console.error("Failed to load friends:", error);
-    } finally {
-      setLoadingFriends(false);
-    }
-  }, [api]);
-
-  // Load friends list
-  useEffect(() => {
-    if (session?.user?.id) {
-      loadFriends();
-    }
-  }, [session?.user?.id, loadFriends]);
-
-  // Listen for friendship changes to refresh friends list
-  useEffect(() => {
-    const handleFriendshipChanged = () => {
-      // Add a small delay to ensure backend has updated the database
-      setTimeout(() => {
-        if (session?.user?.id) {
-          loadFriends();
-        }
-      }, 500);
-    };
-
-    window.addEventListener('friendship-changed', handleFriendshipChanged);
-    
-    return () => {
-      window.removeEventListener('friendship-changed', handleFriendshipChanged);
-    };
-  }, [session?.user?.id, loadFriends]);
+  // Friends dari SharedDataProvider (single fetch, deduplicated)
 
   // Update posts when initialPosts changes; keep real-time prepended posts (e.g. own new post) at top
   useEffect(() => {
@@ -268,23 +210,23 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
     const commentCounts: Record<string, number> = {};
     const userLikes: Record<string, any> = {};
 
-    // Extract counts from post data if available
+    // Extract counts from post data if available (backend feed sudah kirim likes_count, comments_count)
     posts.forEach((post) => {
-      if (post.likes_count !== undefined) {
-        likeCounts[post.id] = post.likes_count;
-      }
-      if (post.comments_count !== undefined) {
-        commentCounts[post.id] = post.comments_count;
-      }
+      const likes = post.likes_count ?? (post as any).LikesCount;
+      const comments = post.comments_count ?? (post as any).CommentsCount;
+      if (likes !== undefined) likeCounts[post.id] = Number(likes);
+      if (comments !== undefined) commentCounts[post.id] = Number(comments);
       if (post.user_liked !== undefined && post.user_liked) {
         userLikes[post.id] = { user_id: session?.user?.id, post_id: post.id };
       }
     });
 
-    // Only fetch counts for posts that don't have them
-    const postsNeedingCounts = posts.filter(
-      (post) => post.likes_count === undefined || post.comments_count === undefined
-    );
+    // Hanya fetch untuk post yang benar-benar belum punya counts (feed endpoint sudah enrich)
+    const postsNeedingCounts = posts.filter((post) => {
+      const hasLikes = post.likes_count !== undefined || (post as any).LikesCount !== undefined;
+      const hasComments = post.comments_count !== undefined || (post as any).CommentsCount !== undefined;
+      return !hasLikes || !hasComments;
+    });
 
     if (postsNeedingCounts.length > 0) {
       try {

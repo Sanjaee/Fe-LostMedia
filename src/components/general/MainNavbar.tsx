@@ -41,6 +41,7 @@ import { NotificationDialog } from "./NotificationDialog";
 import { ContactsList } from "./ContactsList";
 import { useApi } from "@/components/contex/ApiProvider";
 import { useChat } from "@/contexts/ChatContext";
+import { useSharedData } from "@/contexts/SharedDataContext";
 import type { Friendship } from "@/types/friendship";
 import type { Post } from "@/types/post";
 import type { User as UserType } from "@/types/user";
@@ -79,8 +80,7 @@ export default function MainNavbar() {
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const [profileSidebarOpen, setProfileSidebarOpen] = useState(false);
   const [messengerOpen, setMessengerOpen] = useState(false);
-  const [friends, setFriends] = useState<Friendship[]>([]);
-  const [loadingFriends, setLoadingFriends] = useState(false);
+  const { friends, friendsLoading: loadingFriends } = useSharedData();
 
   useWebSocketSubscription((data: any) => {
     let notification: any;
@@ -140,38 +140,7 @@ export default function MainNavbar() {
     return () => window.removeEventListener("chat-closed", onChatClosed);
   }, [fetchChatUnreadCount]);
 
-  // Load friends for messenger dropdown
-  const loadFriends = React.useCallback(async () => {
-    try {
-      setLoadingFriends(true);
-      const response = (await api.getFriends()) as any;
-      let friendsList: Friendship[] = [];
-      if (Array.isArray(response)) friendsList = response;
-      else if (response?.friends) friendsList = response.friends;
-      else if (response?.data?.friends) friendsList = response.data.friends;
-      else if (response?.data?.friendships) friendsList = response.data.friendships;
-      else if (response?.friendships) friendsList = response.friendships;
-      setFriends(friendsList);
-    } catch {
-      setFriends([]);
-    } finally {
-      setLoadingFriends(false);
-    }
-  }, [api]);
-
-  useEffect(() => {
-    if (status === "authenticated" && messengerOpen) {
-      loadFriends();
-    }
-  }, [status, messengerOpen, loadFriends]);
-
-  useEffect(() => {
-    const handleFriendshipChanged = () => {
-      if (status === "authenticated") setTimeout(loadFriends, 300);
-    };
-    window.addEventListener("friendship-changed", handleFriendshipChanged);
-    return () => window.removeEventListener("friendship-changed", handleFriendshipChanged);
-  }, [status, loadFriends]);
+  // Friends dari SharedDataProvider (single fetch)
 
   useEffect(() => {
     if (!searchDialogOpen) return;

@@ -10,17 +10,15 @@ import { Button } from "@/components/ui/button";
 import { Users, FileText, ArrowLeft, Search } from "lucide-react";
 import { useApi } from "@/components/contex/ApiProvider";
 import { useChat } from "@/contexts/ChatContext";
-import type { Friendship } from "@/types/friendship";
+import { useSharedData } from "@/contexts/SharedDataContext";
 
 const SearchPage: React.FC = () => {
   const router = useRouter();
-  const { data: session } = useSession();
   const { api } = useApi();
   const { openChat } = useChat();
+  const { friends, friendsLoading: loadingFriends } = useSharedData();
   const [activeTab, setActiveTab] = useState<"people" | "posts">("posts");
   const query = (router.query.q as string) || "";
-  const [friends, setFriends] = React.useState<Friendship[]>([]);
-  const [loadingFriends, setLoadingFriends] = React.useState(false);
   const [peopleCount, setPeopleCount] = React.useState<number | null>(null);
   const [postsCount, setPostsCount] = React.useState<number | null>(null);
 
@@ -31,46 +29,6 @@ const SearchPage: React.FC = () => {
       setPostsCount(null);
     }
   }, [query]);
-
-  // Load friends for contacts sidebar
-  useEffect(() => {
-    const loadFriends = async () => {
-      if (!session?.user?.id) return;
-      
-      try {
-        setLoadingFriends(true);
-        const response = await api.getFriends() as any;
-        let friendsList: typeof friends = [];
-        
-        if (Array.isArray(response)) {
-          friendsList = response;
-        } else if (response && typeof response === 'object') {
-          if ('friends' in response && Array.isArray(response.friends)) {
-            friendsList = response.friends;
-          } else if ('data' in response && response.data && typeof response.data === 'object') {
-            const data = response.data;
-            if ('friends' in data && Array.isArray(data.friends)) {
-              friendsList = data.friends;
-            } else if ('friendships' in data && Array.isArray(data.friendships)) {
-              friendsList = data.friendships;
-            }
-          } else if ('friendships' in response && Array.isArray(response.friendships)) {
-            friendsList = response.friendships;
-          }
-        }
-        
-        setFriends(friendsList);
-      } catch (error) {
-        console.error("Failed to load friends:", error);
-    } finally {
-        setLoadingFriends(false);
-      }
-    };
-
-    if (session?.user?.id) {
-      loadFriends();
-    }
-  }, [session?.user?.id, api]);
 
   return (
     <AppLayout

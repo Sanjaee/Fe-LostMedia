@@ -1,58 +1,25 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useEffect } from "react";
 import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, MessageCircle } from "lucide-react";
 import { ContactsList } from "@/components/general/ContactsList";
-import { useApi } from "@/components/contex/ApiProvider";
 import { useChat } from "@/contexts/ChatContext";
-import type { Friendship } from "@/types/friendship";
+import { useSharedData } from "@/contexts/SharedDataContext";
 
 export default function MessagePage() {
   const router = useRouter();
-  const { data: session, status } = useSession();
-  const { api } = useApi();
+  const { status } = useSession();
   const { openChat } = useChat();
-  const [friends, setFriends] = useState<Friendship[]>([]);
-  const [loadingFriends, setLoadingFriends] = useState(true);
-
-  const loadFriends = useCallback(async () => {
-    try {
-      setLoadingFriends(true);
-      const response = (await api.getFriends()) as any;
-      let friendsList: Friendship[] = [];
-      if (Array.isArray(response)) friendsList = response;
-      else if (response?.friends) friendsList = response.friends;
-      else if (response?.data?.friends) friendsList = response.data.friends;
-      else if (response?.data?.friendships) friendsList = response.data.friendships;
-      else if (response?.friendships) friendsList = response.friendships;
-      setFriends(friendsList);
-    } catch {
-      setFriends([]);
-    } finally {
-      setLoadingFriends(false);
-    }
-  }, [api]);
+  const { friends, friendsLoading: loadingFriends } = useSharedData();
 
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push(`/auth/login?callbackUrl=${encodeURIComponent("/message")}`);
     }
   }, [status, router]);
-
-  useEffect(() => {
-    if (status === "authenticated") {
-      loadFriends();
-    }
-  }, [status, loadFriends]);
-
-  useEffect(() => {
-    const handleFriendshipChanged = () => setTimeout(loadFriends, 300);
-    window.addEventListener("friendship-changed", handleFriendshipChanged);
-    return () => window.removeEventListener("friendship-changed", handleFriendshipChanged);
-  }, [loadFriends]);
 
   const handleChatClick = (user: { id: string; full_name: string; username?: string; profile_photo?: string }) => {
     openChat(user);

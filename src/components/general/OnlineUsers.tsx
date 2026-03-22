@@ -1,62 +1,16 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React from "react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useApi } from "@/components/contex/ApiProvider";
-import { useWebSocketSubscription } from "@/contexts/WebSocketContext";
+import { useSharedData } from "@/contexts/SharedDataContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserNameWithRole } from "@/components/ui/UserNameWithRole";
 
-interface OnlineUser {
-  id: string;
-  full_name: string;
-  username?: string;
-  profile_photo?: string;
-  user_type?: string;
-}
-
 export const OnlineUsers: React.FC = () => {
-  const { api } = useApi();
-  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { onlineUsers, onlineUsersLoading } = useSharedData();
 
-  const loadOnlineUsers = useCallback(async () => {
-    try {
-      const res = (await api.getOnlineUsers()) as any;
-      const users: OnlineUser[] = res?.users || [];
-      setOnlineUsers(users);
-    } catch {
-      console.error("Failed to load online users");
-    } finally {
-      setLoading(false);
-    }
-  }, [api]);
-
-  // Load on mount - tampilkan untuk guest dan logged-in
-  useEffect(() => {
-    setLoading(true);
-    loadOnlineUsers();
-  }, [loadOnlineUsers]);
-
-  // Listen to WebSocket presence events for real-time updates
-  useWebSocketSubscription((data: any) => {
-    const payload = data?.payload || data;
-    if (payload?.type === "user_presence") {
-      const userId = payload.user_id as string;
-      const online = payload.online as boolean;
-
-      if (online) {
-        // Reload to get full user info
-        loadOnlineUsers();
-      } else {
-        // Remove the user that went offline
-        setOnlineUsers((prev) => prev.filter((u) => u.id !== userId));
-      }
-    }
-  });
-
-  if (loading) {
+  if (onlineUsersLoading) {
     return (
       <div className="space-y-2">
         {[1, 2, 3].map((i) => (

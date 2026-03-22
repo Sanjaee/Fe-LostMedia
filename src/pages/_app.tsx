@@ -8,6 +8,7 @@ import { ApiProvider } from "@/components/contex/ApiProvider";
 import { SessionRefreshListener, RoleUpdateWebSocketListener } from "@/components/auth/SessionRefreshListener";
 import { WebSocketProvider } from "@/contexts/WebSocketContext";
 import { ChatProvider } from "@/contexts/ChatContext";
+import { SharedDataProvider } from "@/contexts/SharedDataContext";
 import MainNavbar from "@/components/general/MainNavbar";
 import BanDialog from "@/components/general/BanDialog";
 import { useRouter } from "next/router";
@@ -70,11 +71,13 @@ function AuthAwareLayout({
   }
   return (
     <WebSocketProvider>
-      <RoleUpdateWebSocketListener />
-      <ChatProvider>
-        <AppContent Component={Component} pageProps={pageProps} />
-        <Toaster />
-      </ChatProvider>
+      <SharedDataProvider>
+        <RoleUpdateWebSocketListener />
+        <ChatProvider>
+          <AppContent Component={Component} pageProps={pageProps} />
+          <Toaster />
+        </ChatProvider>
+      </SharedDataProvider>
     </WebSocketProvider>
   );
 }
