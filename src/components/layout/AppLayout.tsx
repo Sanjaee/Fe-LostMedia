@@ -92,19 +92,15 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                 </Button>
               </div>
 
-              {/* Online Users */}
-              {session && (
-                <>
-                  <Separator />
-                  <div>
-                    <h3 className="text-zinc-500 font-semibold text-sm mb-2 px-2 flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full bg-green-500 inline-block" />
-                      Online Now
-                    </h3>
-                    <OnlineUsers />
-                  </div>
-                </>
-              )}
+              {/* Online Users - tampilkan untuk guest dan logged-in */}
+              <Separator />
+              <div>
+                <h3 className="text-zinc-500 font-semibold text-sm mb-2 px-2 flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-green-500 inline-block" />
+                  Online Now
+                </h3>
+                <OnlineUsers />
+              </div>
             </div>
           </div>
 
@@ -130,21 +126,33 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
               </div>
               <Separator className="my-2" />
               <div>
-                <div
-                  className="cursor-pointer hover:opacity-80"
-                  onClick={() => friends.length > 0 && setContactsModalOpen(true)}
-                  onKeyDown={(e) => e.key === "Enter" && friends.length > 0 && setContactsModalOpen(true)}
-                  role="button"
-                  tabIndex={0}
-                >
-                  <h3 className="text-zinc-500 font-semibold mb-2 px-2">Contacts</h3>
-                  {process.env.NODE_ENV === "development" && (
-                    <div className="text-xs text-zinc-400 mb-2 px-2">
-                      Friends count: {friends.length} | Loading: {loadingFriends ? "Yes" : "No"}
+                {session ? (
+                  <>
+                    <div
+                      className="cursor-pointer hover:opacity-80"
+                      onClick={() => friends.length > 0 && setContactsModalOpen(true)}
+                      onKeyDown={(e) => e.key === "Enter" && friends.length > 0 && setContactsModalOpen(true)}
+                      role="button"
+                      tabIndex={0}
+                    >
+                      <h3 className="text-zinc-500 font-semibold mb-2 px-2">Contacts</h3>
+                      {process.env.NODE_ENV === "development" && (
+                        <div className="text-xs text-zinc-400 mb-2 px-2">
+                          Friends count: {friends.length} | Loading: {loadingFriends ? "Yes" : "No"}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                <ContactsList friends={friends} loading={loadingFriends} onChatClick={handleChatClick} refreshUnreadTrigger={chatUnreadRefreshTrigger} />
+                    <ContactsList friends={friends} loading={loadingFriends} onChatClick={handleChatClick} refreshUnreadTrigger={chatUnreadRefreshTrigger} />
+                  </>
+                ) : (
+                  <>
+                    <h3 className="text-zinc-500 font-semibold mb-2 px-2 flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full bg-green-500 inline-block" />
+                      Online Now
+                    </h3>
+                    <OnlineUsers />
+                  </>
+                )}
                 <Dialog open={contactsModalOpen} onOpenChange={setContactsModalOpen}>
                   <DialogContent className="max-w-sm">
                     <DialogHeader>

@@ -242,7 +242,7 @@ export default function MainNavbar() {
   };
 
   const handleSignOut = async () => {
-    await signOut({ callbackUrl: "/auth/login" });
+    await signOut({ callbackUrl: "/" });
   };
 
   const getInitials = (name?: string | null) => {

@@ -31,18 +31,8 @@ export default function Home() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const redirectedToLoginRef = useRef(false);
 
-  // Redirect to login once when session expired/invalid — avoid looping
-  useEffect(() => {
-    if (status === "loading") return;
-    if (redirectedToLoginRef.current) return;
-    if (status === "unauthenticated" || !session) {
-      redirectedToLoginRef.current = true;
-      router.push("/auth/login");
-    }
-  }, [session, status, router]);
-
+  // Feed dapat dilihat tanpa login; post/comment/like tetap butuh login
   useEffect(() => {
     // Clear cache if user changed
     const cachedUserId = sessionStorage.getItem(POSTS_CACHE_USER_KEY);
@@ -58,7 +48,7 @@ export default function Home() {
     const cachedPosts = sessionStorage.getItem(POSTS_CACHE_KEY);
     const cacheTimestamp = sessionStorage.getItem(POSTS_CACHE_TIMESTAMP_KEY);
     
-    if (cachedPosts && cacheTimestamp && cachedUserId === currentUserId) {
+    if (cachedPosts && cacheTimestamp && (cachedUserId === currentUserId || (!cachedUserId && !currentUserId))) {
       const age = Date.now() - parseInt(cacheTimestamp, 10);
       if (age < CACHE_DURATION) {
         try {
@@ -78,11 +68,12 @@ export default function Home() {
     // Load fresh data - popular first for initial load
     loadFeed(false, "popular");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.user?.id]);
+  }, [session?.user?.id, status]);
   
   // No auto-refresh needed - we load popular directly from the start
 
   const loadFeed = async (silent = false, sort: "newest" | "popular" = "newest") => {
+    const currentUserId = session?.user?.id || "";
     try {
       if (!silent) {
         setLoading(true);
@@ -107,20 +98,14 @@ export default function Home() {
       // Display all posts from feed (all posts are public)
       setPosts(postsList);
       
-      // Cache the posts with user ID to prevent cross-user cache issues
-      if (session?.user?.id) {
-        sessionStorage.setItem(POSTS_CACHE_KEY, JSON.stringify(postsList));
-        sessionStorage.setItem(POSTS_CACHE_TIMESTAMP_KEY, Date.now().toString());
-        sessionStorage.setItem(POSTS_CACHE_USER_KEY, session.user.id);
-      }
+      // Cache the posts (guest uses empty user key)
+      sessionStorage.setItem(POSTS_CACHE_KEY, JSON.stringify(postsList));
+      sessionStorage.setItem(POSTS_CACHE_TIMESTAMP_KEY, Date.now().toString());
+      sessionStorage.setItem(POSTS_CACHE_USER_KEY, currentUserId);
     } catch (err: any) {
       console.error("Failed to load feed:", err);
       
-      // If error is 401 (Unauthorized), session might be expired - redirect to login
-      if (err?.response?.status === 401 || err?.status === 401) {
-        router.push("/auth/login");
-        return;
-      }
+      // Feed bisa diakses guest; 401 tidak redirect (tampilkan error saja)
       
       if (!silent) {
         setError(err.message || "Failed to load feed");
@@ -172,11 +157,6 @@ export default function Home() {
         </div>
       </div>
     );
-  }
-
-  // Don't render anything if redirecting (session check will redirect)
-  if (status === "unauthenticated" || !session) {
-    return null;
   }
 
   if (error) {

@@ -332,6 +332,11 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
   }, [posts.length, loadPostEngagements]);
 
   const handleOpenCommentDialog = (post: Post) => {
+    if (!session?.user?.id) {
+      toast({ title: "Login required", description: "Login to comment on posts" });
+      router.push("/auth/login");
+      return;
+    }
     setSelectedPostForComment(post);
     setCommentDialogOpen(true);
   };
@@ -674,9 +679,9 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
     return () => observer.disconnect();
   }, [hasMore, loadingMore, loadMore]);
 
-  // Initialize feed with popular sorting directly (no delay)
+  // Initialize feed with popular sorting (works for guest and logged-in)
   useEffect(() => {
-    if (session?.user?.id && initialPosts && initialPosts.length > 0) {
+    if (initialPosts && initialPosts.length > 0) {
       setPosts((prev) => {
         const initialIds = new Set(initialPosts.map((p: Post) => p.id));
         const onlyInPrev = prev.filter((p) => !initialIds.has(p.id));
@@ -686,7 +691,7 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
       setCurrentOffset(initialPosts.length);
       setHasMore(initialPosts.length >= FEED_PAGE_SIZE);
       setCurrentSort("popular");
-    } else if (session?.user?.id && (!posts || posts.length === 0)) {
+    } else if (!posts || posts.length === 0) {
       loadFeed("popular", true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -701,7 +706,7 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
     <AppLayout
       friends={friends}
       loadingFriends={loadingFriends}
-      showCreatePost={true}
+      showCreatePost={!!session}
       onCreatePostClick={() => setIsPostDialogOpen(true)}
       onChatClick={(user) => openChat(user)}
     >
@@ -793,9 +798,16 @@ export default function FeedClient({ posts: initialPosts }: FeedClientProps) {
                 handleImageClick={handleImageClick}
                 handleVideoClick={handleVideoClick}
                 onPostDeleted={(postId) => {
-                  // Remove deleted post from list
                   setPosts((prev) => prev.filter((p) => p.id !== postId));
                 }}
+                onLoginRequiredForLike={
+                  !session?.user?.id
+                    ? () => {
+                        toast({ title: "Login required", description: "Login to like posts" });
+                        router.push("/auth/login");
+                      }
+                    : undefined
+                }
               />
             ))}
             

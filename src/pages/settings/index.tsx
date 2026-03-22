@@ -74,7 +74,7 @@ export default function SettingsPage() {
         title: "Account deleted successfully",
         description: "Anda akan diarahkan ke halaman login.",
       });
-      await signOut({ callbackUrl: "/auth/login" });
+      await signOut({ callbackUrl: "/" });
       router.push("/auth/login");
     } catch (err: any) {
       toast({

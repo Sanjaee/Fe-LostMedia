@@ -62,6 +62,8 @@ interface PostCardProps {
   handleImageClick: (post: Post, imageIndex: number) => void;
   handleVideoClick?: (post: Post, videoIndex: number) => void;
   onPostDeleted?: (postId: string) => void;
+  /** Dipanggil saat guest klik like (redirect ke login) */
+  onLoginRequiredForLike?: () => void;
 }
 
 export function PostCard({
@@ -78,6 +80,7 @@ export function PostCard({
   handleImageClick,
   handleVideoClick,
   onPostDeleted,
+  onLoginRequiredForLike,
 }: PostCardProps) {
   // Gabung gambar + video jadi satu media (gambar dulu, lalu video) untuk layout seperti foto
   const mediaItems: { type: "image"; url: string; index: number }[] = (post.image_urls || []).map((url, i) => ({ type: "image" as const, url, index: i }));
@@ -389,6 +392,8 @@ export function PostCard({
                   : (post.user_liked ? { user_id: post.user_id, post_id: post.id } : null)
               }
               onLikeChange={(liked, count) => handleLikeChange(post.id, liked, count)}
+              disabled={!session?.user?.id}
+              onDisabledClick={onLoginRequiredForLike}
             />
           </div>
           <Button 

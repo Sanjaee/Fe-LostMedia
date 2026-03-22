@@ -37,6 +37,10 @@ interface LikeButtonProps {
   iconFilledWhenLiked?: boolean;
   /** Class tambahan untuk tombol compact (mis. h-12 w-12 agar sama dengan tombol lain) */
   compactButtonClassName?: string;
+  /** Saat true, tombol tampil tapi klik memanggil onDisabledClick (untuk guest) */
+  disabled?: boolean;
+  /** Dipanggil saat klik ketika disabled (e.g. redirect ke login) */
+  onDisabledClick?: () => void;
 }
 
 const REACTIONS = [
@@ -61,6 +65,8 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
   compactIconClassName,
   iconFilledWhenLiked = false,
   compactButtonClassName,
+  disabled = false,
+  onDisabledClick,
 }) => {
   const { api } = useApi();
   const { toast } = useToast();
@@ -101,6 +107,10 @@ export const LikeButton: React.FC<LikeButtonProps> = ({
 
   const handleLike = async (reaction: "like" | "love" | "haha" | "wow" | "sad" | "angry" = "like") => {
     if (loading) return;
+    if (disabled) {
+      onDisabledClick?.();
+      return;
+    }
 
     // Same reaction click = unlike. Treat null (from API user_liked) as "like" so 2nd click unlikes
     const effectiveCurrent = currentReaction ?? (liked ? "like" : null);

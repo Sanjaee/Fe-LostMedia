@@ -5,7 +5,6 @@ import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useApi } from "@/components/contex/ApiProvider";
 import { useWebSocketSubscription } from "@/contexts/WebSocketContext";
-import { useSession } from "next-auth/react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserNameWithRole } from "@/components/ui/UserNameWithRole";
 
@@ -19,7 +18,6 @@ interface OnlineUser {
 
 export const OnlineUsers: React.FC = () => {
   const { api } = useApi();
-  const { data: session } = useSession();
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -35,13 +33,11 @@ export const OnlineUsers: React.FC = () => {
     }
   }, [api]);
 
-  // Load on mount
+  // Load on mount - tampilkan untuk guest dan logged-in
   useEffect(() => {
-    if (session?.user?.id) {
-      setLoading(true);
-      loadOnlineUsers();
-    }
-  }, [session?.user?.id, loadOnlineUsers]);
+    setLoading(true);
+    loadOnlineUsers();
+  }, [loadOnlineUsers]);
 
   // Listen to WebSocket presence events for real-time updates
   useWebSocketSubscription((data: any) => {
